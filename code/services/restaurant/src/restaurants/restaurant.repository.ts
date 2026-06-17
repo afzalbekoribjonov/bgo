@@ -1,0 +1,44 @@
+import { Category, MenuItem, Restaurant } from './entities';
+
+export interface CreateCategoryData {
+  restaurantId: string;
+  name: Category['name'];
+  sortOrder?: number;
+}
+
+export interface CreateMenuItemData {
+  restaurantId: string;
+  categoryId: string;
+  name: MenuItem['name'];
+  description?: MenuItem['description'];
+  price: number;
+  imageUrl?: string;
+  isAvailable?: boolean;
+}
+
+/**
+ * Katalog repository interfeysi — saqlash texnologiyasidan mustaqil.
+ * Hozir: in-memory (dev). Keyin: Prisma/PostgreSQL (plan/03-databases.md).
+ */
+export abstract class RestaurantRepository {
+  abstract listRestaurants(): Promise<Restaurant[]>;
+  abstract getRestaurant(id: string): Promise<Restaurant | null>;
+
+  abstract listCategories(restaurantId: string): Promise<Category[]>;
+  abstract createCategory(data: CreateCategoryData): Promise<Category>;
+  abstract updateCategory(
+    restaurantId: string,
+    id: string,
+    patch: Partial<Omit<Category, 'id' | 'restaurantId'>>,
+  ): Promise<Category>;
+  abstract deleteCategory(restaurantId: string, id: string): Promise<void>;
+
+  abstract listMenuItems(restaurantId: string): Promise<MenuItem[]>;
+  abstract createMenuItem(data: CreateMenuItemData): Promise<MenuItem>;
+  abstract updateMenuItem(
+    restaurantId: string,
+    id: string,
+    patch: Partial<Omit<MenuItem, 'id' | 'restaurantId' | 'createdAt'>>,
+  ): Promise<MenuItem>;
+  abstract deleteMenuItem(restaurantId: string, id: string): Promise<void>;
+}
