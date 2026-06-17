@@ -3,3 +3,7 @@ arb-dir: lib/l10n
 template-arb-file: app_uz.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
+# Synthetic 'package:flutter_gen' o'rniga lib/ ichiga generatsiya
+# (analyze/test/run bir xil ishlashi uchun — Flutter 3.27 muammosini chetlab o'tish).
+synthetic-package: false
+output-dir: lib/l10n/generated

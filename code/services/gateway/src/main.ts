@@ -1,14 +1,19 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { setupProxies } from './proxy/setup-proxies';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // bodyParser: false — gateway so'rovlarni o'zgartirmasdan servislarga uzatadi
+  // (proxy oqimi body-parser bilan to'qnashmasligi uchun).
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
 
-  // Barcha endpoint'lar /api/v1 ostida (14-api-design.md)
+  // Servislarga yo'naltirish (auth, ...) — Nest router'idan oldin.
+  setupProxies(app);
+
+  // Gateway'ning o'z endpoint'lari /api/v1 ostida (masalan /health)
   app.setGlobalPrefix('api/v1');
 
-  // Kirish ma'lumotlarini avtomatik validatsiya va tozalash
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

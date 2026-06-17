@@ -1,13 +1,39 @@
 {
   "@@locale": "uz",
   "appName": "Beshariq",
-  "@appName": { "description": "Ilova nomi" },
   "welcome": "Xush kelibsiz!",
-  "@welcome": { "description": "Bosh ekran salomi" },
   "chooseService": "Xizmatni tanlang",
   "serviceFood": "Ovqat",
   "serviceTaxi": "Taksi",
   "serviceDelivery": "Dostavka",
   "language": "Til",
-  "login": "Kirish"
+
+  "loginTitle": "Kirish / Ro'yxatdan o'tish",
+  "loginSubtitle": "Davom etish uchun telefon raqamingizni kiriting",
+  "phoneLabel": "Telefon raqami",
+  "sendCode": "Kod yuborish",
+
+  "otpTitle": "Tasdiqlash kodi",
+  "otpSubtitle": "{phone} raqamiga yuborilgan kodni kiriting",
+  "@otpSubtitle": {
+    "placeholders": { "phone": { "type": "String" } }
+  },
+  "otpLabel": "Kod",
+  "verify": "Tasdiqlash",
+  "resendCode": "Kodni qayta yuborish",
+  "devCodeHint": "Sinov rejimi — kod: {code}",
+  "@devCodeHint": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+
+  "consentTitle": "Maxfiylik va shartlar",
+  "consentBody": "Davom etish orqali siz Foydalanish shartlari va Maxfiylik siyosatiga rozilik bildirasiz. Joylashuv ma'lumotlari xizmat ko'rsatish uchun ishlatiladi.",
+  "consentCheckbox": "Men shartlar va maxfiylik siyosatiga roziman",
+  "continueButton": "Davom etish",
+
+  "logout": "Chiqish",
+  "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
+  "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
+  "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",
+  "errorNetwork": "Internet aloqasi yo'q"
 }
