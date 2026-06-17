@@ -1,0 +1,13 @@
+{
+  "@@locale": "uz",
+  "appName": "Beshariq",
+  "@appName": { "description": "Ilova nomi" },
+  "welcome": "Xush kelibsiz!",
+  "@welcome": { "description": "Bosh ekran salomi" },
+  "chooseService": "Xizmatni tanlang",
+  "serviceFood": "Ovqat",
+  "serviceTaxi": "Taksi",
+  "serviceDelivery": "Dostavka",
+  "language": "Til",
+  "login": "Kirish"
+}

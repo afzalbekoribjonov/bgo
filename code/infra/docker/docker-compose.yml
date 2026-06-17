@@ -1,0 +1,64 @@
+# Beshariq Super-App — lokal infratuzilma (development)
+# Ishga tushirish:  docker compose -f infra/docker/docker-compose.yml up -d
+# To'xtatish:        docker compose -f infra/docker/docker-compose.yml down
+#
+# Eslatma: prod uchun docker-compose.prod.yml alohida bo'ladi.
+
+name: beshariq-infra
+
+services:
+  # --- PostgreSQL + PostGIS (asosiy tranzaksion + geo DB) ---
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: beshariq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-beshariq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-beshariq_dev_password}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Birinchi ishga tushganda DB'larni yaratadi (database-per-service)
+      - ./../db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-beshariq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Redis (kesh, sessiya, real-time geo, navbat) ---
+  redis:
+    image: redis:7-alpine
+    container_name: beshariq-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- NATS (event bus — servislararo asinxron aloqa) ---
+  nats:
+    image: nats:2-alpine
+    container_name: beshariq-nats
+    restart: unless-stopped
+    command: ["-js"] # JetStream yoqilgan (kafolatli yetkazish)
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "8222:8222" # monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:

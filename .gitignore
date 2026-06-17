@@ -1,0 +1,20 @@
+# Repo ildizi himoya qatlami.
+# Asosiy monorepo .gitignore: code/.gitignore
+# Bu yerda faqat ildizda tasodifan paydo bo'ladigan artefaktlar.
+
+# Tasodifiy generatsiya artefaktlari (ildizda bo'lmasligi kerak)
+/build/
+/node_modules/
+**/.dart_tool/
+
+# Loglar / OS / IDE
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Sirlar
+.env
+.env.local

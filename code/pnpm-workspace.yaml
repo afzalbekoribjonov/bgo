@@ -1,0 +1,8 @@
+packages:
+  - "services/*"
+  - "packages/*"
+  - "apps/admin_web"
+  - "apps/restaurant_web"
+
+# Eslatma: apps/customer_app va apps/driver_app — Flutter (Dart) ilovalari,
+# pnpm workspace'iga kirmaydi. Ular alohida `flutter pub get` bilan boshqariladi.

@@ -1,0 +1,16 @@
+{
+  "name": "@beshariq/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Beshariq Super-App — umumiy tarjimalar (uz, uz-Cyrl, ru)",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"(i18n) lint skip\" && exit 0",
+    "test": "echo \"(i18n) test yo'q\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

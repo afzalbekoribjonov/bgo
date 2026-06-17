@@ -1,0 +1,11 @@
+{
+  "@@locale": "uz_Cyrl",
+  "appName": "Бешариқ",
+  "welcome": "Хуш келибсиз!",
+  "chooseService": "Хизматни танланг",
+  "serviceFood": "Овқат",
+  "serviceTaxi": "Такси",
+  "serviceDelivery": "Доставка",
+  "language": "Тил",
+  "login": "Кириш"
+}

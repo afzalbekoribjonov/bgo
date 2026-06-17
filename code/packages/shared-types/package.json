@@ -1,0 +1,16 @@
+{
+  "name": "@beshariq/shared-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Beshariq Super-App — umumiy TypeScript tiplar va enum'lar",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"(shared-types) lint skip\" && exit 0",
+    "test": "echo \"(shared-types) test yo'q\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "@@locale": "ru",
+  "appName": "Бешарык",
+  "welcome": "Добро пожаловать!",
+  "chooseService": "Выберите услугу",
+  "serviceFood": "Еда",
+  "serviceTaxi": "Такси",
+  "serviceDelivery": "Доставка",
+  "language": "Язык",
+  "login": "Вход"
+}

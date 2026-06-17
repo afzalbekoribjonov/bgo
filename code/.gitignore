@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build natijalari
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# Muhit (sirlar)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Loglar
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/*.g.dart
+**/*.freezed.dart
+apps/*/android/.gradle/
+apps/*/android/app/debug
+apps/*/android/app/release
+apps/*/ios/Pods/
+**/*.iml
+**/.idea/
+
+# IDE / OS
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Docker / DB ma'lumotlari (lokal)
+infra/docker/data/
+
+# OSRM ma'lumot fayllari (katta, generatsiya qilinadi)
+infra/osrm/data/
+*.osm.pbf
+*.osrm*
