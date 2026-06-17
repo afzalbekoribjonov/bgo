@@ -13,6 +13,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "gateway:dev": "pnpm --filter @beshariq/gateway start:dev",
+    "auth:dev": "pnpm --filter @beshariq/auth start:dev",
     "infra:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker/docker-compose.yml down",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""

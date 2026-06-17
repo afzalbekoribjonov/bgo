@@ -8,7 +8,7 @@ Batafsil: [`../../plan/04-backend-services.md`](../../plan/04-backend-services.m
 | Servis | Til | Holat | Faza |
 |--------|-----|-------|------|
 | **gateway** | NestJS | ✅ skelet | 0 |
-| auth | NestJS | ⬜ rejada | 1 |
+| **auth** | NestJS | ✅ OTP+JWT (in-memory) | 1 |
 | user | NestJS | ⬜ rejada | 1 |
 | restaurant | NestJS | ⬜ rejada | 2 |
 | pricing | NestJS | ⬜ rejada | 2 |
