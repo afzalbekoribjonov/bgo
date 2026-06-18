@@ -84,4 +84,43 @@ export class OrdersService {
     }
     return this.repo.updateStatus(id, 'CANCELLED');
   }
+
+  // ---------- Oshxona (kitchen) ----------
+  // TODO(restaurant auth): restaurant roli JWT + egalik tekshiruvi.
+
+  listForRestaurant(restaurantId: string) {
+    return this.repo.findByRestaurant(restaurantId);
+  }
+
+  acceptByRestaurant(id: string) {
+    return this.transition(id, ['PENDING'], 'ACCEPTED');
+  }
+
+  startPreparing(id: string) {
+    return this.transition(id, ['ACCEPTED'], 'PREPARING');
+  }
+
+  markReady(id: string) {
+    return this.transition(id, ['ACCEPTED', 'PREPARING'], 'READY');
+  }
+
+  rejectByRestaurant(id: string) {
+    return this.transition(id, ['PENDING', 'ACCEPTED'], 'CANCELLED');
+  }
+
+  /** Holatni faqat ruxsat etilgan o'tish bo'yicha o'zgartiradi. */
+  private async transition(
+    id: string,
+    from: Order['status'][],
+    to: Order['status'],
+  ): Promise<Order> {
+    const order = await this.repo.findById(id);
+    if (!order) throw new NotFoundException('Buyurtma topilmadi');
+    if (!from.includes(order.status)) {
+      throw new BadRequestException(
+        `Holatni '${order.status}' dan '${to}' ga o'zgartirib bo'lmaydi`,
+      );
+    }
+    return this.repo.updateStatus(id, to);
+  }
 }

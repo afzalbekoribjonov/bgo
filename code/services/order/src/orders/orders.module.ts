@@ -3,13 +3,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { InMemoryOrderRepository } from './in-memory-order.repository';
+import { KitchenController } from './kitchen.controller';
 import { OrderRepository } from './order.repository';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 
 @Module({
   imports: [JwtModule.register({})],
-  controllers: [OrdersController],
+  controllers: [OrdersController, KitchenController],
   providers: [
     OrdersService,
     RestaurantClient,

@@ -3,6 +3,8 @@ export type OrderType = 'FOOD' | 'TAXI' | 'DELIVERY';
 export type OrderStatus =
   | 'PENDING' // yaratildi, oshxona tasdig'i kutilmoqda
   | 'ACCEPTED' // oshxona qabul qildi
+  | 'PREPARING' // tayyorlanmoqda
+  | 'READY' // tayyor (kuryer kutilmoqda)
   | 'ASSIGNED' // haydovchi biriktirildi
   | 'IN_PROGRESS'
   | 'PICKED_UP'

@@ -13,5 +13,6 @@ export abstract class OrderRepository {
   abstract create(data: NewOrderData): Promise<Order>;
   abstract findById(id: string): Promise<Order | null>;
   abstract findByCustomer(customerId: string): Promise<Order[]>;
+  abstract findByRestaurant(restaurantId: string): Promise<Order[]>;
   abstract updateStatus(id: string, status: OrderStatus): Promise<Order>;
 }

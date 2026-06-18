@@ -37,6 +37,12 @@ export class InMemoryOrderRepository extends OrderRepository {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  async findByRestaurant(restaurantId: string): Promise<Order[]> {
+    return [...this.orders.values()]
+      .filter((o) => o.restaurantId === restaurantId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
   async updateStatus(id: string, status: OrderStatus): Promise<Order> {
     const order = this.orders.get(id);
     if (!order) throw new NotFoundException('Buyurtma topilmadi');
