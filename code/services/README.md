@@ -13,7 +13,7 @@ Batafsil: [`../../plan/04-backend-services.md`](../../plan/04-backend-services.m
 | **restaurant** | NestJS | ✅ katalog+menyu (in-memory) | 2 |
 | pricing | NestJS | ⬜ rejada | 2 |
 | promo | NestJS | ⬜ rejada | 2 |
-| order | NestJS | ⬜ rejada | 2 |
+| **order** | NestJS | ✅ buyurtma (in-memory, narx katalogdan) | 2 |
 | media | NestJS | ⬜ rejada | 2 |
 | notification | NestJS | ⬜ rejada | 2 |
 | location | **Go** | ⬜ rejada | 3 |
