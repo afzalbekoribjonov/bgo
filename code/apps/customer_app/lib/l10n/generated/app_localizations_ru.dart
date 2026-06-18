@@ -113,4 +113,87 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get retry => 'Повторить';
+
+  @override
+  String get cart => 'Корзина';
+
+  @override
+  String get cartEmpty => 'Корзина пуста';
+
+  @override
+  String get subtotalLabel => 'Блюда';
+
+  @override
+  String get deliveryFeeLabel => 'Доставка';
+
+  @override
+  String get totalLabel => 'Итого';
+
+  @override
+  String get checkoutButton => 'Оформить заказ';
+
+  @override
+  String get checkoutTitle => 'Оформление';
+
+  @override
+  String get addressLabel => 'Адрес доставки';
+
+  @override
+  String get addressHint => 'Улица, дом, ориентир';
+
+  @override
+  String get paymentMethod => 'Способ оплаты';
+
+  @override
+  String get paymentCash => 'Наличные';
+
+  @override
+  String get deliveryNote => 'Стоимость доставки добавится к заказу';
+
+  @override
+  String get placeOrder => 'Подтвердить заказ';
+
+  @override
+  String get orderPlacedTitle => 'Заказ принят';
+
+  @override
+  String get orderPlacedDesc => 'Ваш заказ отправлен в ресторан.';
+
+  @override
+  String get myOrders => 'Мои заказы';
+
+  @override
+  String get noOrders => 'Заказов пока нет';
+
+  @override
+  String orderNo(String no) {
+    return 'Заказ #$no';
+  }
+
+  @override
+  String get cancelOrder => 'Отменить';
+
+  @override
+  String get backToHome => 'На главную';
+
+  @override
+  String get cartUpdatedNewRestaurant => 'Корзина обновлена для нового ресторана';
+
+  @override
+  String get statusPending => 'Ожидает';
+
+  @override
+  String get statusAccepted => 'Принят';
+
+  @override
+  String get statusOnTheWay => 'В пути';
+
+  @override
+  String get statusDelivered => 'Доставлен';
+
+  @override
+  String get statusCancelled => 'Отменён';
+
+  @override
+  String get statusFailed => 'Не выполнен';
 }

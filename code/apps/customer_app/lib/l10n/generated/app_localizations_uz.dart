@@ -113,6 +113,89 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get retry => 'Qayta urinish';
+
+  @override
+  String get cart => 'Savat';
+
+  @override
+  String get cartEmpty => 'Savat bo\'sh';
+
+  @override
+  String get subtotalLabel => 'Taomlar';
+
+  @override
+  String get deliveryFeeLabel => 'Yetkazib berish';
+
+  @override
+  String get totalLabel => 'Jami';
+
+  @override
+  String get checkoutButton => 'Buyurtma berish';
+
+  @override
+  String get checkoutTitle => 'Rasmiylashtirish';
+
+  @override
+  String get addressLabel => 'Yetkazib berish manzili';
+
+  @override
+  String get addressHint => 'Ko\'cha, uy, mo\'ljal';
+
+  @override
+  String get paymentMethod => 'To\'lov usuli';
+
+  @override
+  String get paymentCash => 'Naqd pul';
+
+  @override
+  String get deliveryNote => 'Yetkazib berish narxi buyurtmaga qo\'shiladi';
+
+  @override
+  String get placeOrder => 'Buyurtmani tasdiqlash';
+
+  @override
+  String get orderPlacedTitle => 'Buyurtma qabul qilindi';
+
+  @override
+  String get orderPlacedDesc => 'Buyurtmangiz oshxonaga yuborildi.';
+
+  @override
+  String get myOrders => 'Buyurtmalarim';
+
+  @override
+  String get noOrders => 'Hali buyurtma yo\'q';
+
+  @override
+  String orderNo(String no) {
+    return 'Buyurtma #$no';
+  }
+
+  @override
+  String get cancelOrder => 'Bekor qilish';
+
+  @override
+  String get backToHome => 'Bosh sahifaga';
+
+  @override
+  String get cartUpdatedNewRestaurant => 'Savat yangi oshxona uchun yangilandi';
+
+  @override
+  String get statusPending => 'Kutilmoqda';
+
+  @override
+  String get statusAccepted => 'Qabul qilindi';
+
+  @override
+  String get statusOnTheWay => 'Yo\'lda';
+
+  @override
+  String get statusDelivered => 'Yetkazildi';
+
+  @override
+  String get statusCancelled => 'Bekor qilindi';
+
+  @override
+  String get statusFailed => 'Bajarilmadi';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -226,4 +309,87 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get retry => 'Қайта уриниш';
+
+  @override
+  String get cart => 'Сават';
+
+  @override
+  String get cartEmpty => 'Сават бўш';
+
+  @override
+  String get subtotalLabel => 'Таомлар';
+
+  @override
+  String get deliveryFeeLabel => 'Етказиб бериш';
+
+  @override
+  String get totalLabel => 'Жами';
+
+  @override
+  String get checkoutButton => 'Буюртма бериш';
+
+  @override
+  String get checkoutTitle => 'Расмийлаштириш';
+
+  @override
+  String get addressLabel => 'Етказиб бериш манзили';
+
+  @override
+  String get addressHint => 'Кўча, уй, мўлжал';
+
+  @override
+  String get paymentMethod => 'Тўлов усули';
+
+  @override
+  String get paymentCash => 'Нақд пул';
+
+  @override
+  String get deliveryNote => 'Етказиб бериш нархи буюртмага қўшилади';
+
+  @override
+  String get placeOrder => 'Буюртмани тасдиқлаш';
+
+  @override
+  String get orderPlacedTitle => 'Буюртма қабул қилинди';
+
+  @override
+  String get orderPlacedDesc => 'Буюртмангиз ошхонага юборилди.';
+
+  @override
+  String get myOrders => 'Буюртмаларим';
+
+  @override
+  String get noOrders => 'Ҳали буюртма йўқ';
+
+  @override
+  String orderNo(String no) {
+    return 'Буюртма #$no';
+  }
+
+  @override
+  String get cancelOrder => 'Бекор қилиш';
+
+  @override
+  String get backToHome => 'Бош саҳифага';
+
+  @override
+  String get cartUpdatedNewRestaurant => 'Сават янги ошхона учун янгиланди';
+
+  @override
+  String get statusPending => 'Кутилмоқда';
+
+  @override
+  String get statusAccepted => 'Қабул қилинди';
+
+  @override
+  String get statusOnTheWay => 'Йўлда';
+
+  @override
+  String get statusDelivered => 'Етказилди';
+
+  @override
+  String get statusCancelled => 'Бекор қилинди';
+
+  @override
+  String get statusFailed => 'Бажарилмади';
 }

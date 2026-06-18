@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
+import '../order/my_orders_screen.dart';
 import '../restaurant/restaurant_list_screen.dart';
 
 /// Bosh ekran — xizmat kartalari. To'liq oqimlar Faza 2+ da. plan/05-customer-app.md
@@ -17,6 +18,13 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(t.appName),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long),
+            tooltip: t.myOrders,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
+            ),
+          ),
           const LanguageButton(),
           IconButton(
             icon: const Icon(Icons.logout),

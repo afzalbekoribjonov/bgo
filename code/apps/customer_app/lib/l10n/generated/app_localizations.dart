@@ -299,6 +299,168 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Qayta urinish'**
   String get retry;
+
+  /// No description provided for @cart.
+  ///
+  /// In uz, this message translates to:
+  /// **'Savat'**
+  String get cart;
+
+  /// No description provided for @cartEmpty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Savat bo\'sh'**
+  String get cartEmpty;
+
+  /// No description provided for @subtotalLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Taomlar'**
+  String get subtotalLabel;
+
+  /// No description provided for @deliveryFeeLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yetkazib berish'**
+  String get deliveryFeeLabel;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Jami'**
+  String get totalLabel;
+
+  /// No description provided for @checkoutButton.
+  ///
+  /// In uz, this message translates to:
+  /// **'Buyurtma berish'**
+  String get checkoutButton;
+
+  /// No description provided for @checkoutTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rasmiylashtirish'**
+  String get checkoutTitle;
+
+  /// No description provided for @addressLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yetkazib berish manzili'**
+  String get addressLabel;
+
+  /// No description provided for @addressHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ko\'cha, uy, mo\'ljal'**
+  String get addressHint;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In uz, this message translates to:
+  /// **'To\'lov usuli'**
+  String get paymentMethod;
+
+  /// No description provided for @paymentCash.
+  ///
+  /// In uz, this message translates to:
+  /// **'Naqd pul'**
+  String get paymentCash;
+
+  /// No description provided for @deliveryNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yetkazib berish narxi buyurtmaga qo\'shiladi'**
+  String get deliveryNote;
+
+  /// No description provided for @placeOrder.
+  ///
+  /// In uz, this message translates to:
+  /// **'Buyurtmani tasdiqlash'**
+  String get placeOrder;
+
+  /// No description provided for @orderPlacedTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Buyurtma qabul qilindi'**
+  String get orderPlacedTitle;
+
+  /// No description provided for @orderPlacedDesc.
+  ///
+  /// In uz, this message translates to:
+  /// **'Buyurtmangiz oshxonaga yuborildi.'**
+  String get orderPlacedDesc;
+
+  /// No description provided for @myOrders.
+  ///
+  /// In uz, this message translates to:
+  /// **'Buyurtmalarim'**
+  String get myOrders;
+
+  /// No description provided for @noOrders.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hali buyurtma yo\'q'**
+  String get noOrders;
+
+  /// No description provided for @orderNo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Buyurtma #{no}'**
+  String orderNo(String no);
+
+  /// No description provided for @cancelOrder.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilish'**
+  String get cancelOrder;
+
+  /// No description provided for @backToHome.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bosh sahifaga'**
+  String get backToHome;
+
+  /// No description provided for @cartUpdatedNewRestaurant.
+  ///
+  /// In uz, this message translates to:
+  /// **'Savat yangi oshxona uchun yangilandi'**
+  String get cartUpdatedNewRestaurant;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kutilmoqda'**
+  String get statusPending;
+
+  /// No description provided for @statusAccepted.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qabul qilindi'**
+  String get statusAccepted;
+
+  /// No description provided for @statusOnTheWay.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'lda'**
+  String get statusOnTheWay;
+
+  /// No description provided for @statusDelivered.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yetkazildi'**
+  String get statusDelivered;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilindi'**
+  String get statusCancelled;
+
+  /// No description provided for @statusFailed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bajarilmadi'**
+  String get statusFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

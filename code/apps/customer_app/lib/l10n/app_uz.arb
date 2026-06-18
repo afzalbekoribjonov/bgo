@@ -47,5 +47,36 @@
   },
   "emptyRestaurants": "Hozircha oshxona yo'q",
   "emptyMenu": "Menyu hozircha bo'sh",
-  "retry": "Qayta urinish"
+  "retry": "Qayta urinish",
+
+  "cart": "Savat",
+  "cartEmpty": "Savat bo'sh",
+  "subtotalLabel": "Taomlar",
+  "deliveryFeeLabel": "Yetkazib berish",
+  "totalLabel": "Jami",
+  "checkoutButton": "Buyurtma berish",
+  "checkoutTitle": "Rasmiylashtirish",
+  "addressLabel": "Yetkazib berish manzili",
+  "addressHint": "Ko'cha, uy, mo'ljal",
+  "paymentMethod": "To'lov usuli",
+  "paymentCash": "Naqd pul",
+  "deliveryNote": "Yetkazib berish narxi buyurtmaga qo'shiladi",
+  "placeOrder": "Buyurtmani tasdiqlash",
+  "orderPlacedTitle": "Buyurtma qabul qilindi",
+  "orderPlacedDesc": "Buyurtmangiz oshxonaga yuborildi.",
+  "myOrders": "Buyurtmalarim",
+  "noOrders": "Hali buyurtma yo'q",
+  "orderNo": "Buyurtma #{no}",
+  "@orderNo": {
+    "placeholders": { "no": { "type": "String" } }
+  },
+  "cancelOrder": "Bekor qilish",
+  "backToHome": "Bosh sahifaga",
+  "cartUpdatedNewRestaurant": "Savat yangi oshxona uchun yangilandi",
+  "statusPending": "Kutilmoqda",
+  "statusAccepted": "Qabul qilindi",
+  "statusOnTheWay": "Yo'lda",
+  "statusDelivered": "Yetkazildi",
+  "statusCancelled": "Bekor qilindi",
+  "statusFailed": "Bajarilmadi"
 }
