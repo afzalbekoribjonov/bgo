@@ -1,7 +1,12 @@
-// Beshariq mijoz ilovasi — asosiy smoke test.
+// Beshariq mijoz ilovasi — asosiy smoke testlar.
 import 'package:customer_app/core/providers.dart';
 import 'package:customer_app/core/token_storage.dart';
+import 'package:customer_app/features/restaurant/restaurant_api.dart';
+import 'package:customer_app/features/restaurant/restaurant_list_screen.dart';
+import 'package:customer_app/features/restaurant/restaurant_models.dart';
+import 'package:customer_app/l10n/generated/app_localizations.dart';
 import 'package:customer_app/main.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,13 +45,42 @@ void main() {
       ),
     );
 
-    // bootstrap (token yo'q) -> unauthenticated -> LoginFlow
-    await tester.pump(); // Splash
-    await tester.pump(); // holat yangilandi
+    await tester.pump();
     await tester.pump();
 
-    // Standart til (uz) da kirish ekrani elementlari
     expect(find.text('Beshariq'), findsWidgets);
     expect(find.text('Kod yuborish'), findsOneWidget);
+  });
+
+  testWidgets('Oshxonalar ro\'yxati ko\'rinadi', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          restaurantsProvider.overrideWith(
+            (ref) async => const [
+              RestaurantSummary(
+                id: 'r1',
+                name: 'Test Oshxona',
+                address: 'Beshariq',
+                isOpen: true,
+                rating: 4.5,
+              ),
+            ],
+          ),
+        ],
+        child: const MaterialApp(
+          locale: Locale('uz'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: RestaurantListScreen(),
+        ),
+      ),
+    );
+
+    await tester.pump(); // loading
+    await tester.pump(); // data
+
+    expect(find.text('Test Oshxona'), findsOneWidget);
+    expect(find.text('Oshxonalar'), findsOneWidget);
   });
 }

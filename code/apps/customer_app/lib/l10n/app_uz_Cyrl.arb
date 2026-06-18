@@ -29,5 +29,14 @@
   "errorInvalidPhone": "Телефон рақами нотўғри (+998XXXXXXXXX)",
   "errorInvalidCode": "Код нотўғри ёки муддати тугаган",
   "errorGeneric": "Хатолик юз берди. Қайта уриниб кўринг.",
-  "errorNetwork": "Интернет алоқаси йўқ"
+  "errorNetwork": "Интернет алоқаси йўқ",
+
+  "restaurantsTitle": "Ошхоналар",
+  "open": "Очиқ",
+  "closed": "Ёпиқ",
+  "unavailable": "Ҳозирча йўқ",
+  "priceSom": "{amount} сўм",
+  "emptyRestaurants": "Ҳозирча ошхона йўқ",
+  "emptyMenu": "Меню ҳозирча бўш",
+  "retry": "Қайта уриниш"
 }

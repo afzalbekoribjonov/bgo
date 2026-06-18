@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
+import '../restaurant/restaurant_list_screen.dart';
 
 /// Bosh ekran — xizmat kartalari. To'liq oqimlar Faza 2+ da. plan/05-customer-app.md
 class HomeScreen extends ConsumerWidget {
@@ -39,8 +40,18 @@ class HomeScreen extends ConsumerWidget {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 children: [
-                  _ServiceCard(icon: Icons.restaurant, label: t.serviceFood),
+                  _ServiceCard(
+                    icon: Icons.restaurant,
+                    label: t.serviceFood,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RestaurantListScreen(),
+                      ),
+                    ),
+                  ),
+                  // TODO(Faza 4): taksi ekrani
                   _ServiceCard(icon: Icons.local_taxi, label: t.serviceTaxi),
+                  // TODO(Faza 5): dostavka ekrani
                   _ServiceCard(icon: Icons.delivery_dining, label: t.serviceDelivery),
                 ],
               ),
@@ -55,15 +66,15 @@ class HomeScreen extends ConsumerWidget {
 class _ServiceCard extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const _ServiceCard({required this.icon, required this.label});
+  const _ServiceCard({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
-        // TODO(Faza 2): tegishli xizmat ekraniga o'tish
-        onTap: () {},
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

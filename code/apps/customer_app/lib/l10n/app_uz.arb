@@ -35,5 +35,17 @@
   "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
   "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
   "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",
-  "errorNetwork": "Internet aloqasi yo'q"
+  "errorNetwork": "Internet aloqasi yo'q",
+
+  "restaurantsTitle": "Oshxonalar",
+  "open": "Ochiq",
+  "closed": "Yopiq",
+  "unavailable": "Hozircha yo'q",
+  "priceSom": "{amount} so'm",
+  "@priceSom": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "emptyRestaurants": "Hozircha oshxona yo'q",
+  "emptyMenu": "Menyu hozircha bo'sh",
+  "retry": "Qayta urinish"
 }

@@ -87,4 +87,30 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorNetwork => 'Нет подключения к интернету';
+
+  @override
+  String get restaurantsTitle => 'Рестораны';
+
+  @override
+  String get open => 'Открыто';
+
+  @override
+  String get closed => 'Закрыто';
+
+  @override
+  String get unavailable => 'Нет в наличии';
+
+  @override
+  String priceSom(String amount) {
+    return '$amount сум';
+  }
+
+  @override
+  String get emptyRestaurants => 'Пока нет ресторанов';
+
+  @override
+  String get emptyMenu => 'Меню пока пусто';
+
+  @override
+  String get retry => 'Повторить';
 }

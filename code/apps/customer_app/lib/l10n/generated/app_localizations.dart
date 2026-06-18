@@ -251,6 +251,54 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Internet aloqasi yo\'q'**
   String get errorNetwork;
+
+  /// No description provided for @restaurantsTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oshxonalar'**
+  String get restaurantsTitle;
+
+  /// No description provided for @open.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ochiq'**
+  String get open;
+
+  /// No description provided for @closed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yopiq'**
+  String get closed;
+
+  /// No description provided for @unavailable.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozircha yo\'q'**
+  String get unavailable;
+
+  /// No description provided for @priceSom.
+  ///
+  /// In uz, this message translates to:
+  /// **'{amount} so\'m'**
+  String priceSom(String amount);
+
+  /// No description provided for @emptyRestaurants.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozircha oshxona yo\'q'**
+  String get emptyRestaurants;
+
+  /// No description provided for @emptyMenu.
+  ///
+  /// In uz, this message translates to:
+  /// **'Menyu hozircha bo\'sh'**
+  String get emptyMenu;
+
+  /// No description provided for @retry.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qayta urinish'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

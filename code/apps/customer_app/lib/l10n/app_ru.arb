@@ -29,5 +29,14 @@
   "errorInvalidPhone": "Неверный номер телефона (+998XXXXXXXXX)",
   "errorInvalidCode": "Неверный код или истёк срок действия",
   "errorGeneric": "Произошла ошибка. Попробуйте снова.",
-  "errorNetwork": "Нет подключения к интернету"
+  "errorNetwork": "Нет подключения к интернету",
+
+  "restaurantsTitle": "Рестораны",
+  "open": "Открыто",
+  "closed": "Закрыто",
+  "unavailable": "Нет в наличии",
+  "priceSom": "{amount} сум",
+  "emptyRestaurants": "Пока нет ресторанов",
+  "emptyMenu": "Меню пока пусто",
+  "retry": "Повторить"
 }

@@ -87,6 +87,32 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get errorNetwork => 'Internet aloqasi yo\'q';
+
+  @override
+  String get restaurantsTitle => 'Oshxonalar';
+
+  @override
+  String get open => 'Ochiq';
+
+  @override
+  String get closed => 'Yopiq';
+
+  @override
+  String get unavailable => 'Hozircha yo\'q';
+
+  @override
+  String priceSom(String amount) {
+    return '$amount so\'m';
+  }
+
+  @override
+  String get emptyRestaurants => 'Hozircha oshxona yo\'q';
+
+  @override
+  String get emptyMenu => 'Menyu hozircha bo\'sh';
+
+  @override
+  String get retry => 'Qayta urinish';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -174,4 +200,30 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get errorNetwork => 'Интернет алоқаси йўқ';
+
+  @override
+  String get restaurantsTitle => 'Ошхоналар';
+
+  @override
+  String get open => 'Очиқ';
+
+  @override
+  String get closed => 'Ёпиқ';
+
+  @override
+  String get unavailable => 'Ҳозирча йўқ';
+
+  @override
+  String priceSom(String amount) {
+    return '$amount сўм';
+  }
+
+  @override
+  String get emptyRestaurants => 'Ҳозирча ошхона йўқ';
+
+  @override
+  String get emptyMenu => 'Меню ҳозирча бўш';
+
+  @override
+  String get retry => 'Қайта уриниш';
 }
