@@ -3,9 +3,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { OtpService } from '../otp/otp.service';
 import { SmsService } from '../sms/sms.service';
 import { UsersModule } from '../users/users.module';
+import { AdminUsersController } from './admin-users.controller';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RolesGuard } from './roles.guard';
 
 @Module({
   imports: [
@@ -13,7 +15,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     // Secret'lar har imzo/tekshiruvda aniq beriladi (access va refresh — alohida).
     JwtModule.register({}),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, OtpService, SmsService, JwtAuthGuard],
+  controllers: [AuthController, AdminUsersController],
+  providers: [AuthService, OtpService, SmsService, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

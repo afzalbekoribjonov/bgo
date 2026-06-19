@@ -21,6 +21,13 @@ export class PrismaUserRepository extends UserRepository {
     return user ? this.toEntity(user) : null;
   }
 
+  async findAll(): Promise<UserEntity[]> {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return users.map((u) => this.toEntity(u));
+  }
+
   async create(data: { phone: string; locale?: string }): Promise<UserEntity> {
     const user = await this.prisma.user.create({
       data: { phone: data.phone, locale: data.locale ?? 'uz' },

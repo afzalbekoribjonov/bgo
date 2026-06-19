@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OtpService } from '../otp/otp.service';
@@ -44,8 +49,40 @@ export class AuthService {
       this.logger.log(`Yangi foydalanuvchi: ${phone}`);
     }
 
+    user = await this.ensureSeededRoles(user);
+
     const tokens = await this.issueTokens(user);
     return { ...tokens, user: this.sanitize(user), isNew };
+  }
+
+  /** ADMIN_PHONES ro'yxatidagi raqamga 'admin' rolini avtomatik beradi (bootstrap). */
+  private async ensureSeededRoles(user: UserEntity): Promise<UserEntity> {
+    const adminPhones = (this.config.get<string>('ADMIN_PHONES') ?? '')
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (adminPhones.includes(user.phone) && !user.roles.includes('admin')) {
+      const updated = await this.users.update(user.id, {
+        roles: [...user.roles, 'admin'],
+      });
+      this.logger.log(`Admin roli berildi (bootstrap): ${user.phone}`);
+      return updated;
+    }
+    return user;
+  }
+
+  /** Barcha foydalanuvchilar (admin). */
+  async listUsers() {
+    const users = await this.users.findAll();
+    return users.map((u) => this.sanitize(u));
+  }
+
+  /** Foydalanuvchi rollarini o'rnatish (admin). */
+  async setRoles(userId: string, roles: string[]) {
+    const existing = await this.users.findById(userId);
+    if (!existing) throw new NotFoundException('Foydalanuvchi topilmadi');
+    const user = await this.users.update(userId, { roles });
+    return this.sanitize(user);
   }
 
   /** Refresh token bilan yangi tokenlar olish. */
