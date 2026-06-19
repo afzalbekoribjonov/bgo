@@ -1,56 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() => runApp(const DriverApp());
+import 'auth_gate.dart';
+import 'core/providers.dart';
+import 'l10n/generated/app_localizations.dart';
 
-/// Beshariq haydovchi ilovasi — Faza 0 skeleti (placeholder).
-/// To'liq mantiq (online holat, fon GPS, buyurtma taklifi, kuryer/taksi oqimi)
-/// Faza 3 da quriladi. Reja: plan/06-driver-app.md
-class DriverApp extends StatelessWidget {
+void main() => runApp(const ProviderScope(child: DriverApp()));
+
+/// Beshariq haydovchi (kuryer) ilovasi. plan/06-driver-app.md
+class DriverApp extends ConsumerWidget {
   const DriverApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     return MaterialApp(
-      title: 'Beshariq Haydovchi',
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF2E7D32),
         useMaterial3: true,
       ),
-      home: const _DriverHome(),
-    );
-  }
-}
-
-class _DriverHome extends StatelessWidget {
-  const _DriverHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Beshariq Haydovchi')),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.local_shipping, size: 64),
-              SizedBox(height: 16),
-              Text(
-                'Haydovchi ilovasi — Faza 3',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Online holat, fon GPS, buyurtma taklifi va kuryer/taksi oqimi shu yerda bo\'ladi.',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: const AuthGate(),
     );
   }
 }

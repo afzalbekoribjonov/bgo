@@ -31,6 +31,20 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Ko'p tillilik (uz / uz-Cyrl / ru) — plan/13-localization.md
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+  # Holat boshqaruvi
+  flutter_riverpod: ^2.6.1
+
+  # Tarmoq (backend bilan aloqa)
+  dio: ^5.7.0
+
+  # Token (JWT) ni xavfsiz saqlash
+  flutter_secure_storage: ^9.2.2
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -51,6 +65,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true # l10n (ARB -> Dart) generatsiyasi
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

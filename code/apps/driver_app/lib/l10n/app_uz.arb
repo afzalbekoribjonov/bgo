@@ -1,0 +1,51 @@
+{
+  "@@locale": "uz",
+  "appName": "Beshariq Haydovchi",
+  "language": "Til",
+  "logout": "Chiqish",
+
+  "loginTitle": "Haydovchi kirishi",
+  "loginSubtitle": "Davom etish uchun telefon raqamingizni kiriting",
+  "phoneLabel": "Telefon raqami",
+  "sendCode": "Kod yuborish",
+  "otpTitle": "Tasdiqlash kodi",
+  "otpSubtitle": "{phone} raqamiga yuborilgan kodni kiriting",
+  "@otpSubtitle": {
+    "placeholders": { "phone": { "type": "String" } }
+  },
+  "otpLabel": "Kod",
+  "verify": "Tasdiqlash",
+  "resendCode": "Kodni qayta yuborish",
+  "devCodeHint": "Sinov rejimi — kod: {code}",
+  "@devCodeHint": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+
+  "online": "Onlayn",
+  "offline": "Oflayn",
+  "offlineHint": "Buyurtmalarni ko'rish uchun onlayn bo'ling",
+  "availableTitle": "Mavjud buyurtmalar",
+  "myDeliveriesTitle": "Mening yetkazishlarim",
+  "noAvailable": "Hozircha buyurtma yo'q",
+  "noDeliveries": "Faol yetkazish yo'q",
+  "accept": "Qabul qilish",
+  "markPicked": "Oldim",
+  "markDelivered": "Yetkazdim",
+  "deliverTo": "Manzil",
+  "orderNo": "Buyurtma #{no}",
+  "@orderNo": {
+    "placeholders": { "no": { "type": "String" } }
+  },
+  "priceSom": "{amount} so'm",
+  "@priceSom": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "statusAssigned": "Sizga biriktirildi",
+  "statusPickedUp": "Yo'lda",
+
+  "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
+  "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
+  "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",
+  "errorNetwork": "Internet aloqasi yo'q",
+  "retry": "Qayta urinish"
+}
