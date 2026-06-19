@@ -1,8 +1,8 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CatalogController } from './catalog.controller';
-import { InMemoryRestaurantRepository } from './in-memory-restaurant.repository';
 import { ManagementController } from './management.controller';
+import { PrismaRestaurantRepository } from './prisma-restaurant.repository';
 import { RestaurantRepository } from './restaurant.repository';
 import { RestaurantsService } from './restaurants.service';
 
@@ -10,7 +10,7 @@ import { RestaurantsService } from './restaurants.service';
   controllers: [CatalogController, ManagementController],
   providers: [
     RestaurantsService,
-    { provide: RestaurantRepository, useClass: InMemoryRestaurantRepository },
+    { provide: RestaurantRepository, useClass: PrismaRestaurantRepository },
   ],
   exports: [RestaurantsService],
 })
@@ -22,11 +22,11 @@ export class RestaurantsModule implements OnModuleInit {
     private readonly config: ConfigService,
   ) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     const seedOn = String(this.config.get('SEED_ON_START') ?? 'true') === 'true';
-    if (seedOn && this.repo instanceof InMemoryRestaurantRepository) {
-      this.repo.seedSampleData();
-      this.logger.log('Namunaviy katalog yuklandi (dev seed)');
+    if (seedOn && this.repo instanceof PrismaRestaurantRepository) {
+      await this.repo.seedSampleData();
+      this.logger.log('Namunaviy katalog tekshirildi (bo\'sh bo\'lsa yuklandi)');
     }
   }
 }

@@ -1,0 +1,68 @@
+// Restaurant servisi — ma'lumot modeli (restaurant_db). plan/03-databases.md
+generator client {
+  provider = "prisma-client-js"
+  // Har servisga alohida output (pnpm monorepo'da client'lar to'qnashmasligi uchun)
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RestaurantStatus {
+  ACTIVE
+  PENDING
+  BLOCKED
+}
+
+model Restaurant {
+  id                String           @id @default(uuid())
+  ownerUserId       String?
+  name              String
+  lat               Float
+  lng               Float
+  address           String
+  phone             String
+  status            RestaurantStatus @default(ACTIVE)
+  commissionPercent Int              @default(0)
+  isOpen            Boolean          @default(true)
+  rating            Float            @default(0)
+  logoUrl           String?
+  createdAt         DateTime         @default(now())
+
+  categories Category[]
+  menuItems  MenuItem[]
+
+  @@map("restaurants")
+}
+
+model Category {
+  id           String     @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         Json
+  sortOrder    Int        @default(0)
+  menuItems    MenuItem[]
+
+  @@index([restaurantId])
+  @@map("categories")
+}
+
+model MenuItem {
+  id           String     @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name         Json
+  description  Json?
+  price        Int
+  imageUrl     String?
+  isAvailable  Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+
+  @@index([restaurantId])
+  @@index([categoryId])
+  @@map("menu_items")
+}

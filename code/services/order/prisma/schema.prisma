@@ -1,0 +1,58 @@
+// Order servisi — ma'lumot modeli (order_db). plan/03-databases.md
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderType {
+  FOOD
+  TAXI
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  ASSIGNED
+  IN_PROGRESS
+  PICKED_UP
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentType {
+  CASH
+  PAYME
+  CLICK
+  UZUM
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  publicNo      Int         @unique @default(autoincrement())
+  customerId    String
+  type          OrderType
+  restaurantId  String
+  items         Json // OrderItem[] snapshot
+  itemsTotal    Int
+  deliveryFee   Int
+  total         Int
+  paymentType   PaymentType
+  address       Json // { text, lat?, lng? }
+  status        OrderStatus @default(PENDING)
+  statusHistory Json // OrderStatusEntry[]
+  createdAt     DateTime    @default(now())
+
+  @@index([customerId])
+  @@index([restaurantId])
+  @@map("orders")
+}

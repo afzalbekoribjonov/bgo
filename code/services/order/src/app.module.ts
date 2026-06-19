@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -9,6 +10,7 @@ import { OrdersModule } from './orders/orders.module';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    PrismaModule,
     OrdersModule,
     HealthModule,
   ],

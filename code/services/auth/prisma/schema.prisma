@@ -1,6 +1,8 @@
 // Auth servisi — ma'lumot modeli (auth_db). plan/03-databases.md
 generator client {
   provider = "prisma-client-js"
+  // Har servisga alohida output (pnpm monorepo'da client'lar to'qnashmasligi uchun)
+  output   = "./generated/client"
 }
 
 datasource db {

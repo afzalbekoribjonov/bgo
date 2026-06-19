@@ -1,7 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '../../prisma/generated/client';
 
-/** PrismaClient'ni Nest hayot sikliga ulaydi. */
 @Injectable()
 export class PrismaService
   extends PrismaClient

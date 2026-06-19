@@ -12,6 +12,9 @@ out/
 # Turbo
 .turbo/
 
+# Prisma — generatsiya qilingan client (prisma generate bilan qayta yaratiladi)
+**/prisma/generated/
+
 # Muhit (sirlar)
 .env
 .env.local
