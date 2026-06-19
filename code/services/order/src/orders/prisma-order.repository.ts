@@ -47,6 +47,13 @@ export class PrismaOrderRepository extends OrderRepository {
     return o ? this.toOrder(o as Row) : null;
   }
 
+  async findAll(): Promise<Order[]> {
+    const rows = await this.prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((o) => this.toOrder(o as Row));
+  }
+
   async findByCustomer(customerId: string): Promise<Order[]> {
     const rows = await this.prisma.order.findMany({
       where: { customerId },

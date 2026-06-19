@@ -108,6 +108,44 @@ export class OrdersService {
     return this.transition(id, ['PENDING', 'ACCEPTED'], 'CANCELLED');
   }
 
+  // ---------- Admin / hisobot ----------
+  // TODO(admin auth): admin roli JWT. Hozir ochiq (dev).
+
+  async adminStats() {
+    const orders = await this.repo.findAll();
+    const terminal = ['DELIVERED', 'COMPLETED'];
+    const closed = [...terminal, 'CANCELLED', 'FAILED'];
+
+    const byStatus: Record<string, number> = {};
+    let revenue = 0;
+    let today = 0;
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    for (const o of orders) {
+      byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
+      if (terminal.includes(o.status)) revenue += o.total;
+      if (new Date(o.createdAt) >= startOfDay) today += 1;
+    }
+
+    return {
+      totalOrders: orders.length,
+      activeOrders: orders.filter((o) => !closed.includes(o.status)).length,
+      todayOrders: today,
+      revenue, // yetkazilgan buyurtmalar aylanmasi (so'm)
+      byStatus,
+    };
+  }
+
+  async adminListOrders(filter: { status?: string; type?: string }) {
+    const orders = await this.repo.findAll();
+    return orders.filter(
+      (o) =>
+        (!filter.status || o.status === filter.status) &&
+        (!filter.type || o.type === filter.type),
+    );
+  }
+
   // ---------- Kuryer (courier) ----------
   // TODO(driver auth): driverId JWT (driver roli) sub'idan olinadi.
 

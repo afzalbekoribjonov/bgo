@@ -12,6 +12,8 @@ export type NewOrderData = Omit<
 export abstract class OrderRepository {
   abstract create(data: NewOrderData): Promise<Order>;
   abstract findById(id: string): Promise<Order | null>;
+  /** Barcha buyurtmalar (admin/hisobot uchun), eng yangisi birinchi. */
+  abstract findAll(): Promise<Order[]>;
   abstract findByCustomer(customerId: string): Promise<Order[]>;
   abstract findByRestaurant(restaurantId: string): Promise<Order[]>;
   /** Yetkazishga tayyor, hali haydovchi biriktirilmagan buyurtmalar (READY). */
