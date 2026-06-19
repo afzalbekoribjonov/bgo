@@ -1,0 +1,23 @@
+// Auth servisi — ma'lumot modeli (auth_db). plan/03-databases.md
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  phone             String    @unique
+  fullName          String?
+  locale            String    @default("uz")
+  roles             String[]  @default(["customer"])
+  consentPrivacy    Boolean   @default(false)
+  consentVersion    String?
+  consentAcceptedAt DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@map("users")
+}
