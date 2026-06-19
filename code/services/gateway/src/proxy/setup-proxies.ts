@@ -16,10 +16,11 @@ interface RouteDef {
  * To'liq yo'l (masalan /api/v1/auth/otp/request) o'zgartirilmasdan uzatiladi.
  */
 const ROUTES: RouteDef[] = [
-  { prefix: '/api/v1/auth', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:3001' },
-  { prefix: '/api/v1/restaurants', envKey: 'RESTAURANT_SERVICE_URL', fallback: 'http://localhost:3003' },
-  { prefix: '/api/v1/orders', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:3004' },
-  { prefix: '/api/v1/kitchen', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:3004' },
+  { prefix: '/api/v1/auth', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:4001' },
+  { prefix: '/api/v1/restaurants', envKey: 'RESTAURANT_SERVICE_URL', fallback: 'http://localhost:4003' },
+  { prefix: '/api/v1/orders', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
+  { prefix: '/api/v1/kitchen', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
+  { prefix: '/api/v1/courier', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   // Keyingi fazalarda:
   // { prefix: '/api/v1/users', envKey: 'USER_SERVICE_URL', fallback: 'http://localhost:3002' },
 ];

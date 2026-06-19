@@ -40,6 +40,7 @@ model Order {
   id            String      @id @default(uuid())
   publicNo      Int         @unique @default(autoincrement())
   customerId    String
+  driverId      String? // biriktirilgan haydovchi (kuryer)
   type          OrderType
   restaurantId  String
   items         Json // OrderItem[] snapshot
@@ -54,5 +55,6 @@ model Order {
 
   @@index([customerId])
   @@index([restaurantId])
+  @@index([driverId])
   @@map("orders")
 }

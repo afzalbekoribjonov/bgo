@@ -63,6 +63,40 @@ export class PrismaOrderRepository extends OrderRepository {
     return rows.map((o) => this.toOrder(o as Row));
   }
 
+  async findAvailableForDelivery(): Promise<Order[]> {
+    const rows = await this.prisma.order.findMany({
+      where: { status: 'READY', driverId: null, type: 'FOOD' },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((o) => this.toOrder(o as Row));
+  }
+
+  async findByDriver(driverId: string): Promise<Order[]> {
+    const rows = await this.prisma.order.findMany({
+      where: { driverId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((o) => this.toOrder(o as Row));
+  }
+
+  async assignDriver(id: string, driverId: string): Promise<Order> {
+    const existing = await this.prisma.order.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Buyurtma topilmadi');
+    const history = [
+      ...((existing.statusHistory as unknown as OrderStatusEntry[]) ?? []),
+      { status: 'ASSIGNED' as OrderStatus, at: new Date().toISOString() },
+    ];
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: {
+        driverId,
+        status: 'ASSIGNED',
+        statusHistory: history as unknown as Prisma.InputJsonValue,
+      },
+    });
+    return this.toOrder(updated as Row);
+  }
+
   async updateStatus(id: string, status: OrderStatus): Promise<Order> {
     const existing = await this.prisma.order.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Buyurtma topilmadi');
@@ -85,6 +119,7 @@ export class PrismaOrderRepository extends OrderRepository {
       id: o.id as string,
       publicNo: o.publicNo as number,
       customerId: o.customerId as string,
+      driverId: (o.driverId as string) ?? undefined,
       type: o.type as OrderType,
       restaurantId: o.restaurantId as string,
       items: o.items as unknown as OrderItem[],

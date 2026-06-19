@@ -25,7 +25,7 @@ async function bootstrap() {
   // MVP: barcha origin'larga ruxsat (keyin cheklanadi)
   app.enableCors();
 
-  const port = process.env.GATEWAY_PORT ?? 3000;
+  const port = process.env.GATEWAY_PORT ?? 4000;
   await app.listen(port);
 
   Logger.log(`🚪 API Gateway ishga tushdi: http://localhost:${port}/api/v1`, 'Bootstrap');

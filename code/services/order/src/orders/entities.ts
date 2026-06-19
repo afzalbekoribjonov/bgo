@@ -39,6 +39,7 @@ export interface Order {
   id: string;
   publicNo: number;
   customerId: string;
+  driverId?: string;
   type: OrderType;
   restaurantId: string;
   items: OrderItem[];
