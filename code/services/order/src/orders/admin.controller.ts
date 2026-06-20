@@ -1,11 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { OrdersService } from './orders.service';
 
 /**
  * Admin / hisobot endpointlari (buyurtmalar bo'yicha). plan/08-admin-workspace.md
- * TODO(admin auth): hozir ochiq (dev). Admin roli JWT + Reporting servisi keyin.
+ * Faqat 'admin' roli. TODO: alohida Reporting servisi keyin.
  */
 @Controller('admin')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class AdminController {
   constructor(private readonly orders: OrdersService) {}
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import AuthGate from '@/components/auth-gate';
 import Nav from './nav';
 import './globals.css';
 
@@ -16,8 +17,10 @@ export default function RootLayout({
     <html lang="uz">
       <body>
         <div className="appbar">⚙️ Beshariq — Admin panel</div>
-        <Nav />
-        {children}
+        <AuthGate>
+          <Nav />
+          {children}
+        </AuthGate>
       </body>
     </html>
   );
