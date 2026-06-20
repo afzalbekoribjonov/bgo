@@ -1,4 +1,9 @@
-import { Controller, Get, Headers, Param } from '@nestjs/common';
+import { Controller, Get, Headers, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AccessTokenPayload } from '../auth/jwt-payload.interface';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { localeFromHeader } from '../common/i18n';
 import { RestaurantsService } from './restaurants.service';
 
@@ -10,6 +15,14 @@ export class CatalogController {
   @Get()
   async list() {
     return { success: true, data: await this.service.listPublicRestaurants() };
+  }
+
+  /** Joriy foydalanuvchining oshxonalari (restaurant roli). ':id' dan OLDIN. */
+  @Get('mine')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('restaurant')
+  async mine(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.service.listForOwner(user.sub) };
   }
 
   @Get(':id')

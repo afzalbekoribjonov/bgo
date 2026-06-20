@@ -23,6 +23,9 @@ export interface CreateMenuItemData {
 export abstract class RestaurantRepository {
   abstract listRestaurants(): Promise<Restaurant[]>;
   abstract getRestaurant(id: string): Promise<Restaurant | null>;
+  /** Egalik: shu foydalanuvchiga tegishli oshxonalar. */
+  abstract findByOwner(ownerUserId: string): Promise<Restaurant[]>;
+  abstract setOwner(id: string, ownerUserId: string): Promise<Restaurant>;
 
   abstract listCategories(restaurantId: string): Promise<Category[]>;
   abstract createCategory(data: CreateCategoryData): Promise<Category>;

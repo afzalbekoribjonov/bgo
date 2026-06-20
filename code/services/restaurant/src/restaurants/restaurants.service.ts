@@ -23,6 +23,26 @@ export class RestaurantsService {
     return this.toPublicRestaurant(restaurant);
   }
 
+  // ---------- Egalik (ownership) ----------
+
+  /** Foydalanuvchiga tegishli oshxonalar (restaurant roli). */
+  async listForOwner(ownerUserId: string) {
+    const restaurants = await this.repo.findByOwner(ownerUserId);
+    return restaurants.map((r) => this.toPublicRestaurant(r));
+  }
+
+  /** Egasini biriktirish (admin). */
+  async assignOwner(id: string, ownerUserId: string) {
+    const restaurant = await this.repo.setOwner(id, ownerUserId);
+    return this.toPublicRestaurant(restaurant);
+  }
+
+  /** Foydalanuvchi shu oshxona egasimi? (OwnerGuard uchun) */
+  async isOwner(restaurantId: string, userId: string): Promise<boolean> {
+    const restaurant = await this.repo.getRestaurant(restaurantId);
+    return !!restaurant && restaurant.ownerUserId === userId;
+  }
+
   /** Oshxona menyusi — kategoriyalar bo'yicha guruhlangan, tilga moslangan. */
   async getMenu(id: string, locale: SupportedLocale) {
     const restaurant = await this.requireRestaurant(id);

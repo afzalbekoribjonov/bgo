@@ -5,17 +5,20 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { CatalogController } from './catalog.controller';
 import { ManagementController } from './management.controller';
+import { OwnerController } from './owner.controller';
 import { PrismaRestaurantRepository } from './prisma-restaurant.repository';
+import { RestaurantOwnerGuard } from './restaurant-owner.guard';
 import { RestaurantRepository } from './restaurant.repository';
 import { RestaurantsService } from './restaurants.service';
 
 @Module({
   imports: [JwtModule.register({})],
-  controllers: [CatalogController, ManagementController],
+  controllers: [CatalogController, ManagementController, OwnerController],
   providers: [
     RestaurantsService,
     JwtAuthGuard,
     RolesGuard,
+    RestaurantOwnerGuard,
     { provide: RestaurantRepository, useClass: PrismaRestaurantRepository },
   ],
   exports: [RestaurantsService],

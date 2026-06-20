@@ -80,6 +80,23 @@ export class PrismaRestaurantRepository extends RestaurantRepository {
     return r ? this.toRestaurant(r as Row) : null;
   }
 
+  async findByOwner(ownerUserId: string): Promise<Restaurant[]> {
+    const rows = await this.prisma.restaurant.findMany({
+      where: { ownerUserId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((r) => this.toRestaurant(r as Row));
+  }
+
+  async setOwner(id: string, ownerUserId: string): Promise<Restaurant> {
+    await this.assertRestaurant(id);
+    const r = await this.prisma.restaurant.update({
+      where: { id },
+      data: { ownerUserId },
+    });
+    return this.toRestaurant(r as Row);
+  }
+
   async listCategories(restaurantId: string): Promise<Category[]> {
     const rows = await this.prisma.category.findMany({
       where: { restaurantId },
