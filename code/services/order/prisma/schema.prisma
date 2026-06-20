@@ -40,6 +40,7 @@ model Tariff {
   id                    String   @id @default("default")
   deliveryFee           Int      @default(5000) // mijozdan, so'm
   foodCommissionPercent Int      @default(12) // oshxona ulushi, %
+  courierSharePercent   Int      @default(80) // yetkazish narxidan haydovchi ulushi, %
   updatedAt             DateTime @updatedAt
 
   @@map("tariffs")
@@ -77,6 +78,7 @@ model Order {
   itemsTotal    Int
   deliveryFee   Int
   commission    Int         @default(0) // bizning ulush (oshxona komissiyasi), so'm
+  courierEarning Int        @default(0) // haydovchiga (yetkazish narxidan), so'm
   promoCode     String? // qo'llanilgan promokod
   discount      Int         @default(0) // chegirma, so'm
   total         Int

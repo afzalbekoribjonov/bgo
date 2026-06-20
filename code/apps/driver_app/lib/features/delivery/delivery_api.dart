@@ -26,6 +26,11 @@ class DeliveryApi {
         .toList();
   }
 
+  Future<DriverEarnings> earnings() async {
+    final res = await _dio.get('/courier/earnings');
+    return DriverEarnings.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
   Future<void> accept(String orderId) => _action(orderId, 'accept');
   Future<void> pickup(String orderId) => _action(orderId, 'pickup');
   Future<void> delivered(String orderId) => _action(orderId, 'delivered');
@@ -49,4 +54,9 @@ final availableOrdersProvider = FutureProvider<List<DeliveryOrder>>((ref) {
 final myDeliveriesProvider = FutureProvider<List<DeliveryOrder>>((ref) {
   ref.watch(localeProvider);
   return ref.read(deliveryApiProvider).myOrders();
+});
+
+final earningsProvider = FutureProvider<DriverEarnings>((ref) {
+  ref.watch(localeProvider);
+  return ref.read(deliveryApiProvider).earnings();
 });

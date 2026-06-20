@@ -43,6 +43,15 @@
   "statusAssigned": "Sizga biriktirildi",
   "statusPickedUp": "Yo'lda",
 
+  "earningsTitle": "Daromadim",
+  "earningsToday": "Bugun",
+  "earningsTotal": "Jami",
+  "deliveriesCount": "{count} ta yetkazish",
+  "@deliveriesCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "yourEarning": "Daromad",
+
   "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
   "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
   "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",

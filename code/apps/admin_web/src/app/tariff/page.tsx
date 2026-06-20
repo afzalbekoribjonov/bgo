@@ -8,6 +8,7 @@ export default function TariffPage() {
   const [tariff, setTariff] = useState<Tariff | null>(null);
   const [fee, setFee] = useState('');
   const [pct, setPct] = useState('');
+  const [courierPct, setCourierPct] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,7 @@ export default function TariffPage() {
         setTariff(t);
         setFee(String(t.deliveryFee));
         setPct(String(t.foodCommissionPercent));
+        setCourierPct(String(t.courierSharePercent));
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -30,6 +32,7 @@ export default function TariffPage() {
       const t = await updateTariff({
         deliveryFee: parseInt(fee, 10) || 0,
         foodCommissionPercent: parseInt(pct, 10) || 0,
+        courierSharePercent: parseInt(courierPct, 10) || 0,
       });
       setTariff(t);
       setSaved(true);
@@ -39,6 +42,12 @@ export default function TariffPage() {
       setLoading(false);
     }
   }
+
+  // Tarif tushuntirishi (jonli hisob)
+  const feeNum = parseInt(fee, 10) || 0;
+  const courierPctNum = parseInt(courierPct, 10) || 0;
+  const courierEarn = Math.round((feeNum * courierPctNum) / 100);
+  const deliveryProfit = feeNum - courierEarn;
 
   return (
     <div className="container">
@@ -62,6 +71,32 @@ export default function TariffPage() {
           <p className="muted" style={{ marginTop: 8 }}>
             Komissiya — har ovqat buyurtmasidan bizning ulush (foyda).
           </p>
+          <label style={{ marginTop: 12 }}>Kuryer ulushi (%)</label>
+          <input
+            value={courierPct}
+            inputMode="numeric"
+            onChange={(e) =>
+              setCourierPct(e.target.value.replace(/[^0-9]/g, ''))
+            }
+          />
+          <p className="muted" style={{ marginTop: 8 }}>
+            Yetkazib berish narxidan haydovchiga to&apos;lanadigan ulush. Qolgani —
+            bizning yetkazish foydamiz.
+          </p>
+          <div
+            className="muted"
+            style={{
+              marginTop: 12,
+              padding: 10,
+              borderRadius: 8,
+              background: 'var(--surface-2, #f4f4f5)',
+              fontSize: 13,
+            }}
+          >
+            Har yetkazishda: haydovchi <b>{courierEarn.toLocaleString('ru-RU')}</b>{' '}
+            so&apos;m, bizning yetkazish foydasi{' '}
+            <b>{deliveryProfit.toLocaleString('ru-RU')}</b> so&apos;m.
+          </div>
           {saved && <p style={{ color: 'var(--green, green)' }}>Saqlandi ✓</p>}
           <button
             className="btn"

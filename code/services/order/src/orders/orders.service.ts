@@ -50,6 +50,10 @@ export class OrdersService {
     const commission = Math.round(
       (itemsTotal * tariff.foodCommissionPercent) / 100,
     );
+    // Haydovchi ulushi — yetkazish narxidan
+    const courierEarning = Math.round(
+      (deliveryFee * tariff.courierSharePercent) / 100,
+    );
 
     // Promokod (ixtiyoriy) — chegirma taomlar summasidan
     let discount = 0;
@@ -70,6 +74,7 @@ export class OrdersService {
       itemsTotal,
       deliveryFee,
       commission,
+      courierEarning,
       promoCode,
       discount,
       total,
@@ -146,7 +151,8 @@ export class OrdersService {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
       if (terminal.includes(o.status)) {
         revenue += o.total;
-        profit += o.commission - o.discount; // bizning ulush minus chegirma
+        // bizning foyda = komissiya + (yetkazish - kuryer ulushi) - chegirma
+        profit += o.commission + (o.deliveryFee - o.courierEarning) - o.discount;
       }
       if (new Date(o.createdAt) >= startOfDay) today += 1;
     }
@@ -179,6 +185,31 @@ export class OrdersService {
 
   listDriverOrders(driverId: string) {
     return this.repo.findByDriver(driverId);
+  }
+
+  /** Haydovchi daromadi — yetkazilgan buyurtmalar bo'yicha. */
+  async driverEarnings(driverId: string) {
+    const orders = await this.repo.findByDriver(driverId);
+    const delivered = orders.filter((o) => o.status === 'DELIVERED');
+    const totalEarning = delivered.reduce((sum, o) => sum + o.courierEarning, 0);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayDelivered = delivered.filter(
+      (o) => new Date(o.createdAt) >= todayStart,
+    );
+    const todayEarning = todayDelivered.reduce(
+      (sum, o) => sum + o.courierEarning,
+      0,
+    );
+    return {
+      deliveredCount: delivered.length,
+      totalEarning,
+      todayDeliveredCount: todayDelivered.length,
+      todayEarning,
+      activeCount: orders.filter((o) =>
+        ['ASSIGNED', 'PICKED_UP'].includes(o.status),
+      ).length,
+    };
   }
 
   /** Haydovchi yetkazishni qabul qiladi (READY -> ASSIGNED). */

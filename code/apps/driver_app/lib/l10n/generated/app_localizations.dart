@@ -264,6 +264,36 @@ abstract class AppLocalizations {
   /// **'Yo\'lda'**
   String get statusPickedUp;
 
+  /// No description provided for @earningsTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Daromadim'**
+  String get earningsTitle;
+
+  /// No description provided for @earningsToday.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bugun'**
+  String get earningsToday;
+
+  /// No description provided for @earningsTotal.
+  ///
+  /// In uz, this message translates to:
+  /// **'Jami'**
+  String get earningsTotal;
+
+  /// No description provided for @deliveriesCount.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} ta yetkazish'**
+  String deliveriesCount(int count);
+
+  /// No description provided for @yourEarning.
+  ///
+  /// In uz, this message translates to:
+  /// **'Daromad'**
+  String get yourEarning;
+
   /// No description provided for @errorInvalidPhone.
   ///
   /// In uz, this message translates to:

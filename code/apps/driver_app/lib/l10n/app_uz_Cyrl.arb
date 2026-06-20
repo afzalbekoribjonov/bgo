@@ -31,6 +31,12 @@
   "statusAssigned": "Сизга бириктирилди",
   "statusPickedUp": "Йўлда",
 
+  "earningsTitle": "Даромадим",
+  "earningsToday": "Бугун",
+  "earningsTotal": "Жами",
+  "deliveriesCount": "{count} та етказиш",
+  "yourEarning": "Даромад",
+
   "errorInvalidPhone": "Телефон рақами нотўғри (+998XXXXXXXXX)",
   "errorInvalidCode": "Код нотўғри ёки муддати тугаган",
   "errorGeneric": "Хатолик юз берди. Қайта уриниб кўринг.",

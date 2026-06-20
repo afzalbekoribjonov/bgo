@@ -56,6 +56,7 @@ export const getTariff = () => api<Tariff>('/admin/tariff');
 export const updateTariff = (body: {
   deliveryFee: number;
   foodCommissionPercent: number;
+  courierSharePercent: number;
 }) =>
   api<Tariff>('/admin/tariff', {
     method: 'PUT',

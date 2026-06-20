@@ -99,6 +99,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statusPickedUp => 'В пути';
 
   @override
+  String get earningsTitle => 'Мой доход';
+
+  @override
+  String get earningsToday => 'Сегодня';
+
+  @override
+  String get earningsTotal => 'Всего';
+
+  @override
+  String deliveriesCount(int count) {
+    return '$count доставок';
+  }
+
+  @override
+  String get yourEarning => 'Доход';
+
+  @override
   String get errorInvalidPhone => 'Неверный номер телефона (+998XXXXXXXXX)';
 
   @override

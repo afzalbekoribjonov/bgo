@@ -5,6 +5,7 @@ export interface Tariff {
   id: string;
   deliveryFee: number;
   foodCommissionPercent: number;
+  courierSharePercent: number;
 }
 
 /**
@@ -26,12 +27,14 @@ export class TariffService {
       id: t.id,
       deliveryFee: t.deliveryFee,
       foodCommissionPercent: t.foodCommissionPercent,
+      courierSharePercent: t.courierSharePercent,
     };
   }
 
   async updateTariff(patch: {
     deliveryFee?: number;
     foodCommissionPercent?: number;
+    courierSharePercent?: number;
   }): Promise<Tariff> {
     const t = await this.prisma.tariff.upsert({
       where: { id: 'default' },
@@ -42,6 +45,7 @@ export class TariffService {
       id: t.id,
       deliveryFee: t.deliveryFee,
       foodCommissionPercent: t.foodCommissionPercent,
+      courierSharePercent: t.courierSharePercent,
     };
   }
 }

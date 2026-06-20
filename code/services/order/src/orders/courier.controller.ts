@@ -28,6 +28,12 @@ export class CourierController {
     return { success: true, data: await this.orders.listDriverOrders(user.sub) };
   }
 
+  /** Haydovchi daromadi (yetkazilgan buyurtmalar bo'yicha). */
+  @Get('earnings')
+  async earnings(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.orders.driverEarnings(user.sub) };
+  }
+
   @Post('orders/:id/accept')
   @HttpCode(200)
   async accept(
