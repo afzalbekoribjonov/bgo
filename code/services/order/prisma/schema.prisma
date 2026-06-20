@@ -15,6 +15,26 @@ enum OrderType {
   DELIVERY
 }
 
+enum PromoType {
+  PERCENT
+  FIXED
+}
+
+/** Promokod / aksiya. plan/11-pricing-promo.md */
+model PromoCode {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  type        PromoType @default(PERCENT)
+  value       Int // PERCENT: 0-100; FIXED: so'm
+  minOrder    Int       @default(0) // minimal itemsTotal
+  maxDiscount Int? // PERCENT uchun maksimal chegirma (so'm)
+  active      Boolean   @default(true)
+  usedCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@map("promo_codes")
+}
+
 /** Narx/tarif sozlamasi (MVP: yagona global qator). plan/11-pricing-promo.md */
 model Tariff {
   id                    String   @id @default("default")
@@ -57,6 +77,8 @@ model Order {
   itemsTotal    Int
   deliveryFee   Int
   commission    Int         @default(0) // bizning ulush (oshxona komissiyasi), so'm
+  promoCode     String? // qo'llanilgan promokod
+  discount      Int         @default(0) // chegirma, so'm
   total         Int
   paymentType   PaymentType
   address       Json // { text, lat?, lng? }

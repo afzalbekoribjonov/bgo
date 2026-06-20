@@ -78,5 +78,9 @@
   "statusOnTheWay": "Yo'lda",
   "statusDelivered": "Yetkazildi",
   "statusCancelled": "Bekor qilindi",
-  "statusFailed": "Bajarilmadi"
+  "statusFailed": "Bajarilmadi",
+  "promoLabel": "Promokod",
+  "promoHint": "Bor bo'lsa kiriting",
+  "discountLabel": "Chegirma",
+  "promoInvalid": "Promokod yaroqsiz"
 }

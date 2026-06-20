@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PromoService } from '../promo/promo.service';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TariffService } from '../tariff/tariff.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -16,6 +17,7 @@ export class OrdersService {
     private readonly repo: OrderRepository,
     private readonly restaurant: RestaurantClient,
     private readonly tariff: TariffService,
+    private readonly promo: PromoService,
   ) {}
 
   /** Buyurtma yaratish — narx/komissiya SERVER tomonda (katalog + tarif). */
@@ -48,9 +50,19 @@ export class OrdersService {
     const commission = Math.round(
       (itemsTotal * tariff.foodCommissionPercent) / 100,
     );
-    const total = itemsTotal + deliveryFee;
 
-    return this.repo.create({
+    // Promokod (ixtiyoriy) — chegirma taomlar summasidan
+    let discount = 0;
+    let promoCode: string | undefined;
+    if (dto.promoCode) {
+      const applied = await this.promo.apply(dto.promoCode, itemsTotal);
+      discount = applied.discount;
+      promoCode = applied.code;
+    }
+
+    const total = itemsTotal + deliveryFee - discount;
+
+    const order = await this.repo.create({
       customerId,
       type: dto.type,
       restaurantId: dto.restaurantId,
@@ -58,10 +70,14 @@ export class OrdersService {
       itemsTotal,
       deliveryFee,
       commission,
+      promoCode,
+      discount,
       total,
       paymentType: dto.paymentType,
       address: dto.address,
     });
+    if (promoCode) await this.promo.incrementUsage(promoCode);
+    return order;
   }
 
   async getOwned(customerId: string, id: string): Promise<Order> {
@@ -130,7 +146,7 @@ export class OrdersService {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
       if (terminal.includes(o.status)) {
         revenue += o.total;
-        profit += o.commission; // bizning ulush
+        profit += o.commission - o.discount; // bizning ulush minus chegirma
       }
       if (new Date(o.createdAt) >= startOfDay) today += 1;
     }

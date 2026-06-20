@@ -14,6 +14,7 @@ class OrderApi {
     required String restaurantId,
     required List<CartLine> lines,
     required String addressText,
+    String? promoCode,
   }) async {
     final res = await _dio.post('/orders', data: {
       'type': 'FOOD',
@@ -23,6 +24,7 @@ class OrderApi {
       'items': [
         for (final l in lines) {'menuItemId': l.menuItemId, 'qty': l.qty},
       ],
+      if (promoCode != null && promoCode.isNotEmpty) 'promoCode': promoCode,
     });
     return OrderView.fromJson(res.data['data'] as Map<String, dynamic>);
   }

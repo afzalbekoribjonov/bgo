@@ -461,6 +461,30 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Bajarilmadi'**
   String get statusFailed;
+
+  /// No description provided for @promoLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Promokod'**
+  String get promoLabel;
+
+  /// No description provided for @promoHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bor bo\'lsa kiriting'**
+  String get promoHint;
+
+  /// No description provided for @discountLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Chegirma'**
+  String get discountLabel;
+
+  /// No description provided for @promoInvalid.
+  ///
+  /// In uz, this message translates to:
+  /// **'Promokod yaroqsiz'**
+  String get promoInvalid;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

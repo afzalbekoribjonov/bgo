@@ -1,4 +1,4 @@
-import type { AdminOrder, Restaurant, Stats, Tariff } from './types';
+import type { AdminOrder, PromoCode, Restaurant, Stats, Tariff } from './types';
 import { clearToken, getToken } from './auth';
 
 const BASE =
@@ -31,6 +31,27 @@ export const getStats = () => api<Stats>('/admin/stats');
 export const getOrders = (status?: string) =>
   api<AdminOrder[]>(`/admin/orders${status ? `?status=${status}` : ''}`);
 export const getRestaurants = () => api<Restaurant[]>('/restaurants');
+export const getPromos = () => api<PromoCode[]>('/admin/promos');
+export const createPromo = (body: {
+  code: string;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  minOrder: number;
+}) =>
+  api<PromoCode>('/admin/promos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const togglePromo = (id: string, active: boolean) =>
+  api<PromoCode>(`/admin/promos/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  });
+export const deletePromo = (id: string) =>
+  api<unknown>(`/admin/promos/${id}`, { method: 'DELETE' });
+
 export const getTariff = () => api<Tariff>('/admin/tariff');
 export const updateTariff = (body: {
   deliveryFee: number;

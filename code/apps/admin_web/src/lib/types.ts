@@ -13,6 +13,17 @@ export interface Tariff {
   foodCommissionPercent: number;
 }
 
+export interface PromoCode {
+  id: string;
+  code: string;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  minOrder: number;
+  maxDiscount: number | null;
+  active: boolean;
+  usedCount: number;
+}
+
 export interface AdminOrder {
   id: string;
   publicNo: number;

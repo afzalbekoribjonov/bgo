@@ -8,6 +8,7 @@ const LINKS = [
   { href: '/orders', label: 'Buyurtmalar' },
   { href: '/restaurants', label: 'Oshxonalar' },
   { href: '/tariff', label: 'Tariflar' },
+  { href: '/promos', label: 'Promokodlar' },
 ];
 
 export default function Nav() {

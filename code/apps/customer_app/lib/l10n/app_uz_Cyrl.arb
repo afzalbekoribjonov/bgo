@@ -66,5 +66,9 @@
   "statusOnTheWay": "Йўлда",
   "statusDelivered": "Етказилди",
   "statusCancelled": "Бекор қилинди",
-  "statusFailed": "Бажарилмади"
+  "statusFailed": "Бажарилмади",
+  "promoLabel": "Промокод",
+  "promoHint": "Бор бўлса киритинг",
+  "discountLabel": "Чегирма",
+  "promoInvalid": "Промокод яроқсиз"
 }

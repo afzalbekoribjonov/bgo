@@ -26,6 +26,7 @@ class OrderView {
   final List<OrderItemView> items;
   final int itemsTotal;
   final int deliveryFee;
+  final int discount;
   final int total;
   final String status;
   final String addressText;
@@ -37,6 +38,7 @@ class OrderView {
     required this.items,
     required this.itemsTotal,
     required this.deliveryFee,
+    required this.discount,
     required this.total,
     required this.status,
     required this.addressText,
@@ -52,6 +54,7 @@ class OrderView {
           .toList(),
       itemsTotal: (json['itemsTotal'] as num?)?.toInt() ?? 0,
       deliveryFee: (json['deliveryFee'] as num?)?.toInt() ?? 0,
+      discount: (json['discount'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
       status: (json['status'] as String?) ?? 'PENDING',
       addressText: (json['address']?['text'] as String?) ?? '',

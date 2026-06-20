@@ -66,5 +66,9 @@
   "statusOnTheWay": "В пути",
   "statusDelivered": "Доставлен",
   "statusCancelled": "Отменён",
-  "statusFailed": "Не выполнен"
+  "statusFailed": "Не выполнен",
+  "promoLabel": "Промокод",
+  "promoHint": "Если есть",
+  "discountLabel": "Скидка",
+  "promoInvalid": "Промокод недействителен"
 }

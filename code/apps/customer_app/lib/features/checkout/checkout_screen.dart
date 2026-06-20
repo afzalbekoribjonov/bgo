@@ -18,12 +18,14 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _addressCtrl = TextEditingController();
+  final _promoCtrl = TextEditingController();
   bool _loading = false;
   String? _error;
 
   @override
   void dispose() {
     _addressCtrl.dispose();
+    _promoCtrl.dispose();
     super.dispose();
   }
 
@@ -44,6 +46,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             restaurantId: cart.restaurantId!,
             lines: cart.lines,
             addressText: address,
+            promoCode: _promoCtrl.text.trim(),
           );
       ref.read(cartProvider.notifier).clear();
       ref.invalidate(myOrdersProvider);
@@ -55,7 +58,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = isNetworkError(e) ? t.errorNetwork : t.errorGeneric;
+        // 400 — promokod yoki boshqa validatsiya: backend xabarini ko'rsatamiz
+        _error = isNetworkError(e)
+            ? t.errorNetwork
+            : (httpStatus(e) == 400 ? t.promoInvalid : t.errorGeneric);
       });
     }
   }
@@ -90,6 +96,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 leading: const Icon(Icons.payments_outlined),
                 title: Text(t.paymentCash),
                 trailing: const Icon(Icons.check_circle, color: Colors.green),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _promoCtrl,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                labelText: t.promoLabel,
+                hintText: t.promoHint,
+                prefixIcon: const Icon(Icons.local_offer_outlined),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),

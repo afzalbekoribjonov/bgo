@@ -46,6 +46,8 @@ export interface Order {
   itemsTotal: number;
   deliveryFee: number;
   commission: number;
+  promoCode?: string;
+  discount: number;
   total: number;
   paymentType: PaymentType;
   address: OrderAddress;

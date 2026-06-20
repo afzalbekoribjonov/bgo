@@ -196,6 +196,18 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get statusFailed => 'Bajarilmadi';
+
+  @override
+  String get promoLabel => 'Promokod';
+
+  @override
+  String get promoHint => 'Bor bo\'lsa kiriting';
+
+  @override
+  String get discountLabel => 'Chegirma';
+
+  @override
+  String get promoInvalid => 'Promokod yaroqsiz';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -392,4 +404,16 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get statusFailed => 'Бажарилмади';
+
+  @override
+  String get promoLabel => 'Промокод';
+
+  @override
+  String get promoHint => 'Бор бўлса киритинг';
+
+  @override
+  String get discountLabel => 'Чегирма';
+
+  @override
+  String get promoInvalid => 'Промокод яроқсиз';
 }

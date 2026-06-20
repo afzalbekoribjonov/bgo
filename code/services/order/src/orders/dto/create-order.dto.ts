@@ -60,4 +60,8 @@ export class CreateOrderDto {
   // MVP: faqat naqd
   @IsIn(['CASH'])
   paymentType!: 'CASH';
+
+  @IsOptional()
+  @IsString()
+  promoCode?: string;
 }

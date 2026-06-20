@@ -196,4 +196,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get statusFailed => 'Не выполнен';
+
+  @override
+  String get promoLabel => 'Промокод';
+
+  @override
+  String get promoHint => 'Если есть';
+
+  @override
+  String get discountLabel => 'Скидка';
+
+  @override
+  String get promoInvalid => 'Промокод недействителен';
 }

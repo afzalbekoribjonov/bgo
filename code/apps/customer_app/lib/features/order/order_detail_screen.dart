@@ -86,6 +86,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             const Divider(height: 24),
             _row(context, t.subtotalLabel, order.itemsTotal),
             _row(context, t.deliveryFeeLabel, order.deliveryFee),
+            if (order.discount > 0)
+              _row(context, t.discountLabel, -order.discount),
             const SizedBox(height: 4),
             _row(context, t.totalLabel, order.total, bold: true),
             const SizedBox(height: 16),
