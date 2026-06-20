@@ -1,13 +1,24 @@
-import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { OrdersService } from './orders.service';
 
 /**
  * Oshxona paneli uchun buyurtma boshqaruvi (status oqimi).
  * plan/07-restaurant-app.md
- * TODO(restaurant auth): hozir ochiq (dev). Restaurant roli JWT + egalik
- * tekshiruvi restaurant_web auth ulanganda qo'shiladi.
+ * Faqat 'restaurant' roli. TODO: oshxona egalik tekshiruvi.
  */
 @Controller('kitchen')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('restaurant')
 export class KitchenController {
   constructor(private readonly orders: OrdersService) {}
 

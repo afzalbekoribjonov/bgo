@@ -1,18 +1,26 @@
 import type { Category, MenuItem, Order, Restaurant } from './types';
+import { clearToken, getToken } from './auth';
 
 const BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 
 async function api<T>(path: string, opts?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       'Accept-Language': 'uz',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(opts?.headers ?? {}),
     },
     cache: 'no-store',
     ...opts,
   });
+  if (res.status === 401 || res.status === 403) {
+    clearToken();
+    if (typeof window !== 'undefined') window.location.reload();
+    throw new Error('Avtorizatsiya talab qilinadi');
+  }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const message =

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import AuthGate from '@/components/auth-gate';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default function RootLayout({
     <html lang="uz">
       <body>
         <div className="appbar">🍽 Beshariq — Oshxona paneli</div>
-        {children}
+        <AuthGate>{children}</AuthGate>
       </body>
     </html>
   );

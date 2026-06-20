@@ -1,5 +1,8 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 import { CatalogController } from './catalog.controller';
 import { ManagementController } from './management.controller';
 import { PrismaRestaurantRepository } from './prisma-restaurant.repository';
@@ -7,9 +10,12 @@ import { RestaurantRepository } from './restaurant.repository';
 import { RestaurantsService } from './restaurants.service';
 
 @Module({
+  imports: [JwtModule.register({})],
   controllers: [CatalogController, ManagementController],
   providers: [
     RestaurantsService,
+    JwtAuthGuard,
+    RolesGuard,
     { provide: RestaurantRepository, useClass: PrismaRestaurantRepository },
   ],
   exports: [RestaurantsService],

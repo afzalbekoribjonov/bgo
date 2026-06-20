@@ -7,7 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import {
   AvailabilityDto,
@@ -18,10 +22,11 @@ import { RestaurantsService } from './restaurants.service';
 
 /**
  * Oshxona boshqaruvi (menyu, kategoriya, narx). plan/07-restaurant-app.md
- * TODO(restaurant_web auth): restaurantId egalik tekshiruvi JWT orqali —
- * hozir ochiq (dev). Restaurant paneli auth ulanganda qo'shiladi.
+ * Faqat 'restaurant' roli. TODO: restaurantId egalik tekshiruvi (ownerUserId↔restaurant).
  */
 @Controller('restaurants/:restaurantId')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('restaurant')
 export class ManagementController {
   constructor(private readonly service: RestaurantsService) {}
 
