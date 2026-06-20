@@ -99,6 +99,23 @@ class AppLocalizationsUz extends AppLocalizations {
   String get statusPickedUp => 'Yo\'lda';
 
   @override
+  String get earningsTitle => 'Daromadim';
+
+  @override
+  String get earningsToday => 'Bugun';
+
+  @override
+  String get earningsTotal => 'Jami';
+
+  @override
+  String deliveriesCount(int count) {
+    return '$count ta yetkazish';
+  }
+
+  @override
+  String get yourEarning => 'Daromad';
+
+  @override
   String get errorInvalidPhone => 'Telefon raqami noto\'g\'ri (+998XXXXXXXXX)';
 
   @override
@@ -209,6 +226,23 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get statusPickedUp => 'Йўлда';
+
+  @override
+  String get earningsTitle => 'Даромадим';
+
+  @override
+  String get earningsToday => 'Бугун';
+
+  @override
+  String get earningsTotal => 'Жами';
+
+  @override
+  String deliveriesCount(int count) {
+    return '$count та етказиш';
+  }
+
+  @override
+  String get yourEarning => 'Даромад';
 
   @override
   String get errorInvalidPhone => 'Телефон рақами нотўғри (+998XXXXXXXXX)';

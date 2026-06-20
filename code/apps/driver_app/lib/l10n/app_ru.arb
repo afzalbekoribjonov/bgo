@@ -31,6 +31,12 @@
   "statusAssigned": "Назначен вам",
   "statusPickedUp": "В пути",
 
+  "earningsTitle": "Мой доход",
+  "earningsToday": "Сегодня",
+  "earningsTotal": "Всего",
+  "deliveriesCount": "{count} доставок",
+  "yourEarning": "Доход",
+
   "errorInvalidPhone": "Неверный номер телефона (+998XXXXXXXXX)",
   "errorInvalidCode": "Неверный код или истёк срок действия",
   "errorGeneric": "Произошла ошибка. Попробуйте снова.",

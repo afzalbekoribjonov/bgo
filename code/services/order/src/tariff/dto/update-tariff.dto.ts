@@ -11,4 +11,10 @@ export class UpdateTariffDto {
   @Min(0)
   @Max(100)
   foodCommissionPercent?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  courierSharePercent?: number;
 }

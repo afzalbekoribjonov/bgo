@@ -11,6 +11,7 @@ export interface Tariff {
   id: string;
   deliveryFee: number;
   foodCommissionPercent: number;
+  courierSharePercent: number;
 }
 
 export interface PromoCode {

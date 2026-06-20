@@ -46,6 +46,7 @@ export interface Order {
   itemsTotal: number;
   deliveryFee: number;
   commission: number;
+  courierEarning: number;
   promoCode?: string;
   discount: number;
   total: number;

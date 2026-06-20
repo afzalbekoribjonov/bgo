@@ -27,6 +27,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
       await action();
       ref.invalidate(availableOrdersProvider);
       ref.invalidate(myDeliveriesProvider);
+      ref.invalidate(earningsProvider);
     } catch (e) {
       if (mounted) {
         final t = AppLocalizations.of(context)!;
@@ -67,10 +68,13 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
         onRefresh: () async {
           ref.invalidate(availableOrdersProvider);
           ref.invalidate(myDeliveriesProvider);
+          ref.invalidate(earningsProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(12),
           children: [
+            _buildEarnings(t),
+            const SizedBox(height: 16),
             _SectionTitle(t.myDeliveriesTitle),
             _buildMyDeliveries(t),
             const SizedBox(height: 16),
@@ -86,6 +90,92 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEarnings(AppLocalizations t) {
+    final async = ref.watch(earningsProvider);
+    return async.when(
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (e, _) => AsyncErrorRetry(
+        error: e,
+        onRetry: () => ref.invalidate(earningsProvider),
+      ),
+      data: (e) {
+        final scheme = Theme.of(context).colorScheme;
+        return Card(
+          color: scheme.primaryContainer,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.account_balance_wallet,
+                        color: scheme.onPrimaryContainer),
+                    const SizedBox(width: 8),
+                    Text(
+                      t.earningsTitle,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: scheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _earnStat(
+                        t.earningsToday,
+                        t.priceSom(groupThousands(e.todayEarning)),
+                        t.deliveriesCount(e.todayDeliveredCount),
+                      ),
+                    ),
+                    Expanded(
+                      child: _earnStat(
+                        t.earningsTotal,
+                        t.priceSom(groupThousands(e.totalEarning)),
+                        t.deliveriesCount(e.deliveredCount),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _earnStat(String label, String value, String sub) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: scheme.onPrimaryContainer)),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            color: scheme.onPrimaryContainer,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(sub,
+            style: TextStyle(
+                color: scheme.onPrimaryContainer.withValues(alpha: 0.7),
+                fontSize: 12)),
+      ],
     );
   }
 
@@ -179,6 +269,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             const SizedBox(height: 4),
             Text('${t.deliverTo}: ${o.addressText}'),
             Text(t.priceSom(groupThousands(o.total))),
+            _earningChip(t, o),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: busy
@@ -212,7 +303,21 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
         const SizedBox(height: 4),
         Text('${t.deliverTo}: ${o.addressText}'),
         Text(t.priceSom(groupThousands(o.total))),
+        _earningChip(t, o),
       ],
+    );
+  }
+
+  Widget _earningChip(AppLocalizations t, DeliveryOrder o) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        '${t.yourEarning}: ${t.priceSom(groupThousands(o.courierEarning))}',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
