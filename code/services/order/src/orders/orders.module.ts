@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { AdminController } from './admin.controller';
 import { CourierController } from './courier.controller';
@@ -22,6 +23,7 @@ import { PrismaOrderRepository } from './prisma-order.repository';
     OrdersService,
     RestaurantClient,
     JwtAuthGuard,
+    RolesGuard,
     { provide: OrderRepository, useClass: PrismaOrderRepository },
   ],
 })

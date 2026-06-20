@@ -21,14 +21,12 @@ class DeliveryBoardScreen extends ConsumerStatefulWidget {
 class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
   String? _busy;
 
-  String get _driverId => ref.read(authControllerProvider).user!.id;
-
   Future<void> _run(String orderId, Future<void> Function() action) async {
     setState(() => _busy = orderId);
     try {
       await action();
       ref.invalidate(availableOrdersProvider);
-      ref.invalidate(myDeliveriesProvider(_driverId));
+      ref.invalidate(myDeliveriesProvider);
     } catch (e) {
       if (mounted) {
         final t = AppLocalizations.of(context)!;
@@ -47,7 +45,6 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final online = ref.watch(onlineProvider);
-    final driverId = _driverId;
 
     return Scaffold(
       appBar: AppBar(
@@ -69,13 +66,13 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(availableOrdersProvider);
-          ref.invalidate(myDeliveriesProvider(driverId));
+          ref.invalidate(myDeliveriesProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(12),
           children: [
             _SectionTitle(t.myDeliveriesTitle),
-            _buildMyDeliveries(t, driverId),
+            _buildMyDeliveries(t),
             const SizedBox(height: 16),
             _SectionTitle(t.availableTitle),
             if (online)
@@ -92,8 +89,8 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
     );
   }
 
-  Widget _buildMyDeliveries(AppLocalizations t, String driverId) {
-    final async = ref.watch(myDeliveriesProvider(driverId));
+  Widget _buildMyDeliveries(AppLocalizations t) {
+    final async = ref.watch(myDeliveriesProvider);
     return async.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(24),
@@ -101,7 +98,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
       ),
       error: (e, _) => AsyncErrorRetry(
         error: e,
-        onRetry: () => ref.invalidate(myDeliveriesProvider(driverId)),
+        onRetry: () => ref.invalidate(myDeliveriesProvider),
       ),
       data: (orders) {
         final active = orders
@@ -146,7 +143,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             FilledButton(
               onPressed: busy
                   ? null
-                  : () => _run(o.id, () => ref.read(deliveryApiProvider).accept(o.id, _driverId)),
+                  : () => _run(o.id, () => ref.read(deliveryApiProvider).accept(o.id)),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
               child: busy ? const _Spinner() : Text(t.accept),
             ),
@@ -189,8 +186,8 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
                   : () => _run(
                         o.id,
                         () => isAssigned
-                            ? ref.read(deliveryApiProvider).pickup(o.id, _driverId)
-                            : ref.read(deliveryApiProvider).delivered(o.id, _driverId),
+                            ? ref.read(deliveryApiProvider).pickup(o.id)
+                            : ref.read(deliveryApiProvider).delivered(o.id),
                       ),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(44),
