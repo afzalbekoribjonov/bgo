@@ -15,6 +15,16 @@ enum OrderType {
   DELIVERY
 }
 
+/** Narx/tarif sozlamasi (MVP: yagona global qator). plan/11-pricing-promo.md */
+model Tariff {
+  id                    String   @id @default("default")
+  deliveryFee           Int      @default(5000) // mijozdan, so'm
+  foodCommissionPercent Int      @default(12) // oshxona ulushi, %
+  updatedAt             DateTime @updatedAt
+
+  @@map("tariffs")
+}
+
 enum OrderStatus {
   PENDING
   ACCEPTED
@@ -46,6 +56,7 @@ model Order {
   items         Json // OrderItem[] snapshot
   itemsTotal    Int
   deliveryFee   Int
+  commission    Int         @default(0) // bizning ulush (oshxona komissiyasi), so'm
   total         Int
   paymentType   PaymentType
   address       Json // { text, lat?, lng? }

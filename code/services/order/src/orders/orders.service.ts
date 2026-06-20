@@ -4,25 +4,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
+import { TariffService } from '../tariff/tariff.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order, OrderItem } from './entities';
 import { OrderRepository } from './order.repository';
 
 @Injectable()
 export class OrdersService {
-  private readonly deliveryFee: number;
-
   constructor(
     private readonly repo: OrderRepository,
     private readonly restaurant: RestaurantClient,
-    config: ConfigService,
-  ) {
-    this.deliveryFee = Number(config.get('DELIVERY_FEE') ?? 5000);
-  }
+    private readonly tariff: TariffService,
+  ) {}
 
-  /** Buyurtma yaratish — narx SERVER tomonda katalogdan hisoblanadi. */
+  /** Buyurtma yaratish — narx/komissiya SERVER tomonda (katalog + tarif). */
   async create(customerId: string, dto: CreateOrderDto, locale: string) {
     const menu = await this.restaurant.getMenuItems(dto.restaurantId, locale);
 
@@ -46,7 +42,13 @@ export class OrdersService {
     });
 
     const itemsTotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
-    const total = itemsTotal + this.deliveryFee;
+    const tariff = await this.tariff.getTariff();
+    const deliveryFee = tariff.deliveryFee;
+    // Komissiya = bizning ulush (oshxona taomlar summasidan)
+    const commission = Math.round(
+      (itemsTotal * tariff.foodCommissionPercent) / 100,
+    );
+    const total = itemsTotal + deliveryFee;
 
     return this.repo.create({
       customerId,
@@ -54,7 +56,8 @@ export class OrdersService {
       restaurantId: dto.restaurantId,
       items,
       itemsTotal,
-      deliveryFee: this.deliveryFee,
+      deliveryFee,
+      commission,
       total,
       paymentType: dto.paymentType,
       address: dto.address,
@@ -118,13 +121,17 @@ export class OrdersService {
 
     const byStatus: Record<string, number> = {};
     let revenue = 0;
+    let profit = 0;
     let today = 0;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
     for (const o of orders) {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
-      if (terminal.includes(o.status)) revenue += o.total;
+      if (terminal.includes(o.status)) {
+        revenue += o.total;
+        profit += o.commission; // bizning ulush
+      }
       if (new Date(o.createdAt) >= startOfDay) today += 1;
     }
 
@@ -133,6 +140,7 @@ export class OrdersService {
       activeOrders: orders.filter((o) => !closed.includes(o.status)).length,
       todayOrders: today,
       revenue, // yetkazilgan buyurtmalar aylanmasi (so'm)
+      profit, // bizning foyda (komissiya), so'm
       byStatus,
     };
   }

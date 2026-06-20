@@ -27,6 +27,7 @@ export default function DashboardPage() {
             <Stat label="Faol buyurtma" value={String(stats.activeOrders)} />
             <Stat label="Bugungi buyurtma" value={String(stats.todayOrders)} />
             <Stat label="Aylanma (yetkazilgan)" value={formatSom(stats.revenue)} />
+            <Stat label="Foyda (komissiya)" value={formatSom(stats.profit)} />
           </div>
 
           <div className="card">

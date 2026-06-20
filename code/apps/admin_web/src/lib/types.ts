@@ -3,7 +3,14 @@ export interface Stats {
   activeOrders: number;
   todayOrders: number;
   revenue: number;
+  profit: number;
   byStatus: Record<string, number>;
+}
+
+export interface Tariff {
+  id: string;
+  deliveryFee: number;
+  foodCommissionPercent: number;
 }
 
 export interface AdminOrder {

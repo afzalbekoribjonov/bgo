@@ -45,6 +45,7 @@ export interface Order {
   items: OrderItem[];
   itemsTotal: number;
   deliveryFee: number;
+  commission: number;
   total: number;
   paymentType: PaymentType;
   address: OrderAddress;

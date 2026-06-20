@@ -10,6 +10,7 @@ import { OrderRepository } from './order.repository';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { PrismaOrderRepository } from './prisma-order.repository';
+import { TariffService } from '../tariff/tariff.service';
 
 @Module({
   imports: [JwtModule.register({})],
@@ -22,6 +23,7 @@ import { PrismaOrderRepository } from './prisma-order.repository';
   providers: [
     OrdersService,
     RestaurantClient,
+    TariffService,
     JwtAuthGuard,
     RolesGuard,
     { provide: OrderRepository, useClass: PrismaOrderRepository },

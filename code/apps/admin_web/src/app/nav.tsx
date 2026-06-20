@@ -7,6 +7,7 @@ const LINKS = [
   { href: '/', label: 'Dashboard' },
   { href: '/orders', label: 'Buyurtmalar' },
   { href: '/restaurants', label: 'Oshxonalar' },
+  { href: '/tariff', label: 'Tariflar' },
 ];
 
 export default function Nav() {
