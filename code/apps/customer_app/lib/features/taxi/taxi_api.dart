@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/places.dart';
 import 'taxi_models.dart';
 
 /// Taksi API'si (gateway orqali, Bearer token). plan/05-customer-app.md
@@ -9,13 +10,13 @@ class TaxiApi {
   final Dio _dio;
   TaxiApi(this._dio);
 
-  Map<String, dynamic> _point(TaxiPlace p) => {
+  Map<String, dynamic> _point(GeoPlace p) => {
         'text': p.label,
         'lat': p.lat,
         'lng': p.lng,
       };
 
-  Future<TaxiEstimate> estimate(TaxiPlace pickup, TaxiPlace destination) async {
+  Future<TaxiEstimate> estimate(GeoPlace pickup, GeoPlace destination) async {
     final res = await _dio.post('/taxi/estimate', data: {
       'pickup': _point(pickup),
       'destination': _point(destination),
@@ -23,7 +24,7 @@ class TaxiApi {
     return TaxiEstimate.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
-  Future<TaxiTrip> request(TaxiPlace pickup, TaxiPlace destination) async {
+  Future<TaxiTrip> request(GeoPlace pickup, GeoPlace destination) async {
     final res = await _dio.post('/taxi/request', data: {
       'pickup': _point(pickup),
       'destination': _point(destination),

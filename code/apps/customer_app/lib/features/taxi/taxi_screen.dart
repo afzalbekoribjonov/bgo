@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/places.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
+import '../geo/geo_api.dart';
 import 'taxi_api.dart';
 import 'taxi_models.dart';
-import 'taxi_places.dart';
 
 /// Taksi chaqirish ekrani. plan/05-customer-app.md
 /// Xarita ulanmaguncha: Beshariq preset nuqtalari.
@@ -18,8 +19,8 @@ class TaxiScreen extends ConsumerStatefulWidget {
 }
 
 class _TaxiScreenState extends ConsumerState<TaxiScreen> {
-  TaxiPlace? _from;
-  TaxiPlace? _to;
+  GeoPlace? _from;
+  GeoPlace? _to;
   TaxiEstimate? _estimate;
   bool _estimating = false;
   bool _requesting = false;
@@ -86,20 +87,24 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
     return Scaffold(
       appBar: AppBar(title: Text(t.taxiTitle)),
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(myTripsProvider),
+        onRefresh: () async {
+          ref.invalidate(myTripsProvider);
+          ref.invalidate(placesProvider);
+        },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _placeDropdown(t.taxiFrom, Icons.my_location, _from,
+            _placeDropdown(t.taxiFrom, Icons.my_location, _from, places,
                 (p) => setState(() {
                       _from = p;
                       _estimate = null;
                     })),
             const SizedBox(height: 12),
-            _placeDropdown(t.taxiTo, Icons.location_on, _to,
+            _placeDropdown(t.taxiTo, Icons.location_on, _to, places,
                 (p) => setState(() {
                       _to = p;
                       _estimate = null;
@@ -142,11 +147,12 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   Widget _placeDropdown(
     String label,
     IconData icon,
-    TaxiPlace? value,
-    ValueChanged<TaxiPlace?> onChanged,
+    GeoPlace? value,
+    List<GeoPlace> places,
+    ValueChanged<GeoPlace?> onChanged,
   ) {
-    return DropdownButtonFormField<TaxiPlace>(
-      value: value,
+    return DropdownButtonFormField<GeoPlace>(
+      value: places.contains(value) ? value : null,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: label,
@@ -154,7 +160,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
         border: const OutlineInputBorder(),
       ),
       items: [
-        for (final p in beshariqPlaces)
+        for (final p in places)
           DropdownMenuItem(value: p, child: Text(p.label)),
       ],
       onChanged: onChanged,
