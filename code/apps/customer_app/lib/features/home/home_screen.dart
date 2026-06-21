@@ -8,6 +8,7 @@ import '../order/my_orders_screen.dart';
 import '../partner/partner_screen.dart';
 import '../profile/profile_screen.dart';
 import '../restaurant/restaurant_list_screen.dart';
+import '../taxi/taxi_screen.dart';
 
 /// Bosh ekran — xizmat kartalari. To'liq oqimlar Faza 2+ da. plan/05-customer-app.md
 class HomeScreen extends ConsumerWidget {
@@ -66,8 +67,13 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // TODO(Faza 4): taksi ekrani
-                  _ServiceCard(icon: Icons.local_taxi, label: t.serviceTaxi),
+                  _ServiceCard(
+                    icon: Icons.local_taxi,
+                    label: t.serviceTaxi,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const TaxiScreen()),
+                    ),
+                  ),
                   // TODO(Faza 5): dostavka ekrani
                   _ServiceCard(icon: Icons.delivery_dining, label: t.serviceDelivery),
                 ],

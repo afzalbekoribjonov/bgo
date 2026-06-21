@@ -7,6 +7,8 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
+import '../taxi/taxi_api.dart';
+import '../taxi/taxi_models.dart';
 import 'delivery_api.dart';
 import 'delivery_models.dart';
 
@@ -47,46 +49,240 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
     final t = AppLocalizations.of(context)!;
     final online = ref.watch(onlineProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.appName),
-        actions: [
-          Center(child: Text(online ? t.online : t.offline)),
-          Switch(
-            value: online,
-            onChanged: (v) => ref.read(onlineProvider.notifier).state = v,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(t.appName),
+          actions: [
+            Center(child: Text(online ? t.online : t.offline)),
+            Switch(
+              value: online,
+              onChanged: (v) => ref.read(onlineProvider.notifier).state = v,
+            ),
+            const LanguageButton(),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: t.logout,
+              onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            ),
+          ],
+          bottom: TabBar(
+            tabs: [
+              Tab(text: t.deliveryTab, icon: const Icon(Icons.delivery_dining)),
+              Tab(text: t.taxiTab, icon: const Icon(Icons.local_taxi)),
+            ],
           ),
-          const LanguageButton(),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: t.logout,
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-          ),
+        ),
+        body: TabBarView(
+          children: [
+            _deliveryTab(t, online),
+            _taxiTab(t, online),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _deliveryTab(AppLocalizations t, bool online) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(availableOrdersProvider);
+        ref.invalidate(myDeliveriesProvider);
+        ref.invalidate(earningsProvider);
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          _buildEarnings(t),
+          const SizedBox(height: 16),
+          _SectionTitle(t.myDeliveriesTitle),
+          _buildMyDeliveries(t),
+          const SizedBox(height: 16),
+          _SectionTitle(t.availableTitle),
+          if (online)
+            _buildAvailable(t)
+          else
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(t.offlineHint,
+                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+            ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(availableOrdersProvider);
-          ref.invalidate(myDeliveriesProvider);
-          ref.invalidate(earningsProvider);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(12),
+    );
+  }
+
+  // ---------- Taksi tab ----------
+
+  Widget _taxiTab(AppLocalizations t, bool online) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(availableTaxiProvider);
+        ref.invalidate(myTaxiTripsProvider);
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          _SectionTitle(t.taxiMyTripsTitle),
+          _buildMyTaxiTrips(t),
+          const SizedBox(height: 16),
+          _SectionTitle(t.taxiAvailableTitle),
+          if (online)
+            _buildAvailableTaxi(t)
+          else
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(t.offlineHint,
+                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _runTaxi(String id, Future<void> Function() action) async {
+    setState(() => _busy = id);
+    try {
+      await action();
+      ref.invalidate(availableTaxiProvider);
+      ref.invalidate(myTaxiTripsProvider);
+    } catch (e) {
+      if (mounted) {
+        final t = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isNetworkError(e) ? t.errorNetwork : t.errorGeneric),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Widget _buildMyTaxiTrips(AppLocalizations t) {
+    final async = ref.watch(myTaxiTripsProvider);
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => AsyncErrorRetry(
+        error: e,
+        onRetry: () => ref.invalidate(myTaxiTripsProvider),
+      ),
+      data: (trips) {
+        final active = trips
+            .where((tr) => tr.status == 'ACCEPTED' || tr.status == 'IN_PROGRESS')
+            .toList();
+        if (active.isEmpty) return _emptyHint(t.taxiNoActive);
+        return Column(children: active.map((tr) => _taxiActiveCard(t, tr)).toList());
+      },
+    );
+  }
+
+  Widget _buildAvailableTaxi(AppLocalizations t) {
+    final async = ref.watch(availableTaxiProvider);
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => AsyncErrorRetry(
+        error: e,
+        onRetry: () => ref.invalidate(availableTaxiProvider),
+      ),
+      data: (trips) {
+        if (trips.isEmpty) return _emptyHint(t.taxiNoAvailable);
+        return Column(children: trips.map((tr) => _taxiAvailableCard(t, tr)).toList());
+      },
+    );
+  }
+
+  Widget _taxiRoute(AppLocalizations t, TaxiTrip tr) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.taxiTripNo(tr.publicNo.toString()),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text('${tr.pickupText} → ${tr.destinationText}'),
+        Text('${t.taxiKm(tr.distanceKm.toStringAsFixed(1))} · '
+            '${t.priceSom(groupThousands(tr.fare))}'),
+        Text('${t.yourEarning}: ${t.priceSom(groupThousands(tr.driverEarning))}',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            )),
+      ],
+    );
+  }
+
+  Widget _taxiAvailableCard(AppLocalizations t, TaxiTrip tr) {
+    final busy = _busy == tr.id;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildEarnings(t),
-            const SizedBox(height: 16),
-            _SectionTitle(t.myDeliveriesTitle),
-            _buildMyDeliveries(t),
-            const SizedBox(height: 16),
-            _SectionTitle(t.availableTitle),
-            if (online)
-              _buildAvailable(t)
-            else
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(t.offlineHint,
-                    style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+            _taxiRoute(t, tr),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () => _runTaxi(
+                      tr.id, () => ref.read(taxiApiProvider).accept(tr.id)),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+              child: busy ? const _Spinner() : Text(t.accept),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _taxiActiveCard(AppLocalizations t, TaxiTrip tr) {
+    final busy = _busy == tr.id;
+    final isAccepted = tr.status == 'ACCEPTED';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: _taxiRoute(t, tr)),
+                Text(
+                  isAccepted ? t.taxiStatusAccepted : t.taxiStatusInProgress,
+                  style: TextStyle(
+                    color: isAccepted ? Colors.blue : Colors.orange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () => _runTaxi(
+                        tr.id,
+                        () => isAccepted
+                            ? ref.read(taxiApiProvider).start(tr.id)
+                            : ref.read(taxiApiProvider).complete(tr.id),
+                      ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                backgroundColor: isAccepted ? null : Colors.green,
               ),
+              child: busy
+                  ? const _Spinner()
+                  : Text(isAccepted ? t.taxiStart : t.taxiComplete),
+            ),
           ],
         ),
       ),

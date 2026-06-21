@@ -294,6 +294,78 @@ abstract class AppLocalizations {
   /// **'Daromad'**
   String get yourEarning;
 
+  /// No description provided for @deliveryTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yetkazish'**
+  String get deliveryTab;
+
+  /// No description provided for @taxiTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Taksi'**
+  String get taxiTab;
+
+  /// No description provided for @taxiAvailableTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mavjud safarlar'**
+  String get taxiAvailableTitle;
+
+  /// No description provided for @taxiMyTripsTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mening safarlarim'**
+  String get taxiMyTripsTitle;
+
+  /// No description provided for @taxiNoAvailable.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozircha safar yo\'q'**
+  String get taxiNoAvailable;
+
+  /// No description provided for @taxiNoActive.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol safar yo\'q'**
+  String get taxiNoActive;
+
+  /// No description provided for @taxiStart.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'lovchini oldim'**
+  String get taxiStart;
+
+  /// No description provided for @taxiComplete.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yakunlash'**
+  String get taxiComplete;
+
+  /// No description provided for @taxiTripNo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Safar #{no}'**
+  String taxiTripNo(String no);
+
+  /// No description provided for @taxiKm.
+  ///
+  /// In uz, this message translates to:
+  /// **'{km} km'**
+  String taxiKm(String km);
+
+  /// No description provided for @taxiStatusAccepted.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qabul qilindi'**
+  String get taxiStatusAccepted;
+
+  /// No description provided for @taxiStatusInProgress.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'lda'**
+  String get taxiStatusInProgress;
+
   /// No description provided for @errorInvalidPhone.
   ///
   /// In uz, this message translates to:

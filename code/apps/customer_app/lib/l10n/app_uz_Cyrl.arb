@@ -106,5 +106,26 @@
   "addressDelete": "Ўчириш",
   "addressNone": "Сақланган манзил йўқ",
   "addressNew": "Янги манзил",
-  "addressChoose": "Манзилни танланг"
+  "addressChoose": "Манзилни танланг",
+
+  "taxiTitle": "Такси",
+  "taxiFrom": "Қаердан",
+  "taxiTo": "Қаерга",
+  "taxiEstimate": "Нархни ҳисоблаш",
+  "taxiRequest": "Такси чақириш",
+  "taxiDistance": "Масофа",
+  "taxiFare": "Нарх",
+  "taxiKm": "{km} км",
+  "taxiSamePoint": "Бошланиш ва манзил бир хил бўлмасин",
+  "taxiActiveTrip": "Жорий сафар",
+  "taxiMyTrips": "Сафарларим",
+  "taxiNoTrips": "Ҳали сафар йўқ",
+  "taxiRequested": "Такси чақирилди",
+  "taxiCancel": "Бекор қилиш",
+  "taxiTripNo": "Сафар #{no}",
+  "taxiStatusPending": "Ҳайдовчи кутилмоқда",
+  "taxiStatusAccepted": "Ҳайдовчи йўлда",
+  "taxiStatusInProgress": "Йўлдасиз",
+  "taxiStatusCompleted": "Якунланди",
+  "taxiStatusCancelled": "Бекор қилинди"
 }
