@@ -82,5 +82,25 @@
   "promoLabel": "Promokod",
   "promoHint": "Bor bo'lsa kiriting",
   "discountLabel": "Chegirma",
-  "promoInvalid": "Promokod yaroqsiz"
+  "promoInvalid": "Promokod yaroqsiz",
+
+  "partnerTitle": "Hamkorlik",
+  "partnerBanner": "Bizga hamkor bo'ling",
+  "partnerBannerSubtitle": "Oshxona yoki haydovchi sifatida ariza qoldiring",
+  "partnerFormTitle": "Hamkorlik arizasi",
+  "partnerFullName": "F.I.Sh.",
+  "partnerFullNameHint": "Ism familiyangiz",
+  "partnerType": "Hamkorlik turi",
+  "partnerTypeRestaurant": "Oshxona",
+  "partnerTypeDriver": "Haydovchi",
+  "partnerNote": "Izoh (ixtiyoriy)",
+  "partnerNoteHint": "Qo'shimcha ma'lumot",
+  "partnerSubmit": "Ariza yuborish",
+  "partnerSubmitted": "Arizangiz qabul qilindi",
+  "partnerMyApplications": "Mening arizalarim",
+  "partnerNoApplications": "Hali ariza yo'q",
+  "partnerNameRequired": "Ism kiritilishi shart",
+  "partnerStatusPending": "Ko'rib chiqilmoqda",
+  "partnerStatusApproved": "Tasdiqlandi",
+  "partnerStatusRejected": "Rad etildi"
 }

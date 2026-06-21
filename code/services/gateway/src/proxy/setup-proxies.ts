@@ -17,6 +17,7 @@ interface RouteDef {
  */
 const ROUTES: RouteDef[] = [
   { prefix: '/api/v1/auth', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:4001' },
+  { prefix: '/api/v1/partners', envKey: 'AUTH_SERVICE_URL', fallback: 'http://localhost:4001' },
   { prefix: '/api/v1/restaurants', envKey: 'RESTAURANT_SERVICE_URL', fallback: 'http://localhost:4003' },
   { prefix: '/api/v1/orders', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/kitchen', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },

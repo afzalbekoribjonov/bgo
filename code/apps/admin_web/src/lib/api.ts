@@ -1,4 +1,11 @@
-import type { AdminOrder, PromoCode, Restaurant, Stats, Tariff } from './types';
+import type {
+  AdminOrder,
+  PartnerApplication,
+  PromoCode,
+  Restaurant,
+  Stats,
+  Tariff,
+} from './types';
 import { clearToken, getToken } from './auth';
 
 const BASE =
@@ -62,6 +69,20 @@ export const updateTariff = (body: {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+  });
+
+export const getPartners = (status?: string) =>
+  api<PartnerApplication[]>(
+    `/auth/admin/partners${status ? `?status=${status}` : ''}`,
+  );
+export const updatePartnerStatus = (
+  id: string,
+  status: 'APPROVED' | 'REJECTED',
+) =>
+  api<PartnerApplication>(`/auth/admin/partners/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
   });
 
 export function formatSom(value: number): string {

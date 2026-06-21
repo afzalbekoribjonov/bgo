@@ -42,3 +42,13 @@ export interface Restaurant {
   isOpen: boolean;
   rating: number;
 }
+
+export interface PartnerApplication {
+  id: string;
+  phone: string;
+  fullName: string;
+  type: 'RESTAURANT' | 'DRIVER';
+  note: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+}

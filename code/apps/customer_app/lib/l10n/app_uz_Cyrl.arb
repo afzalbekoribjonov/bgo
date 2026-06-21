@@ -70,5 +70,25 @@
   "promoLabel": "Промокод",
   "promoHint": "Бор бўлса киритинг",
   "discountLabel": "Чегирма",
-  "promoInvalid": "Промокод яроқсиз"
+  "promoInvalid": "Промокод яроқсиз",
+
+  "partnerTitle": "Ҳамкорлик",
+  "partnerBanner": "Бизга ҳамкор бўлинг",
+  "partnerBannerSubtitle": "Ошхона ёки ҳайдовчи сифатида ариза қолдиринг",
+  "partnerFormTitle": "Ҳамкорлик аризаси",
+  "partnerFullName": "Ф.И.Ш.",
+  "partnerFullNameHint": "Исм фамилиянгиз",
+  "partnerType": "Ҳамкорлик тури",
+  "partnerTypeRestaurant": "Ошхона",
+  "partnerTypeDriver": "Ҳайдовчи",
+  "partnerNote": "Изоҳ (ихтиёрий)",
+  "partnerNoteHint": "Қўшимча маълумот",
+  "partnerSubmit": "Ариза юбориш",
+  "partnerSubmitted": "Аризангиз қабул қилинди",
+  "partnerMyApplications": "Менинг аризаларим",
+  "partnerNoApplications": "Ҳали ариза йўқ",
+  "partnerNameRequired": "Исм киритилиши шарт",
+  "partnerStatusPending": "Кўриб чиқилмоқда",
+  "partnerStatusApproved": "Тасдиқланди",
+  "partnerStatusRejected": "Рад этилди"
 }

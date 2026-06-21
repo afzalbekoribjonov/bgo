@@ -208,6 +208,63 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get promoInvalid => 'Promokod yaroqsiz';
+
+  @override
+  String get partnerTitle => 'Hamkorlik';
+
+  @override
+  String get partnerBanner => 'Bizga hamkor bo\'ling';
+
+  @override
+  String get partnerBannerSubtitle => 'Oshxona yoki haydovchi sifatida ariza qoldiring';
+
+  @override
+  String get partnerFormTitle => 'Hamkorlik arizasi';
+
+  @override
+  String get partnerFullName => 'F.I.Sh.';
+
+  @override
+  String get partnerFullNameHint => 'Ism familiyangiz';
+
+  @override
+  String get partnerType => 'Hamkorlik turi';
+
+  @override
+  String get partnerTypeRestaurant => 'Oshxona';
+
+  @override
+  String get partnerTypeDriver => 'Haydovchi';
+
+  @override
+  String get partnerNote => 'Izoh (ixtiyoriy)';
+
+  @override
+  String get partnerNoteHint => 'Qo\'shimcha ma\'lumot';
+
+  @override
+  String get partnerSubmit => 'Ariza yuborish';
+
+  @override
+  String get partnerSubmitted => 'Arizangiz qabul qilindi';
+
+  @override
+  String get partnerMyApplications => 'Mening arizalarim';
+
+  @override
+  String get partnerNoApplications => 'Hali ariza yo\'q';
+
+  @override
+  String get partnerNameRequired => 'Ism kiritilishi shart';
+
+  @override
+  String get partnerStatusPending => 'Ko\'rib chiqilmoqda';
+
+  @override
+  String get partnerStatusApproved => 'Tasdiqlandi';
+
+  @override
+  String get partnerStatusRejected => 'Rad etildi';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -416,4 +473,61 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get promoInvalid => 'Промокод яроқсиз';
+
+  @override
+  String get partnerTitle => 'Ҳамкорлик';
+
+  @override
+  String get partnerBanner => 'Бизга ҳамкор бўлинг';
+
+  @override
+  String get partnerBannerSubtitle => 'Ошхона ёки ҳайдовчи сифатида ариза қолдиринг';
+
+  @override
+  String get partnerFormTitle => 'Ҳамкорлик аризаси';
+
+  @override
+  String get partnerFullName => 'Ф.И.Ш.';
+
+  @override
+  String get partnerFullNameHint => 'Исм фамилиянгиз';
+
+  @override
+  String get partnerType => 'Ҳамкорлик тури';
+
+  @override
+  String get partnerTypeRestaurant => 'Ошхона';
+
+  @override
+  String get partnerTypeDriver => 'Ҳайдовчи';
+
+  @override
+  String get partnerNote => 'Изоҳ (ихтиёрий)';
+
+  @override
+  String get partnerNoteHint => 'Қўшимча маълумот';
+
+  @override
+  String get partnerSubmit => 'Ариза юбориш';
+
+  @override
+  String get partnerSubmitted => 'Аризангиз қабул қилинди';
+
+  @override
+  String get partnerMyApplications => 'Менинг аризаларим';
+
+  @override
+  String get partnerNoApplications => 'Ҳали ариза йўқ';
+
+  @override
+  String get partnerNameRequired => 'Исм киритилиши шарт';
+
+  @override
+  String get partnerStatusPending => 'Кўриб чиқилмоқда';
+
+  @override
+  String get partnerStatusApproved => 'Тасдиқланди';
+
+  @override
+  String get partnerStatusRejected => 'Рад этилди';
 }

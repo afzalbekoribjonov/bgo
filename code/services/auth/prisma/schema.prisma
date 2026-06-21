@@ -23,3 +23,31 @@ model User {
 
   @@map("users")
 }
+
+enum PartnerType {
+  RESTAURANT
+  DRIVER
+}
+
+enum PartnerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/** Hamkorlik arizasi (oshxona/haydovchi). plan/08-admin-workspace.md */
+model PartnerApplication {
+  id        String        @id @default(uuid())
+  userId    String
+  phone     String
+  fullName  String
+  type      PartnerType
+  note      String?
+  status    PartnerStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("partner_applications")
+}
