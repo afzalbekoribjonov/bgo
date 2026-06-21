@@ -71,6 +71,17 @@
   "taxiStatusAccepted": "Qabul qilindi",
   "taxiStatusInProgress": "Yo'lda",
 
+  "parcelTab": "Dostavka",
+  "parcelAvailableTitle": "Mavjud dostavkalar",
+  "parcelMyTitle": "Mening dostavkalarim",
+  "parcelNoAvailable": "Hozircha dostavka yo'q",
+  "parcelNoActive": "Faol dostavka yo'q",
+  "parcelNo": "Dostavka #{no}",
+  "@parcelNo": {
+    "placeholders": { "no": { "type": "String" } }
+  },
+  "parcelStatusPickedUp": "Yo'lda",
+
   "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
   "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
   "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",

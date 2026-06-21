@@ -366,6 +366,48 @@ abstract class AppLocalizations {
   /// **'Yo\'lda'**
   String get taxiStatusInProgress;
 
+  /// No description provided for @parcelTab.
+  ///
+  /// In uz, this message translates to:
+  /// **'Dostavka'**
+  String get parcelTab;
+
+  /// No description provided for @parcelAvailableTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mavjud dostavkalar'**
+  String get parcelAvailableTitle;
+
+  /// No description provided for @parcelMyTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mening dostavkalarim'**
+  String get parcelMyTitle;
+
+  /// No description provided for @parcelNoAvailable.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozircha dostavka yo\'q'**
+  String get parcelNoAvailable;
+
+  /// No description provided for @parcelNoActive.
+  ///
+  /// In uz, this message translates to:
+  /// **'Faol dostavka yo\'q'**
+  String get parcelNoActive;
+
+  /// No description provided for @parcelNo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Dostavka #{no}'**
+  String parcelNo(String no);
+
+  /// No description provided for @parcelStatusPickedUp.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'lda'**
+  String get parcelStatusPickedUp;
+
   /// No description provided for @errorInvalidPhone.
   ///
   /// In uz, this message translates to:

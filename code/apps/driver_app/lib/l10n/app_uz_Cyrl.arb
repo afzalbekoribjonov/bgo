@@ -50,6 +50,14 @@
   "taxiStatusAccepted": "Қабул қилинди",
   "taxiStatusInProgress": "Йўлда",
 
+  "parcelTab": "Достевка",
+  "parcelAvailableTitle": "Мавжуд достевкалар",
+  "parcelMyTitle": "Менинг достевкаларим",
+  "parcelNoAvailable": "Ҳозирча достевка йўқ",
+  "parcelNoActive": "Фаол достевка йўқ",
+  "parcelNo": "Достевка #{no}",
+  "parcelStatusPickedUp": "Йўлда",
+
   "errorInvalidPhone": "Телефон рақами нотўғри (+998XXXXXXXXX)",
   "errorInvalidCode": "Код нотўғри ёки муддати тугаган",
   "errorGeneric": "Хатолик юз берди. Қайта уриниб кўринг.",

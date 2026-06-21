@@ -145,5 +145,28 @@
   "taxiStatusAccepted": "Haydovchi yo'lda",
   "taxiStatusInProgress": "Yo'ldasiz",
   "taxiStatusCompleted": "Yakunlandi",
-  "taxiStatusCancelled": "Bekor qilindi"
+  "taxiStatusCancelled": "Bekor qilindi",
+
+  "parcelTitle": "Dostavka",
+  "parcelSize": "O'lcham",
+  "parcelSizeSmall": "Kichik",
+  "parcelSizeMedium": "O'rta",
+  "parcelSizeLarge": "Katta",
+  "parcelRecipientName": "Qabul qiluvchi ismi",
+  "parcelRecipientPhone": "Qabul qiluvchi telefoni",
+  "parcelNote": "Izoh (ixtiyoriy)",
+  "parcelSend": "Jo'natish",
+  "parcelSent": "Dostavka jo'natildi",
+  "parcelMyParcels": "Dostavkalarim",
+  "parcelNoParcels": "Hali dostavka yo'q",
+  "parcelRecipientRequired": "Qabul qiluvchi ism va telefoni kerak",
+  "parcelNo": "Dostavka #{no}",
+  "@parcelNo": {
+    "placeholders": { "no": { "type": "String" } }
+  },
+  "parcelStatusPending": "Kuryer kutilmoqda",
+  "parcelStatusAccepted": "Kuryer qabul qildi",
+  "parcelStatusPickedUp": "Yo'lda",
+  "parcelStatusDelivered": "Yetkazildi",
+  "parcelStatusCancelled": "Bekor qilindi"
 }

@@ -809,6 +809,120 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Bekor qilindi'**
   String get taxiStatusCancelled;
+
+  /// No description provided for @parcelTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Dostavka'**
+  String get parcelTitle;
+
+  /// No description provided for @parcelSize.
+  ///
+  /// In uz, this message translates to:
+  /// **'O\'lcham'**
+  String get parcelSize;
+
+  /// No description provided for @parcelSizeSmall.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kichik'**
+  String get parcelSizeSmall;
+
+  /// No description provided for @parcelSizeMedium.
+  ///
+  /// In uz, this message translates to:
+  /// **'O\'rta'**
+  String get parcelSizeMedium;
+
+  /// No description provided for @parcelSizeLarge.
+  ///
+  /// In uz, this message translates to:
+  /// **'Katta'**
+  String get parcelSizeLarge;
+
+  /// No description provided for @parcelRecipientName.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qabul qiluvchi ismi'**
+  String get parcelRecipientName;
+
+  /// No description provided for @parcelRecipientPhone.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qabul qiluvchi telefoni'**
+  String get parcelRecipientPhone;
+
+  /// No description provided for @parcelNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Izoh (ixtiyoriy)'**
+  String get parcelNote;
+
+  /// No description provided for @parcelSend.
+  ///
+  /// In uz, this message translates to:
+  /// **'Jo\'natish'**
+  String get parcelSend;
+
+  /// No description provided for @parcelSent.
+  ///
+  /// In uz, this message translates to:
+  /// **'Dostavka jo\'natildi'**
+  String get parcelSent;
+
+  /// No description provided for @parcelMyParcels.
+  ///
+  /// In uz, this message translates to:
+  /// **'Dostavkalarim'**
+  String get parcelMyParcels;
+
+  /// No description provided for @parcelNoParcels.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hali dostavka yo\'q'**
+  String get parcelNoParcels;
+
+  /// No description provided for @parcelRecipientRequired.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qabul qiluvchi ism va telefoni kerak'**
+  String get parcelRecipientRequired;
+
+  /// No description provided for @parcelNo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Dostavka #{no}'**
+  String parcelNo(String no);
+
+  /// No description provided for @parcelStatusPending.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kuryer kutilmoqda'**
+  String get parcelStatusPending;
+
+  /// No description provided for @parcelStatusAccepted.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kuryer qabul qildi'**
+  String get parcelStatusAccepted;
+
+  /// No description provided for @parcelStatusPickedUp.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'lda'**
+  String get parcelStatusPickedUp;
+
+  /// No description provided for @parcelStatusDelivered.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yetkazildi'**
+  String get parcelStatusDelivered;
+
+  /// No description provided for @parcelStatusCancelled.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilindi'**
+  String get parcelStatusCancelled;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -127,5 +127,25 @@
   "taxiStatusAccepted": "Водитель в пути",
   "taxiStatusInProgress": "В пути",
   "taxiStatusCompleted": "Завершена",
-  "taxiStatusCancelled": "Отменена"
+  "taxiStatusCancelled": "Отменена",
+
+  "parcelTitle": "Доставка",
+  "parcelSize": "Размер",
+  "parcelSizeSmall": "Маленький",
+  "parcelSizeMedium": "Средний",
+  "parcelSizeLarge": "Большой",
+  "parcelRecipientName": "Имя получателя",
+  "parcelRecipientPhone": "Телефон получателя",
+  "parcelNote": "Примечание (необязательно)",
+  "parcelSend": "Отправить",
+  "parcelSent": "Посылка отправлена",
+  "parcelMyParcels": "Мои отправления",
+  "parcelNoParcels": "Отправлений пока нет",
+  "parcelRecipientRequired": "Нужны имя и телефон получателя",
+  "parcelNo": "Отправление #{no}",
+  "parcelStatusPending": "Ожидание курьера",
+  "parcelStatusAccepted": "Курьер принял",
+  "parcelStatusPickedUp": "В пути",
+  "parcelStatusDelivered": "Доставлено",
+  "parcelStatusCancelled": "Отменено"
 }

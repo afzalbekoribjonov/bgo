@@ -127,5 +127,25 @@
   "taxiStatusAccepted": "Ҳайдовчи йўлда",
   "taxiStatusInProgress": "Йўлдасиз",
   "taxiStatusCompleted": "Якунланди",
-  "taxiStatusCancelled": "Бекор қилинди"
+  "taxiStatusCancelled": "Бекор қилинди",
+
+  "parcelTitle": "Достевка",
+  "parcelSize": "Ўлчам",
+  "parcelSizeSmall": "Кичик",
+  "parcelSizeMedium": "Ўрта",
+  "parcelSizeLarge": "Катта",
+  "parcelRecipientName": "Қабул қилувчи исми",
+  "parcelRecipientPhone": "Қабул қилувчи телефони",
+  "parcelNote": "Изоҳ (ихтиёрий)",
+  "parcelSend": "Жўнатиш",
+  "parcelSent": "Достевка жўнатилди",
+  "parcelMyParcels": "Достевкаларим",
+  "parcelNoParcels": "Ҳали достевка йўқ",
+  "parcelRecipientRequired": "Қабул қилувчи исм ва телефони керак",
+  "parcelNo": "Достевка #{no}",
+  "parcelStatusPending": "Курьер кутилмоқда",
+  "parcelStatusAccepted": "Курьер қабул қилди",
+  "parcelStatusPickedUp": "Йўлда",
+  "parcelStatusDelivered": "Етказилди",
+  "parcelStatusCancelled": "Бекор қилинди"
 }

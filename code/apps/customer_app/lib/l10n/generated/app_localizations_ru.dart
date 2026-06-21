@@ -374,4 +374,63 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get taxiStatusCancelled => 'Отменена';
+
+  @override
+  String get parcelTitle => 'Доставка';
+
+  @override
+  String get parcelSize => 'Размер';
+
+  @override
+  String get parcelSizeSmall => 'Маленький';
+
+  @override
+  String get parcelSizeMedium => 'Средний';
+
+  @override
+  String get parcelSizeLarge => 'Большой';
+
+  @override
+  String get parcelRecipientName => 'Имя получателя';
+
+  @override
+  String get parcelRecipientPhone => 'Телефон получателя';
+
+  @override
+  String get parcelNote => 'Примечание (необязательно)';
+
+  @override
+  String get parcelSend => 'Отправить';
+
+  @override
+  String get parcelSent => 'Посылка отправлена';
+
+  @override
+  String get parcelMyParcels => 'Мои отправления';
+
+  @override
+  String get parcelNoParcels => 'Отправлений пока нет';
+
+  @override
+  String get parcelRecipientRequired => 'Нужны имя и телефон получателя';
+
+  @override
+  String parcelNo(String no) {
+    return 'Отправление #$no';
+  }
+
+  @override
+  String get parcelStatusPending => 'Ожидание курьера';
+
+  @override
+  String get parcelStatusAccepted => 'Курьер принял';
+
+  @override
+  String get parcelStatusPickedUp => 'В пути';
+
+  @override
+  String get parcelStatusDelivered => 'Доставлено';
+
+  @override
+  String get parcelStatusCancelled => 'Отменено';
 }

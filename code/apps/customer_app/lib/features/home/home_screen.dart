@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
 import '../order/my_orders_screen.dart';
+import '../parcel/parcel_screen.dart';
 import '../partner/partner_screen.dart';
 import '../profile/profile_screen.dart';
 import '../restaurant/restaurant_list_screen.dart';
@@ -74,8 +75,13 @@ class HomeScreen extends ConsumerWidget {
                       MaterialPageRoute(builder: (_) => const TaxiScreen()),
                     ),
                   ),
-                  // TODO(Faza 5): dostavka ekrani
-                  _ServiceCard(icon: Icons.delivery_dining, label: t.serviceDelivery),
+                  _ServiceCard(
+                    icon: Icons.delivery_dining,
+                    label: t.serviceDelivery,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ParcelScreen()),
+                    ),
+                  ),
                 ],
               ),
             ),

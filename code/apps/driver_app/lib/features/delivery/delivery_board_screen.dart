@@ -7,6 +7,8 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
+import '../parcel/parcel_api.dart';
+import '../parcel/parcel_models.dart';
 import '../taxi/taxi_api.dart';
 import '../taxi/taxi_models.dart';
 import 'delivery_api.dart';
@@ -50,7 +52,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
     final online = ref.watch(onlineProvider);
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(t.appName),
@@ -68,9 +70,11 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             ),
           ],
           bottom: TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: t.deliveryTab, icon: const Icon(Icons.delivery_dining)),
               Tab(text: t.taxiTab, icon: const Icon(Icons.local_taxi)),
+              Tab(text: t.parcelTab, icon: const Icon(Icons.local_shipping)),
             ],
           ),
         ),
@@ -78,6 +82,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
           children: [
             _deliveryTab(t, online),
             _taxiTab(t, online),
+            _parcelTab(t, online),
           ],
         ),
       ),
@@ -282,6 +287,184 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
               child: busy
                   ? const _Spinner()
                   : Text(isAccepted ? t.taxiStart : t.taxiComplete),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Dostavka tab ----------
+
+  Widget _parcelTab(AppLocalizations t, bool online) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(availableParcelsProvider);
+        ref.invalidate(myParcelDeliveriesProvider);
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          _SectionTitle(t.parcelMyTitle),
+          _buildMyParcels(t),
+          const SizedBox(height: 16),
+          _SectionTitle(t.parcelAvailableTitle),
+          if (online)
+            _buildAvailableParcels(t)
+          else
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(t.offlineHint,
+                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _runParcel(String id, Future<void> Function() action) async {
+    setState(() => _busy = id);
+    try {
+      await action();
+      ref.invalidate(availableParcelsProvider);
+      ref.invalidate(myParcelDeliveriesProvider);
+    } catch (e) {
+      if (mounted) {
+        final t = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isNetworkError(e) ? t.errorNetwork : t.errorGeneric),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Widget _buildMyParcels(AppLocalizations t) {
+    final async = ref.watch(myParcelDeliveriesProvider);
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => AsyncErrorRetry(
+        error: e,
+        onRetry: () => ref.invalidate(myParcelDeliveriesProvider),
+      ),
+      data: (parcels) {
+        final active = parcels
+            .where((p) => p.status == 'ACCEPTED' || p.status == 'PICKED_UP')
+            .toList();
+        if (active.isEmpty) return _emptyHint(t.parcelNoActive);
+        return Column(children: active.map((p) => _parcelActiveCard(t, p)).toList());
+      },
+    );
+  }
+
+  Widget _buildAvailableParcels(AppLocalizations t) {
+    final async = ref.watch(availableParcelsProvider);
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => AsyncErrorRetry(
+        error: e,
+        onRetry: () => ref.invalidate(availableParcelsProvider),
+      ),
+      data: (parcels) {
+        if (parcels.isEmpty) return _emptyHint(t.parcelNoAvailable);
+        return Column(
+            children: parcels.map((p) => _parcelAvailableCard(t, p)).toList());
+      },
+    );
+  }
+
+  Widget _parcelInfo(AppLocalizations t, ParcelDelivery p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.parcelNo(p.publicNo.toString()),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text('${p.pickupText} → ${p.destinationText}'),
+        Text('${p.recipientName} · ${p.recipientPhone}'),
+        Text('${t.taxiKm(p.distanceKm.toStringAsFixed(1))} · '
+            '${t.priceSom(groupThousands(p.fare))}'),
+        Text('${t.yourEarning}: ${t.priceSom(groupThousands(p.driverEarning))}',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            )),
+      ],
+    );
+  }
+
+  Widget _parcelAvailableCard(AppLocalizations t, ParcelDelivery p) {
+    final busy = _busy == p.id;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _parcelInfo(t, p),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () => _runParcel(
+                      p.id, () => ref.read(parcelApiProvider).accept(p.id)),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+              child: busy ? const _Spinner() : Text(t.accept),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _parcelActiveCard(AppLocalizations t, ParcelDelivery p) {
+    final busy = _busy == p.id;
+    final isAccepted = p.status == 'ACCEPTED';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: _parcelInfo(t, p)),
+                Text(
+                  isAccepted ? t.taxiStatusAccepted : t.parcelStatusPickedUp,
+                  style: TextStyle(
+                    color: isAccepted ? Colors.blue : Colors.orange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () => _runParcel(
+                        p.id,
+                        () => isAccepted
+                            ? ref.read(parcelApiProvider).pickup(p.id)
+                            : ref.read(parcelApiProvider).delivered(p.id),
+                      ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                backgroundColor: isAccepted ? null : Colors.green,
+              ),
+              child: busy
+                  ? const _Spinner()
+                  : Text(isAccepted ? t.markPicked : t.markDelivered),
             ),
           ],
         ),

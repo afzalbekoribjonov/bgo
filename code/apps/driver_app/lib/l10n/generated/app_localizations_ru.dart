@@ -156,6 +156,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiStatusInProgress => 'В пути';
 
   @override
+  String get parcelTab => 'Доставка';
+
+  @override
+  String get parcelAvailableTitle => 'Доступные доставки';
+
+  @override
+  String get parcelMyTitle => 'Мои доставки';
+
+  @override
+  String get parcelNoAvailable => 'Доставок пока нет';
+
+  @override
+  String get parcelNoActive => 'Нет активных доставок';
+
+  @override
+  String parcelNo(String no) {
+    return 'Доставка #$no';
+  }
+
+  @override
+  String get parcelStatusPickedUp => 'В пути';
+
+  @override
   String get errorInvalidPhone => 'Неверный номер телефона (+998XXXXXXXXX)';
 
   @override

@@ -156,6 +156,29 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiStatusInProgress => 'Yo\'lda';
 
   @override
+  String get parcelTab => 'Dostavka';
+
+  @override
+  String get parcelAvailableTitle => 'Mavjud dostavkalar';
+
+  @override
+  String get parcelMyTitle => 'Mening dostavkalarim';
+
+  @override
+  String get parcelNoAvailable => 'Hozircha dostavka yo\'q';
+
+  @override
+  String get parcelNoActive => 'Faol dostavka yo\'q';
+
+  @override
+  String parcelNo(String no) {
+    return 'Dostavka #$no';
+  }
+
+  @override
+  String get parcelStatusPickedUp => 'Yo\'lda';
+
+  @override
   String get errorInvalidPhone => 'Telefon raqami noto\'g\'ri (+998XXXXXXXXX)';
 
   @override
@@ -323,6 +346,29 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiStatusInProgress => 'Йўлда';
+
+  @override
+  String get parcelTab => 'Достевка';
+
+  @override
+  String get parcelAvailableTitle => 'Мавжуд достевкалар';
+
+  @override
+  String get parcelMyTitle => 'Менинг достевкаларим';
+
+  @override
+  String get parcelNoAvailable => 'Ҳозирча достевка йўқ';
+
+  @override
+  String get parcelNoActive => 'Фаол достевка йўқ';
+
+  @override
+  String parcelNo(String no) {
+    return 'Достевка #$no';
+  }
+
+  @override
+  String get parcelStatusPickedUp => 'Йўлда';
 
   @override
   String get errorInvalidPhone => 'Телефон рақами нотўғри (+998XXXXXXXXX)';

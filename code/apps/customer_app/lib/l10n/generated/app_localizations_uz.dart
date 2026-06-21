@@ -374,6 +374,65 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get taxiStatusCancelled => 'Bekor qilindi';
+
+  @override
+  String get parcelTitle => 'Dostavka';
+
+  @override
+  String get parcelSize => 'O\'lcham';
+
+  @override
+  String get parcelSizeSmall => 'Kichik';
+
+  @override
+  String get parcelSizeMedium => 'O\'rta';
+
+  @override
+  String get parcelSizeLarge => 'Katta';
+
+  @override
+  String get parcelRecipientName => 'Qabul qiluvchi ismi';
+
+  @override
+  String get parcelRecipientPhone => 'Qabul qiluvchi telefoni';
+
+  @override
+  String get parcelNote => 'Izoh (ixtiyoriy)';
+
+  @override
+  String get parcelSend => 'Jo\'natish';
+
+  @override
+  String get parcelSent => 'Dostavka jo\'natildi';
+
+  @override
+  String get parcelMyParcels => 'Dostavkalarim';
+
+  @override
+  String get parcelNoParcels => 'Hali dostavka yo\'q';
+
+  @override
+  String get parcelRecipientRequired => 'Qabul qiluvchi ism va telefoni kerak';
+
+  @override
+  String parcelNo(String no) {
+    return 'Dostavka #$no';
+  }
+
+  @override
+  String get parcelStatusPending => 'Kuryer kutilmoqda';
+
+  @override
+  String get parcelStatusAccepted => 'Kuryer qabul qildi';
+
+  @override
+  String get parcelStatusPickedUp => 'Yo\'lda';
+
+  @override
+  String get parcelStatusDelivered => 'Yetkazildi';
+
+  @override
+  String get parcelStatusCancelled => 'Bekor qilindi';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -748,4 +807,63 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiStatusCancelled => 'Бекор қилинди';
+
+  @override
+  String get parcelTitle => 'Достевка';
+
+  @override
+  String get parcelSize => 'Ўлчам';
+
+  @override
+  String get parcelSizeSmall => 'Кичик';
+
+  @override
+  String get parcelSizeMedium => 'Ўрта';
+
+  @override
+  String get parcelSizeLarge => 'Катта';
+
+  @override
+  String get parcelRecipientName => 'Қабул қилувчи исми';
+
+  @override
+  String get parcelRecipientPhone => 'Қабул қилувчи телефони';
+
+  @override
+  String get parcelNote => 'Изоҳ (ихтиёрий)';
+
+  @override
+  String get parcelSend => 'Жўнатиш';
+
+  @override
+  String get parcelSent => 'Достевка жўнатилди';
+
+  @override
+  String get parcelMyParcels => 'Достевкаларим';
+
+  @override
+  String get parcelNoParcels => 'Ҳали достевка йўқ';
+
+  @override
+  String get parcelRecipientRequired => 'Қабул қилувчи исм ва телефони керак';
+
+  @override
+  String parcelNo(String no) {
+    return 'Достевка #$no';
+  }
+
+  @override
+  String get parcelStatusPending => 'Курьер кутилмоқда';
+
+  @override
+  String get parcelStatusAccepted => 'Курьер қабул қилди';
+
+  @override
+  String get parcelStatusPickedUp => 'Йўлда';
+
+  @override
+  String get parcelStatusDelivered => 'Етказилди';
+
+  @override
+  String get parcelStatusCancelled => 'Бекор қилинди';
 }

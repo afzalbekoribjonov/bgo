@@ -50,6 +50,14 @@
   "taxiStatusAccepted": "Принята",
   "taxiStatusInProgress": "В пути",
 
+  "parcelTab": "Доставка",
+  "parcelAvailableTitle": "Доступные доставки",
+  "parcelMyTitle": "Мои доставки",
+  "parcelNoAvailable": "Доставок пока нет",
+  "parcelNoActive": "Нет активных доставок",
+  "parcelNo": "Доставка #{no}",
+  "parcelStatusPickedUp": "В пути",
+
   "errorInvalidPhone": "Неверный номер телефона (+998XXXXXXXXX)",
   "errorInvalidCode": "Неверный код или истёк срок действия",
   "errorGeneric": "Произошла ошибка. Попробуйте снова.",
