@@ -10,7 +10,7 @@ import { OtpService } from '../otp/otp.service';
 import { SmsService } from '../sms/sms.service';
 import { UserEntity } from '../users/user.entity';
 import { UserRepository } from '../users/user.repository';
-import { AccessTokenPayload, RefreshTokenPayload } from './jwt-payload.interface';
+import { AccessTokenPayload, RefreshTokenPayload } from '@beshariq/nest-auth';
 
 export interface TokenPair {
   accessToken: string;

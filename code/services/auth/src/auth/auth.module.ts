@@ -6,8 +6,7 @@ import { UsersModule } from '../users/users.module';
 import { AdminUsersController } from './admin-users.controller';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { RolesGuard } from './roles.guard';
+import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 
 @Module({
   imports: [

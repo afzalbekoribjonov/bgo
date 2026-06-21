@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '@beshariq/nest-auth';
 import { UsersModule } from '../users/users.module';
 import { AddressRepository } from './address.repository';
 import { PrismaAddressRepository } from './prisma-address.repository';

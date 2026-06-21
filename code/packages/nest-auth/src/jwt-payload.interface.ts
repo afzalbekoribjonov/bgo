@@ -1,4 +1,4 @@
-/** Access token ichidagi ma'lumot. */
+/** Access token ichidagi ma'lumot (auth servisi imzolagan). */
 export interface AccessTokenPayload {
   sub: string; // user id
   phone: string;

@@ -1,9 +1,7 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SetRolesDto } from './dto/set-roles.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { Roles } from './roles.decorator';
-import { RolesGuard } from './roles.guard';
+import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 
 /**
  * Foydalanuvchi va rol boshqaruvi — faqat admin. plan/08-admin-workspace.md

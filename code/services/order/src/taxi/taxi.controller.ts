@@ -7,9 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { AccessTokenPayload } from '../auth/jwt-payload.interface';
+import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
 import { RequestTaxiDto } from './dto/request-taxi.dto';
 import { TaxiService } from './taxi.service';
 

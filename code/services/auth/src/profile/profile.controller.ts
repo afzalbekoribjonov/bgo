@@ -9,9 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { AccessTokenPayload } from '../auth/jwt-payload.interface';
+import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
 import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';

@@ -14,9 +14,7 @@ import { TariffService } from '../tariff/tariff.service';
 import { UpdateTariffDto } from '../tariff/dto/update-tariff.dto';
 import { PromoService } from '../promo/promo.service';
 import { CreatePromoDto, UpdatePromoDto } from '../promo/dto/promo.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { OrdersService, ReportPeriod } from './orders.service';
 
 /**

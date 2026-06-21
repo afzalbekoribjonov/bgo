@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AccessTokenPayload } from '../auth/jwt-payload.interface';
+import { AccessTokenPayload } from '@beshariq/nest-auth';
 import { RestaurantsService } from './restaurants.service';
 
 /**

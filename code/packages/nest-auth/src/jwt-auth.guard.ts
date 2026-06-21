@@ -11,7 +11,7 @@ import { AccessTokenPayload } from './jwt-payload.interface';
 
 /**
  * Auth servisi bergan access token'ni tekshiradi (bir xil JWT_ACCESS_SECRET).
- * TODO: keyin packages/ ichidagi umumiy guardga ajratish (auth bilan takrorlanmoqda).
+ * Barcha servislar uchun umumiy — @beshariq/nest-auth.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {

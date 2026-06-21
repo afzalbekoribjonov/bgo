@@ -1,5 +1,5 @@
 import { ArrayNotEmpty, IsArray, IsIn } from 'class-validator';
-import { ALLOWED_ROLES } from '../roles.decorator';
+import { ALLOWED_ROLES } from '@beshariq/nest-auth';
 
 export class SetRolesDto {
   @IsArray()
