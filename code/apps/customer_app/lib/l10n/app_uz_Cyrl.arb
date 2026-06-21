@@ -90,5 +90,21 @@
   "partnerNameRequired": "Исм киритилиши шарт",
   "partnerStatusPending": "Кўриб чиқилмоқда",
   "partnerStatusApproved": "Тасдиқланди",
-  "partnerStatusRejected": "Рад этилди"
+  "partnerStatusRejected": "Рад этилди",
+
+  "profileTitle": "Профил",
+  "profileName": "Исм фамилия",
+  "profileNameHint": "Исмингизни киритинг",
+  "profileSave": "Сақлаш",
+  "profileSaved": "Сақланди",
+  "addressesTitle": "Манзилларим",
+  "addressAdd": "Манзил қўшиш",
+  "addressLabelField": "Номи (Уй, Иш...)",
+  "addressTextField": "Тўлиқ манзил",
+  "addressDefault": "Стандарт",
+  "addressSetDefault": "Стандарт қилиш",
+  "addressDelete": "Ўчириш",
+  "addressNone": "Сақланган манзил йўқ",
+  "addressNew": "Янги манзил",
+  "addressChoose": "Манзилни танланг"
 }

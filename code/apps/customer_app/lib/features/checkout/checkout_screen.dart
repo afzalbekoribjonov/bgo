@@ -7,6 +7,8 @@ import '../../l10n/generated/app_localizations.dart';
 import '../cart/cart_controller.dart';
 import '../order/order_api.dart';
 import '../order/order_placed_screen.dart';
+import '../profile/profile_api.dart';
+import '../profile/profile_models.dart';
 
 /// Rasmiylashtirish — manzil, to'lov (naqd), tasdiqlash. plan/05-customer-app.md
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -20,6 +22,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _addressCtrl = TextEditingController();
   final _promoCtrl = TextEditingController();
   bool _loading = false;
+  bool _prefilled = false;
   String? _error;
 
   @override
@@ -70,6 +73,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final cart = ref.watch(cartProvider);
+    final addresses = ref.watch(addressesProvider);
+
+    // Standart manzilni bir marta avtomatik to'ldirish.
+    ref.listen<AsyncValue<List<Address>>>(addressesProvider, (_, next) {
+      next.whenData((list) {
+        if (!_prefilled && _addressCtrl.text.isEmpty && list.isNotEmpty) {
+          _prefilled = true;
+          final def = list.firstWhere((a) => a.isDefault, orElse: () => list.first);
+          _addressCtrl.text = def.text;
+        }
+      });
+    });
 
     return Scaffold(
       appBar: AppBar(title: Text(t.checkoutTitle)),
@@ -77,6 +92,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            ...addresses.maybeWhen<List<Widget>>(
+              data: (list) => list.isEmpty
+                  ? const <Widget>[]
+                  : <Widget>[
+                      Text(t.addressChoose,
+                          style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final a in list)
+                            ActionChip(
+                              avatar: Icon(
+                                a.isDefault ? Icons.home : Icons.location_on_outlined,
+                                size: 18,
+                              ),
+                              label: Text(a.label),
+                              onPressed: () =>
+                                  setState(() => _addressCtrl.text = a.text),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+              orElse: () => const <Widget>[],
+            ),
             TextField(
               controller: _addressCtrl,
               minLines: 1,

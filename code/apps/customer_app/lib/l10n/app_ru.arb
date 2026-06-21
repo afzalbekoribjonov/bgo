@@ -90,5 +90,21 @@
   "partnerNameRequired": "Введите имя",
   "partnerStatusPending": "На рассмотрении",
   "partnerStatusApproved": "Одобрено",
-  "partnerStatusRejected": "Отклонено"
+  "partnerStatusRejected": "Отклонено",
+
+  "profileTitle": "Профиль",
+  "profileName": "Имя и фамилия",
+  "profileNameHint": "Введите ваше имя",
+  "profileSave": "Сохранить",
+  "profileSaved": "Сохранено",
+  "addressesTitle": "Мои адреса",
+  "addressAdd": "Добавить адрес",
+  "addressLabelField": "Название (Дом, Работа...)",
+  "addressTextField": "Полный адрес",
+  "addressDefault": "По умолчанию",
+  "addressSetDefault": "Сделать основным",
+  "addressDelete": "Удалить",
+  "addressNone": "Нет сохранённых адресов",
+  "addressNew": "Новый адрес",
+  "addressChoose": "Выберите адрес"
 }

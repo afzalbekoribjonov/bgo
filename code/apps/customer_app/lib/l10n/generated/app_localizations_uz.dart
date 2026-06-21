@@ -265,6 +265,51 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get partnerStatusRejected => 'Rad etildi';
+
+  @override
+  String get profileTitle => 'Profil';
+
+  @override
+  String get profileName => 'Ism familiya';
+
+  @override
+  String get profileNameHint => 'Ismingizni kiriting';
+
+  @override
+  String get profileSave => 'Saqlash';
+
+  @override
+  String get profileSaved => 'Saqlandi';
+
+  @override
+  String get addressesTitle => 'Manzillarim';
+
+  @override
+  String get addressAdd => 'Manzil qo\'shish';
+
+  @override
+  String get addressLabelField => 'Nomi (Uy, Ish...)';
+
+  @override
+  String get addressTextField => 'To\'liq manzil';
+
+  @override
+  String get addressDefault => 'Standart';
+
+  @override
+  String get addressSetDefault => 'Standart qilish';
+
+  @override
+  String get addressDelete => 'O\'chirish';
+
+  @override
+  String get addressNone => 'Saqlangan manzil yo\'q';
+
+  @override
+  String get addressNew => 'Yangi manzil';
+
+  @override
+  String get addressChoose => 'Manzilni tanlang';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -530,4 +575,49 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get partnerStatusRejected => 'Рад этилди';
+
+  @override
+  String get profileTitle => 'Профил';
+
+  @override
+  String get profileName => 'Исм фамилия';
+
+  @override
+  String get profileNameHint => 'Исмингизни киритинг';
+
+  @override
+  String get profileSave => 'Сақлаш';
+
+  @override
+  String get profileSaved => 'Сақланди';
+
+  @override
+  String get addressesTitle => 'Манзилларим';
+
+  @override
+  String get addressAdd => 'Манзил қўшиш';
+
+  @override
+  String get addressLabelField => 'Номи (Уй, Иш...)';
+
+  @override
+  String get addressTextField => 'Тўлиқ манзил';
+
+  @override
+  String get addressDefault => 'Стандарт';
+
+  @override
+  String get addressSetDefault => 'Стандарт қилиш';
+
+  @override
+  String get addressDelete => 'Ўчириш';
+
+  @override
+  String get addressNone => 'Сақланган манзил йўқ';
+
+  @override
+  String get addressNew => 'Янги манзил';
+
+  @override
+  String get addressChoose => 'Манзилни танланг';
 }

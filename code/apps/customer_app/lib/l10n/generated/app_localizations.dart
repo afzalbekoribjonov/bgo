@@ -599,6 +599,96 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Rad etildi'**
   String get partnerStatusRejected;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Profil'**
+  String get profileTitle;
+
+  /// No description provided for @profileName.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ism familiya'**
+  String get profileName;
+
+  /// No description provided for @profileNameHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ismingizni kiriting'**
+  String get profileNameHint;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In uz, this message translates to:
+  /// **'Saqlash'**
+  String get profileSave;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In uz, this message translates to:
+  /// **'Saqlandi'**
+  String get profileSaved;
+
+  /// No description provided for @addressesTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzillarim'**
+  String get addressesTitle;
+
+  /// No description provided for @addressAdd.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzil qo\'shish'**
+  String get addressAdd;
+
+  /// No description provided for @addressLabelField.
+  ///
+  /// In uz, this message translates to:
+  /// **'Nomi (Uy, Ish...)'**
+  String get addressLabelField;
+
+  /// No description provided for @addressTextField.
+  ///
+  /// In uz, this message translates to:
+  /// **'To\'liq manzil'**
+  String get addressTextField;
+
+  /// No description provided for @addressDefault.
+  ///
+  /// In uz, this message translates to:
+  /// **'Standart'**
+  String get addressDefault;
+
+  /// No description provided for @addressSetDefault.
+  ///
+  /// In uz, this message translates to:
+  /// **'Standart qilish'**
+  String get addressSetDefault;
+
+  /// No description provided for @addressDelete.
+  ///
+  /// In uz, this message translates to:
+  /// **'O\'chirish'**
+  String get addressDelete;
+
+  /// No description provided for @addressNone.
+  ///
+  /// In uz, this message translates to:
+  /// **'Saqlangan manzil yo\'q'**
+  String get addressNone;
+
+  /// No description provided for @addressNew.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangi manzil'**
+  String get addressNew;
+
+  /// No description provided for @addressChoose.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilni tanlang'**
+  String get addressChoose;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

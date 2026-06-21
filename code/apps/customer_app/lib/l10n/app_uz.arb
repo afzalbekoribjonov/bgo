@@ -102,5 +102,21 @@
   "partnerNameRequired": "Ism kiritilishi shart",
   "partnerStatusPending": "Ko'rib chiqilmoqda",
   "partnerStatusApproved": "Tasdiqlandi",
-  "partnerStatusRejected": "Rad etildi"
+  "partnerStatusRejected": "Rad etildi",
+
+  "profileTitle": "Profil",
+  "profileName": "Ism familiya",
+  "profileNameHint": "Ismingizni kiriting",
+  "profileSave": "Saqlash",
+  "profileSaved": "Saqlandi",
+  "addressesTitle": "Manzillarim",
+  "addressAdd": "Manzil qo'shish",
+  "addressLabelField": "Nomi (Uy, Ish...)",
+  "addressTextField": "To'liq manzil",
+  "addressDefault": "Standart",
+  "addressSetDefault": "Standart qilish",
+  "addressDelete": "O'chirish",
+  "addressNone": "Saqlangan manzil yo'q",
+  "addressNew": "Yangi manzil",
+  "addressChoose": "Manzilni tanlang"
 }
