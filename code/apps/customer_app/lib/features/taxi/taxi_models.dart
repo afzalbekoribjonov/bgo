@@ -1,12 +1,5 @@
 // Taksi modellari — Order servisi (taxi) javobiga mos.
-
-/// Beshariq ichidagi oldindan belgilangan nuqta (xarita ulanmaguncha).
-class TaxiPlace {
-  final String label;
-  final double lat;
-  final double lng;
-  const TaxiPlace(this.label, this.lat, this.lng);
-}
+// Nuqta tipi: GeoPlace (lib/core/places.dart) — taksi va dostavka uchun umumiy.
 
 class TaxiEstimate {
   final double distanceKm;

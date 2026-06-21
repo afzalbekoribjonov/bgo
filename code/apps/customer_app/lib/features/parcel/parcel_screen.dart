@@ -5,6 +5,7 @@ import 'package:beshariq_core/beshariq_core.dart';
 import '../../core/places.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
+import '../geo/geo_api.dart';
 import 'parcel_api.dart';
 import 'parcel_models.dart';
 
@@ -114,20 +115,25 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
     return Scaffold(
       appBar: AppBar(title: Text(t.parcelTitle)),
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(myParcelsProvider),
+        onRefresh: () async {
+          ref.invalidate(myParcelsProvider);
+          ref.invalidate(placesProvider);
+        },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _placeDropdown(t.taxiFrom, Icons.my_location, _from,
+            _placeDropdown(t.taxiFrom, Icons.my_location, _from, places,
                 (p) => setState(() {
                       _from = p;
                       _estimate = null;
                     })),
             const SizedBox(height: 12),
-            _placeDropdown(t.taxiTo, Icons.location_on, _to, (p) => setState(() {
+            _placeDropdown(t.taxiTo, Icons.location_on, _to, places,
+                (p) => setState(() {
                   _to = p;
                   _estimate = null;
                 })),
@@ -209,10 +215,11 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
     String label,
     IconData icon,
     GeoPlace? value,
+    List<GeoPlace> places,
     ValueChanged<GeoPlace?> onChanged,
   ) {
     return DropdownButtonFormField<GeoPlace>(
-      value: value,
+      value: places.contains(value) ? value : null,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: label,
@@ -220,7 +227,7 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
         border: const OutlineInputBorder(),
       ),
       items: [
-        for (final p in beshariqPlaces)
+        for (final p in places)
           DropdownMenuItem(value: p, child: Text(p.label)),
       ],
       onChanged: onChanged,
