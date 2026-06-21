@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/alert_sound.dart';
 import '../../core/error_text.dart';
 import '../../core/format.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -24,6 +27,55 @@ class DeliveryBoardScreen extends ConsumerStatefulWidget {
 
 class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
   String? _busy;
+  Timer? _pollTimer;
+  int _lastAvailable = 0;
+  bool _silenced = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Onlayn bo'lsa, mavjud buyurtmalarni davriy yangilab turamiz (yangi
+    // buyurtma kelganini bilish + ovozli signal uchun).
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (!mounted || !ref.read(onlineProvider)) return;
+      ref.invalidate(availableOrdersProvider);
+      ref.invalidate(availableTaxiProvider);
+      ref.invalidate(availableParcelsProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    ref.read(alertSoundProvider).stop();
+    super.dispose();
+  }
+
+  /// Qabul bosilganda signalni jim qiladi (yangi buyurtma kelsa qayta yonadi).
+  void _silenceAlert() {
+    _silenced = true;
+    ref.read(alertSoundProvider).stop();
+  }
+
+  /// Mavjud buyurtmalar soniga qarab signalni boshqaradi.
+  void _updateAlert(int available, bool online) {
+    final alert = ref.read(alertSoundProvider);
+    if (!online || available == 0) {
+      _silenced = false;
+      _lastAvailable = available;
+      if (alert.isPlaying) alert.stop();
+      return;
+    }
+    if (available > _lastAvailable) {
+      _silenced = false; // yangi buyurtma keldi — qayta jaranglaydi
+    }
+    _lastAvailable = available;
+    if (_silenced) {
+      if (alert.isPlaying) alert.stop();
+    } else {
+      if (!alert.isPlaying) alert.start();
+    }
+  }
 
   Future<void> _run(String orderId, Future<void> Function() action) async {
     setState(() => _busy = orderId);
@@ -50,6 +102,15 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final online = ref.watch(onlineProvider);
+
+    // Uchala vertikaldagi mavjud (kutilayotgan) buyurtmalar soni — ovozli
+    // signal uchun. Providerlarni shu yerda kuzatib turamiz (har doim faol).
+    final available = (ref.watch(availableOrdersProvider).value?.length ?? 0) +
+        (ref.watch(availableTaxiProvider).value?.length ?? 0) +
+        (ref.watch(availableParcelsProvider).value?.length ?? 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateAlert(available, online);
+    });
 
     return DefaultTabController(
       length: 3,
@@ -237,8 +298,10 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             FilledButton(
               onPressed: busy
                   ? null
-                  : () => _runTaxi(
-                      tr.id, () => ref.read(taxiApiProvider).accept(tr.id)),
+                  : () {
+                      _silenceAlert();
+                      _runTaxi(tr.id, () => ref.read(taxiApiProvider).accept(tr.id));
+                    },
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
               child: busy ? const _Spinner() : Text(t.accept),
             ),
@@ -415,8 +478,10 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             FilledButton(
               onPressed: busy
                   ? null
-                  : () => _runParcel(
-                      p.id, () => ref.read(parcelApiProvider).accept(p.id)),
+                  : () {
+                      _silenceAlert();
+                      _runParcel(p.id, () => ref.read(parcelApiProvider).accept(p.id));
+                    },
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
               child: busy ? const _Spinner() : Text(t.accept),
             ),
@@ -612,7 +677,10 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             FilledButton(
               onPressed: busy
                   ? null
-                  : () => _run(o.id, () => ref.read(deliveryApiProvider).accept(o.id)),
+                  : () {
+                      _silenceAlert();
+                      _run(o.id, () => ref.read(deliveryApiProvider).accept(o.id));
+                    },
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
               child: busy ? const _Spinner() : Text(t.accept),
             ),
