@@ -12,6 +12,10 @@ export interface Tariff {
   deliveryFee: number;
   foodCommissionPercent: number;
   courierSharePercent: number;
+  taxiBaseFare: number;
+  taxiPerKm: number;
+  taxiMinFare: number;
+  taxiCommissionPercent: number;
 }
 
 export interface PromoCode {

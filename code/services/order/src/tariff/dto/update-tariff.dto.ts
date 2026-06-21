@@ -17,4 +17,25 @@ export class UpdateTariffDto {
   @Min(0)
   @Max(100)
   courierSharePercent?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  taxiBaseFare?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  taxiPerKm?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  taxiMinFare?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  taxiCommissionPercent?: number;
 }

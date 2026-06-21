@@ -41,9 +41,44 @@ model Tariff {
   deliveryFee           Int      @default(5000) // mijozdan, so'm
   foodCommissionPercent Int      @default(12) // oshxona ulushi, %
   courierSharePercent   Int      @default(80) // yetkazish narxidan haydovchi ulushi, %
+  taxiBaseFare          Int      @default(5000) // taksi boshlang'ich haq, so'm
+  taxiPerKm             Int      @default(2000) // har km uchun, so'm
+  taxiMinFare           Int      @default(8000) // minimal taksi haqi, so'm
+  taxiCommissionPercent Int      @default(15) // taksi haqidan platforma ulushi, %
   updatedAt             DateTime @updatedAt
 
   @@map("tariffs")
+}
+
+enum TaxiStatus {
+  PENDING // yaratildi, haydovchi kutilmoqda
+  ACCEPTED // haydovchi qabul qildi
+  IN_PROGRESS // yo'lovchi olindi, yo'lda
+  COMPLETED // yakunlandi
+  CANCELLED
+}
+
+/** Taksi safari (alohida — ovqat Order modelidan ajratilgan). plan/06-driver-app.md */
+model TaxiTrip {
+  id            String      @id @default(uuid())
+  publicNo      Int         @unique @default(autoincrement())
+  customerId    String
+  driverId      String? // biriktirilgan haydovchi
+  pickup        Json // { text, lat, lng }
+  destination   Json // { text, lat, lng }
+  distanceKm    Float
+  fare          Int // umumiy haq (so'm)
+  commission    Int         @default(0) // platforma ulushi
+  driverEarning Int         @default(0) // haydovchiga
+  status        TaxiStatus  @default(PENDING)
+  paymentType   PaymentType @default(CASH)
+  statusHistory Json
+  createdAt     DateTime    @default(now())
+
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+  @@map("taxi_trips")
 }
 
 enum OrderStatus {
