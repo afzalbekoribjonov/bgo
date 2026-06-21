@@ -70,6 +70,33 @@ export default function DashboardPage() {
               <Stat label="Foyda" value={formatSom(report.summary.profit)} />
               <Stat label="O'rtacha chek" value={formatSom(report.summary.avgOrder)} />
             </div>
+            {report.byVertical && (
+              <div style={{ marginTop: 16 }}>
+                <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>
+                  Yo&apos;nalish bo&apos;yicha (aylanma · foyda)
+                </div>
+                <div className="stats">
+                  <VerticalCard
+                    icon="🍽"
+                    label="Ovqat"
+                    revenue={report.byVertical.food.revenue}
+                    profit={report.byVertical.food.profit}
+                  />
+                  <VerticalCard
+                    icon="🚕"
+                    label="Taksi"
+                    revenue={report.byVertical.taxi.revenue}
+                    profit={report.byVertical.taxi.profit}
+                  />
+                  <VerticalCard
+                    icon="📦"
+                    label="Dostavka"
+                    revenue={report.byVertical.parcel.revenue}
+                    profit={report.byVertical.parcel.profit}
+                  />
+                </div>
+              </div>
+            )}
             {report.daily.length > 1 && <DailyChart report={report} />}
           </>
         )}
@@ -138,6 +165,30 @@ function Stat({ label, value }: { label: string; value: string }) {
     <div className="stat">
       <div className="label">{label}</div>
       <div className="value">{value}</div>
+    </div>
+  );
+}
+
+function VerticalCard({
+  icon,
+  label,
+  revenue,
+  profit,
+}: {
+  icon: string;
+  label: string;
+  revenue: number;
+  profit: number;
+}) {
+  return (
+    <div className="stat">
+      <div className="label">
+        {icon} {label}
+      </div>
+      <div className="value" style={{ fontSize: 18 }}>{formatSom(revenue)}</div>
+      <div className="muted" style={{ fontSize: 12 }}>
+        Foyda: {formatSom(profit)}
+      </div>
     </div>
   );
 }

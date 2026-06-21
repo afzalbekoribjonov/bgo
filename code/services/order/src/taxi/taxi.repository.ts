@@ -4,6 +4,8 @@ import { NewTaxiTrip, TaxiStatus, TaxiTrip } from './entities';
 export abstract class TaxiRepository {
   abstract create(data: NewTaxiTrip): Promise<TaxiTrip>;
   abstract findById(id: string): Promise<TaxiTrip | null>;
+  /** Barcha safarlar (admin hisobot uchun). */
+  abstract findAll(): Promise<TaxiTrip[]>;
   abstract findByCustomer(customerId: string): Promise<TaxiTrip[]>;
   abstract findByDriver(driverId: string): Promise<TaxiTrip[]>;
   /** Yangi (PENDING), hali haydovchi biriktirilmagan safarlar. */

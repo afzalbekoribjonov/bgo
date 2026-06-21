@@ -43,6 +43,13 @@ export class PrismaTaxiRepository extends TaxiRepository {
     return t ? this.toTrip(t as Row) : null;
   }
 
+  async findAll(): Promise<TaxiTrip[]> {
+    const rows = await this.prisma.taxiTrip.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((t) => this.toTrip(t as Row));
+  }
+
   async findByCustomer(customerId: string): Promise<TaxiTrip[]> {
     const rows = await this.prisma.taxiTrip.findMany({
       where: { customerId },

@@ -6,6 +6,11 @@ import {
 } from '@nestjs/common';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { haversineKm } from '../common/geo';
+import {
+  buildVerticalReport,
+  buildVerticalStats,
+  ReportPeriod,
+} from '../common/reporting';
 import { TariffService } from '../tariff/tariff.service';
 import { RequestTaxiDto } from './dto/request-taxi.dto';
 import { GeoPoint, TaxiTrip } from './entities';
@@ -77,6 +82,30 @@ export class TaxiService {
 
   listDriverTrips(driverId: string) {
     return this.repo.findByDriver(driverId);
+  }
+
+  // ---------- Admin hisobot ----------
+
+  /** Taksi davr hisoboti (admin jamlash uchun). */
+  async adminReport(period: ReportPeriod) {
+    const trips = await this.repo.findAll();
+    return buildVerticalReport(trips, period, {
+      createdAtOf: (t) => t.createdAt,
+      isDone: (t) => t.status === 'COMPLETED',
+      isCancelled: (t) => t.status === 'CANCELLED',
+      revenueOf: (t) => t.fare,
+      profitOf: (t) => t.commission,
+    });
+  }
+
+  /** Taksi umumiy statistikasi (aylanma/foyda). */
+  async adminStats() {
+    const trips = await this.repo.findAll();
+    return buildVerticalStats(trips, {
+      isDone: (t) => t.status === 'COMPLETED',
+      revenueOf: (t) => t.fare,
+      profitOf: (t) => t.commission,
+    });
   }
 
   /** Haydovchi taksi daromadi (EarningsSummary). */
