@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:customer_app/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/error_text.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import '../../widgets/language_button.dart';
 import 'auth_controller.dart';
 

@@ -1,6 +1,5 @@
 // Beshariq mijoz ilovasi — asosiy smoke testlar.
-import 'package:customer_app/core/providers.dart';
-import 'package:customer_app/core/token_storage.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import 'package:customer_app/features/restaurant/restaurant_api.dart';
 import 'package:customer_app/features/restaurant/restaurant_list_screen.dart';
 import 'package:customer_app/features/restaurant/restaurant_models.dart';

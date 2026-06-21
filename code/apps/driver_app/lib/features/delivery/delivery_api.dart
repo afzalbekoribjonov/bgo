@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import 'delivery_models.dart';
 
 /// Kuryer (courier) API'si — gateway orqali. driverId token (JWT) dan olinadi.

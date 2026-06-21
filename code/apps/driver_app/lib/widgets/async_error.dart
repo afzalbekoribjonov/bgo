@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/error_text.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import '../l10n/generated/app_localizations.dart';
 
 class AsyncErrorRetry extends StatelessWidget {

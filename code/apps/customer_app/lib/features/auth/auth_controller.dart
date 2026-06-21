@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import 'auth_api.dart';
 import 'auth_user.dart';
 

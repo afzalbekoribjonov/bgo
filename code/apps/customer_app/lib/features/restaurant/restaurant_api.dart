@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import 'restaurant_models.dart';
 
 /// Restaurant katalog API'si (gateway orqali). plan/14-api-design.md
