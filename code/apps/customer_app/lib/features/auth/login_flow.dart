@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:customer_app/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../widgets/language_button.dart';
@@ -24,6 +25,7 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
   bool _loading = false;
   String? _error;
   String? _devCode;
+  String? _telegramBotUrl;
   String _phone = '';
 
   static final _phoneRegex = RegExp(r'^\+998\d{9}$');
@@ -47,12 +49,13 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
       _error = null;
     });
     try {
-      final code =
+      final res =
           await ref.read(authControllerProvider.notifier).requestOtp(phone);
       if (!mounted) return;
       setState(() {
         _phone = phone;
-        _devCode = code;
+        _devCode = res.devCode;
+        _telegramBotUrl = res.telegramBotUrl;
         _otpStep = true;
         _loading = false;
       });
@@ -64,6 +67,13 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
             ? t.errorNetwork
             : (httpStatus(e) == 400 ? t.errorInvalidPhone : t.errorGeneric);
       });
+    }
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -160,6 +170,14 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
               t.devCodeHint(_devCode!),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+          ),
+        ],
+        if (_telegramBotUrl != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _openUrl(_telegramBotUrl!),
+            icon: const Icon(Icons.send),
+            label: Text(t.telegramFreeHint),
           ),
         ],
         const SizedBox(height: 24),

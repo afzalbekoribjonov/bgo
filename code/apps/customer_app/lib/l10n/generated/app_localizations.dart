@@ -198,6 +198,12 @@ abstract class AppLocalizations {
   /// **'Sinov rejimi — kod: {code}'**
   String devCodeHint(String code);
 
+  /// No description provided for @telegramFreeHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kodni bepul Telegram orqali oling'**
+  String get telegramFreeHint;
+
   /// No description provided for @consentTitle.
   ///
   /// In uz, this message translates to:

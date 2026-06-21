@@ -9,11 +9,16 @@ class AuthApi {
   final Dio _dio;
   AuthApi(this._dio);
 
-  /// OTP so'rash. Dev rejimda devCode qaytishi mumkin.
-  Future<String?> requestOtp(String phone) async {
+  /// OTP so'rash. Dev rejimda devCode; SMS kanal bo'lsa telegramBotUrl qaytadi.
+  Future<({String? devCode, String? telegramBotUrl})> requestOtp(
+    String phone,
+  ) async {
     final res = await _dio.post('/auth/otp/request', data: {'phone': phone});
     final data = res.data['data'] as Map<String, dynamic>?;
-    return data?['devCode'] as String?;
+    return (
+      devCode: data?['devCode'] as String?,
+      telegramBotUrl: data?['telegramBotUrl'] as String?,
+    );
   }
 
   /// OTP tasdiqlash → foydalanuvchi + tokenlar.
