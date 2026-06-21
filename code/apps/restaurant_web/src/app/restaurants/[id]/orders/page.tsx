@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alarm } from '@/lib/alarm';
 import { formatSom, getKitchenOrders, orderAction } from '@/lib/api';
 import type { Order, OrderStatus } from '@/lib/types';
 
@@ -24,6 +25,10 @@ export default function OrdersPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  const alarmRef = useRef<Alarm | null>(null);
+  const lastPendingRef = useRef(0);
+  const silencedRef = useRef(false);
+
   const load = useCallback(async () => {
     try {
       setOrders(await getKitchenOrders(rid));
@@ -34,15 +39,47 @@ export default function OrdersPage({ params }: { params: { id: string } }) {
   }, [rid]);
 
   useEffect(() => {
+    alarmRef.current = new Alarm();
+    return () => {
+      alarmRef.current?.stop();
+      alarmRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     load();
     const timer = setInterval(load, 5000);
     return () => clearInterval(timer);
   }, [load]);
 
+  // Yangi (PENDING) buyurtma kelganda signal; qabul/rad bilan jim bo'ladi.
+  useEffect(() => {
+    const alarm = alarmRef.current;
+    if (!alarm) return;
+    const pending = orders.filter((o) => o.status === 'PENDING').length;
+    if (pending === 0) {
+      silencedRef.current = false;
+      lastPendingRef.current = 0;
+      alarm.stop();
+      return;
+    }
+    if (pending > lastPendingRef.current) silencedRef.current = false; // yangi
+    lastPendingRef.current = pending;
+    if (silencedRef.current) alarm.stop();
+    else alarm.start();
+  }, [orders]);
+
+  function silenceAlarm() {
+    silencedRef.current = true;
+    alarmRef.current?.stop();
+  }
+
   async function act(
     id: string,
     action: 'accept' | 'preparing' | 'ready' | 'reject',
   ) {
+    // Qabul/rad bosilganda signalni jim qilamiz.
+    if (action === 'accept' || action === 'reject') silenceAlarm();
     setBusy(id);
     try {
       await orderAction(id, action);
