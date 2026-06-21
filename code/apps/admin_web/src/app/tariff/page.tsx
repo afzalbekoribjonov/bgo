@@ -13,6 +13,10 @@ export default function TariffPage() {
   const [taxiPerKm, setTaxiPerKm] = useState('');
   const [taxiMin, setTaxiMin] = useState('');
   const [taxiPct, setTaxiPct] = useState('');
+  const [parcelBase, setParcelBase] = useState('');
+  const [parcelPerKm, setParcelPerKm] = useState('');
+  const [parcelMin, setParcelMin] = useState('');
+  const [parcelPct, setParcelPct] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,6 +32,10 @@ export default function TariffPage() {
         setTaxiPerKm(String(t.taxiPerKm));
         setTaxiMin(String(t.taxiMinFare));
         setTaxiPct(String(t.taxiCommissionPercent));
+        setParcelBase(String(t.parcelBaseFare));
+        setParcelPerKm(String(t.parcelPerKm));
+        setParcelMin(String(t.parcelMinFare));
+        setParcelPct(String(t.parcelCommissionPercent));
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -45,6 +53,10 @@ export default function TariffPage() {
         taxiPerKm: parseInt(taxiPerKm, 10) || 0,
         taxiMinFare: parseInt(taxiMin, 10) || 0,
         taxiCommissionPercent: parseInt(taxiPct, 10) || 0,
+        parcelBaseFare: parseInt(parcelBase, 10) || 0,
+        parcelPerKm: parseInt(parcelPerKm, 10) || 0,
+        parcelMinFare: parseInt(parcelMin, 10) || 0,
+        parcelCommissionPercent: parseInt(parcelPct, 10) || 0,
       });
       setTariff(t);
       setSaved(true);
@@ -140,6 +152,35 @@ export default function TariffPage() {
           <p className="muted" style={{ marginTop: 8 }}>
             Taksi haqi = max(minimal, boshlang&apos;ich + har km × masofa). Komissiyadan
             keyin qolgani haydovchiga.
+          </p>
+          <hr style={{ margin: '16px 0', border: 0, borderTop: '1px solid var(--border, #e5e5e5)' }} />
+          <strong>📦 Dostavka tarifi</strong>
+          <label style={{ marginTop: 12 }}>Boshlang&apos;ich haq (so&apos;m)</label>
+          <input
+            value={parcelBase}
+            inputMode="numeric"
+            onChange={(e) => setParcelBase(onlyDigits(e.target.value))}
+          />
+          <label style={{ marginTop: 12 }}>Har km uchun (so&apos;m)</label>
+          <input
+            value={parcelPerKm}
+            inputMode="numeric"
+            onChange={(e) => setParcelPerKm(onlyDigits(e.target.value))}
+          />
+          <label style={{ marginTop: 12 }}>Minimal haq (so&apos;m)</label>
+          <input
+            value={parcelMin}
+            inputMode="numeric"
+            onChange={(e) => setParcelMin(onlyDigits(e.target.value))}
+          />
+          <label style={{ marginTop: 12 }}>Platforma komissiyasi (%)</label>
+          <input
+            value={parcelPct}
+            inputMode="numeric"
+            onChange={(e) => setParcelPct(onlyDigits(e.target.value))}
+          />
+          <p className="muted" style={{ marginTop: 8 }}>
+            O&apos;lcham koeffitsienti: kichik ×1, o&apos;rta ×1.3, katta ×1.6.
           </p>
           {saved && <p style={{ color: 'var(--green, green)' }}>Saqlandi ✓</p>}
           <button

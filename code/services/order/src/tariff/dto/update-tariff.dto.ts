@@ -38,4 +38,25 @@ export class UpdateTariffDto {
   @Min(0)
   @Max(100)
   taxiCommissionPercent?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  parcelBaseFare?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  parcelPerKm?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  parcelMinFare?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  parcelCommissionPercent?: number;
 }

@@ -45,6 +45,10 @@ model Tariff {
   taxiPerKm             Int      @default(2000) // har km uchun, so'm
   taxiMinFare           Int      @default(8000) // minimal taksi haqi, so'm
   taxiCommissionPercent Int      @default(15) // taksi haqidan platforma ulushi, %
+  parcelBaseFare          Int    @default(4000) // dostavka boshlang'ich haq, so'm
+  parcelPerKm             Int    @default(1500) // har km uchun, so'm
+  parcelMinFare           Int    @default(6000) // minimal dostavka haqi, so'm
+  parcelCommissionPercent Int    @default(15) // dostavka haqidan platforma ulushi, %
   updatedAt             DateTime @updatedAt
 
   @@map("tariffs")
@@ -127,4 +131,45 @@ model Order {
   @@index([restaurantId])
   @@index([driverId])
   @@map("orders")
+}
+
+enum ParcelStatus {
+  PENDING // yaratildi, kuryer kutilmoqda
+  ACCEPTED // kuryer qabul qildi
+  PICKED_UP // jo'natuvchidan olindi
+  DELIVERED // qabul qiluvchiga yetkazildi
+  CANCELLED
+}
+
+enum ParcelSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+/** Dostavka (pochta/posilka) — alohida model. plan/06-driver-app.md */
+model ParcelDelivery {
+  id             String       @id @default(uuid())
+  publicNo       Int          @unique @default(autoincrement())
+  customerId     String
+  driverId       String? // biriktirilgan kuryer
+  pickup         Json // { text, lat, lng }
+  destination    Json // { text, lat, lng }
+  distanceKm     Float
+  size           ParcelSize   @default(SMALL)
+  recipientName  String
+  recipientPhone String
+  note           String?
+  fare           Int
+  commission     Int          @default(0)
+  driverEarning  Int          @default(0)
+  status         ParcelStatus @default(PENDING)
+  paymentType    PaymentType  @default(CASH)
+  statusHistory  Json
+  createdAt      DateTime     @default(now())
+
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+  @@map("parcel_deliveries")
 }

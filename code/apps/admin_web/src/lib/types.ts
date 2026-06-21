@@ -16,6 +16,10 @@ export interface Tariff {
   taxiPerKm: number;
   taxiMinFare: number;
   taxiCommissionPercent: number;
+  parcelBaseFare: number;
+  parcelPerKm: number;
+  parcelMinFare: number;
+  parcelCommissionPercent: number;
 }
 
 export interface PromoCode {

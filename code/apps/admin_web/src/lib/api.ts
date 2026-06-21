@@ -102,6 +102,10 @@ export const updateTariff = (body: {
   taxiPerKm: number;
   taxiMinFare: number;
   taxiCommissionPercent: number;
+  parcelBaseFare: number;
+  parcelPerKm: number;
+  parcelMinFare: number;
+  parcelCommissionPercent: number;
 }) =>
   api<Tariff>('/admin/tariff', {
     method: 'PUT',
