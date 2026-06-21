@@ -15,6 +15,38 @@ enum OrderType {
   DELIVERY
 }
 
+/** Xizmat hududi (tuman) — admin boshqaradi, kengaytiriladi. plan/12-maps-navigation.md */
+model ServiceArea {
+  id        String   @id @default(uuid())
+  name      String // "Beshariq tumani"
+  centerLat Float
+  centerLng Float
+  boundary  Json // GeoJSON Polygon koordinatalari: [[[lng,lat],...]]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  places Place[]
+
+  @@map("service_areas")
+}
+
+/** Hududdagi nomli joy (xaritada marker). */
+model Place {
+  id        String      @id @default(uuid())
+  areaId    String
+  area      ServiceArea @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  label     String
+  lat       Float
+  lng       Float
+  category  String? // "landmark", "mahalla", ...
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+
+  @@index([areaId])
+  @@map("places")
+}
+
 enum PromoType {
   PERCENT
   FIXED
