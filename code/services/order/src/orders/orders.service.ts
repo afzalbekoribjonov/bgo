@@ -8,8 +8,40 @@ import { PromoService } from '../promo/promo.service';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TariffService } from '../tariff/tariff.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { Order, OrderItem } from './entities';
+import { Order, OrderItem, OrderStatus } from './entities';
 import { OrderRepository } from './order.repository';
+
+export type ReportPeriod = 'today' | 'week' | 'month';
+
+/** Yakuniy (muvaffaqiyatli yopilgan) holatlar — aylanma/foyda shulardan. */
+const TERMINAL_STATUSES: OrderStatus[] = ['DELIVERED', 'COMPLETED'];
+/** Bekor qilingan holatlar. */
+const CANCELLED_STATUSES: OrderStatus[] = ['CANCELLED', 'FAILED'];
+
+/** Mahalliy (TZ) sana kaliti YYYY-MM-DD. */
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Sana chegarasini ms'ga aylantiradi. Faqat sana (YYYY-MM-DD) berilsa,
+ * 'start' = kun boshi, 'end' = kun oxiri (mahalliy vaqt).
+ */
+function parseDayBoundary(
+  value: string | undefined,
+  edge: 'start' | 'end',
+): number | undefined {
+  if (!value) return undefined;
+  const iso =
+    value.length === 10
+      ? `${value}T${edge === 'start' ? '00:00:00.000' : '23:59:59.999'}`
+      : value;
+  const ts = new Date(iso).getTime();
+  return Number.isNaN(ts) ? undefined : ts;
+}
 
 @Injectable()
 export class OrdersService {
@@ -135,10 +167,14 @@ export class OrdersService {
   // ---------- Admin / hisobot ----------
   // TODO(admin auth): admin roli JWT. Hozir ochiq (dev).
 
+  /** Buyurtma foydasi = komissiya + (yetkazish − kuryer ulushi) − chegirma. */
+  private orderProfit(o: Order): number {
+    return o.commission + (o.deliveryFee - o.courierEarning) - o.discount;
+  }
+
   async adminStats() {
     const orders = await this.repo.findAll();
-    const terminal = ['DELIVERED', 'COMPLETED'];
-    const closed = [...terminal, 'CANCELLED', 'FAILED'];
+    const closed = [...TERMINAL_STATUSES, ...CANCELLED_STATUSES];
 
     const byStatus: Record<string, number> = {};
     let revenue = 0;
@@ -149,10 +185,9 @@ export class OrdersService {
 
     for (const o of orders) {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
-      if (terminal.includes(o.status)) {
+      if (TERMINAL_STATUSES.includes(o.status)) {
         revenue += o.total;
-        // bizning foyda = komissiya + (yetkazish - kuryer ulushi) - chegirma
-        profit += o.commission + (o.deliveryFee - o.courierEarning) - o.discount;
+        profit += this.orderProfit(o);
       }
       if (new Date(o.createdAt) >= startOfDay) today += 1;
     }
@@ -167,13 +202,103 @@ export class OrdersService {
     };
   }
 
-  async adminListOrders(filter: { status?: string; type?: string }) {
+  /** Davr hisoboti (bugun/hafta/oy) — xulosa + kunlik time-series. */
+  async adminReport(period: ReportPeriod) {
     const orders = await this.repo.findAll();
-    return orders.filter(
-      (o) =>
-        (!filter.status || o.status === filter.status) &&
-        (!filter.type || o.type === filter.type),
-    );
+    const days = period === 'today' ? 1 : period === 'week' ? 7 : 30;
+
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+    from.setDate(from.getDate() - (days - 1));
+    const fromTs = from.getTime();
+
+    // Kunlik chelaklarni oldindan to'ldiramiz (bo'sh kunlar ham ko'rinadi)
+    const daily = new Map<
+      string,
+      { date: string; orders: number; revenue: number; profit: number }
+    >();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(from);
+      d.setDate(from.getDate() + i);
+      const key = localDateKey(d);
+      daily.set(key, { date: key, orders: 0, revenue: 0, profit: 0 });
+    }
+
+    let totalOrders = 0;
+    let delivered = 0;
+    let cancelled = 0;
+    let revenue = 0;
+    let profit = 0;
+
+    for (const o of orders) {
+      if (new Date(o.createdAt).getTime() < fromTs) continue;
+      totalOrders += 1;
+      const bucket = daily.get(localDateKey(new Date(o.createdAt)));
+      if (bucket) bucket.orders += 1;
+      if (TERMINAL_STATUSES.includes(o.status)) {
+        delivered += 1;
+        const p = this.orderProfit(o);
+        revenue += o.total;
+        profit += p;
+        if (bucket) {
+          bucket.revenue += o.total;
+          bucket.profit += p;
+        }
+      } else if (CANCELLED_STATUSES.includes(o.status)) {
+        cancelled += 1;
+      }
+    }
+
+    return {
+      period,
+      from: from.toISOString(),
+      to: new Date().toISOString(),
+      summary: {
+        totalOrders,
+        delivered,
+        cancelled,
+        revenue,
+        profit,
+        avgOrder: delivered > 0 ? Math.round(revenue / delivered) : 0,
+      },
+      daily: Array.from(daily.values()),
+    };
+  }
+
+  async adminListOrders(filter: {
+    status?: string;
+    type?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+    sort?: 'createdAt' | 'total';
+    order?: 'asc' | 'desc';
+  }) {
+    const fromTs = parseDayBoundary(filter.from, 'start');
+    const toTs = parseDayBoundary(filter.to, 'end');
+    const q = filter.q?.trim().toLowerCase();
+
+    const filtered = (await this.repo.findAll()).filter((o) => {
+      if (filter.status && o.status !== filter.status) return false;
+      if (filter.type && o.type !== filter.type) return false;
+      const ts = new Date(o.createdAt).getTime();
+      if (fromTs !== undefined && ts < fromTs) return false;
+      if (toTs !== undefined && ts > toTs) return false;
+      if (q) {
+        const hay = `${o.publicNo} ${o.address?.text ?? ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const sortKey = filter.sort ?? 'createdAt';
+    const dir = filter.order === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      const av = sortKey === 'total' ? a.total : new Date(a.createdAt).getTime();
+      const bv = sortKey === 'total' ? b.total : new Date(b.createdAt).getTime();
+      return (av - bv) * dir;
+    });
+    return filtered;
   }
 
   // ---------- Kuryer (courier) ----------

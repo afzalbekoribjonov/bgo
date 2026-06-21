@@ -17,7 +17,7 @@ import { CreatePromoDto, UpdatePromoDto } from '../promo/dto/promo.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { OrdersService } from './orders.service';
+import { OrdersService, ReportPeriod } from './orders.service';
 
 /**
  * Admin / hisobot endpointlari (buyurtmalar + tarif). plan/08-admin-workspace.md
@@ -71,14 +71,37 @@ export class AdminController {
     return { success: true, data: await this.orders.adminStats() };
   }
 
+  /** Davr hisoboti: ?period=today|week|month (standart: today). */
+  @Get('reports')
+  async reports(@Query('period') period?: string) {
+    const valid: ReportPeriod[] = ['today', 'week', 'month'];
+    const p = valid.includes(period as ReportPeriod)
+      ? (period as ReportPeriod)
+      : 'today';
+    return { success: true, data: await this.orders.adminReport(p) };
+  }
+
   @Get('orders')
   async list(
     @Query('status') status?: string,
     @Query('type') type?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('q') q?: string,
+    @Query('sort') sort?: string,
+    @Query('order') order?: string,
   ) {
     return {
       success: true,
-      data: await this.orders.adminListOrders({ status, type }),
+      data: await this.orders.adminListOrders({
+        status,
+        type,
+        from,
+        to,
+        q,
+        sort: sort === 'total' ? 'total' : 'createdAt',
+        order: order === 'asc' ? 'asc' : 'desc',
+      }),
     };
   }
 }
