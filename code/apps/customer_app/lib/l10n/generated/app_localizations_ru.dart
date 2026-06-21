@@ -208,4 +208,61 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get promoInvalid => 'Промокод недействителен';
+
+  @override
+  String get partnerTitle => 'Партнёрство';
+
+  @override
+  String get partnerBanner => 'Станьте нашим партнёром';
+
+  @override
+  String get partnerBannerSubtitle => 'Оставьте заявку как ресторан или водитель';
+
+  @override
+  String get partnerFormTitle => 'Заявка на партнёрство';
+
+  @override
+  String get partnerFullName => 'Ф.И.О.';
+
+  @override
+  String get partnerFullNameHint => 'Ваше имя и фамилия';
+
+  @override
+  String get partnerType => 'Тип партнёрства';
+
+  @override
+  String get partnerTypeRestaurant => 'Ресторан';
+
+  @override
+  String get partnerTypeDriver => 'Водитель';
+
+  @override
+  String get partnerNote => 'Примечание (необязательно)';
+
+  @override
+  String get partnerNoteHint => 'Дополнительная информация';
+
+  @override
+  String get partnerSubmit => 'Отправить заявку';
+
+  @override
+  String get partnerSubmitted => 'Ваша заявка принята';
+
+  @override
+  String get partnerMyApplications => 'Мои заявки';
+
+  @override
+  String get partnerNoApplications => 'Заявок пока нет';
+
+  @override
+  String get partnerNameRequired => 'Введите имя';
+
+  @override
+  String get partnerStatusPending => 'На рассмотрении';
+
+  @override
+  String get partnerStatusApproved => 'Одобрено';
+
+  @override
+  String get partnerStatusRejected => 'Отклонено';
 }

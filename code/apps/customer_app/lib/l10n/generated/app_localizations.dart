@@ -485,6 +485,120 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Promokod yaroqsiz'**
   String get promoInvalid;
+
+  /// No description provided for @partnerTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hamkorlik'**
+  String get partnerTitle;
+
+  /// No description provided for @partnerBanner.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bizga hamkor bo\'ling'**
+  String get partnerBanner;
+
+  /// No description provided for @partnerBannerSubtitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oshxona yoki haydovchi sifatida ariza qoldiring'**
+  String get partnerBannerSubtitle;
+
+  /// No description provided for @partnerFormTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hamkorlik arizasi'**
+  String get partnerFormTitle;
+
+  /// No description provided for @partnerFullName.
+  ///
+  /// In uz, this message translates to:
+  /// **'F.I.Sh.'**
+  String get partnerFullName;
+
+  /// No description provided for @partnerFullNameHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ism familiyangiz'**
+  String get partnerFullNameHint;
+
+  /// No description provided for @partnerType.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hamkorlik turi'**
+  String get partnerType;
+
+  /// No description provided for @partnerTypeRestaurant.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oshxona'**
+  String get partnerTypeRestaurant;
+
+  /// No description provided for @partnerTypeDriver.
+  ///
+  /// In uz, this message translates to:
+  /// **'Haydovchi'**
+  String get partnerTypeDriver;
+
+  /// No description provided for @partnerNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Izoh (ixtiyoriy)'**
+  String get partnerNote;
+
+  /// No description provided for @partnerNoteHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qo\'shimcha ma\'lumot'**
+  String get partnerNoteHint;
+
+  /// No description provided for @partnerSubmit.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ariza yuborish'**
+  String get partnerSubmit;
+
+  /// No description provided for @partnerSubmitted.
+  ///
+  /// In uz, this message translates to:
+  /// **'Arizangiz qabul qilindi'**
+  String get partnerSubmitted;
+
+  /// No description provided for @partnerMyApplications.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mening arizalarim'**
+  String get partnerMyApplications;
+
+  /// No description provided for @partnerNoApplications.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hali ariza yo\'q'**
+  String get partnerNoApplications;
+
+  /// No description provided for @partnerNameRequired.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ism kiritilishi shart'**
+  String get partnerNameRequired;
+
+  /// No description provided for @partnerStatusPending.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ko\'rib chiqilmoqda'**
+  String get partnerStatusPending;
+
+  /// No description provided for @partnerStatusApproved.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tasdiqlandi'**
+  String get partnerStatusApproved;
+
+  /// No description provided for @partnerStatusRejected.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rad etildi'**
+  String get partnerStatusRejected;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

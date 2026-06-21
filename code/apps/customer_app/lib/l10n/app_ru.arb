@@ -70,5 +70,25 @@
   "promoLabel": "Промокод",
   "promoHint": "Если есть",
   "discountLabel": "Скидка",
-  "promoInvalid": "Промокод недействителен"
+  "promoInvalid": "Промокод недействителен",
+
+  "partnerTitle": "Партнёрство",
+  "partnerBanner": "Станьте нашим партнёром",
+  "partnerBannerSubtitle": "Оставьте заявку как ресторан или водитель",
+  "partnerFormTitle": "Заявка на партнёрство",
+  "partnerFullName": "Ф.И.О.",
+  "partnerFullNameHint": "Ваше имя и фамилия",
+  "partnerType": "Тип партнёрства",
+  "partnerTypeRestaurant": "Ресторан",
+  "partnerTypeDriver": "Водитель",
+  "partnerNote": "Примечание (необязательно)",
+  "partnerNoteHint": "Дополнительная информация",
+  "partnerSubmit": "Отправить заявку",
+  "partnerSubmitted": "Ваша заявка принята",
+  "partnerMyApplications": "Мои заявки",
+  "partnerNoApplications": "Заявок пока нет",
+  "partnerNameRequired": "Введите имя",
+  "partnerStatusPending": "На рассмотрении",
+  "partnerStatusApproved": "Одобрено",
+  "partnerStatusRejected": "Отклонено"
 }
