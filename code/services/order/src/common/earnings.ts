@@ -1,0 +1,52 @@
+/** Haydovchi daromadi xulosasi (bitta vertikal bo'yicha). */
+export interface EarningsSummary {
+  count: number; // yakunlangan ishlar soni
+  earning: number; // jami daromad (so'm)
+  todayEarning: number; // bugungi daromad (so'm)
+  activeCount: number; // hozir bajarilayotgan ishlar
+}
+
+/**
+ * Ish ro'yxatidan daromad xulosasini hisoblaydi.
+ * isDone — yakunlangan (pul sanaladigan), isActive — hozir bajarilayotgan.
+ */
+export function summarizeEarnings<T>(
+  items: T[],
+  isDone: (i: T) => boolean,
+  isActive: (i: T) => boolean,
+  earningOf: (i: T) => number,
+  createdAtOf: (i: T) => string,
+): EarningsSummary {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  let count = 0;
+  let earning = 0;
+  let todayEarning = 0;
+  let activeCount = 0;
+
+  for (const item of items) {
+    if (isDone(item)) {
+      count += 1;
+      const e = earningOf(item);
+      earning += e;
+      if (new Date(createdAtOf(item)) >= todayStart) todayEarning += e;
+    } else if (isActive(item)) {
+      activeCount += 1;
+    }
+  }
+  return { count, earning, todayEarning, activeCount };
+}
+
+/** Bir nechta vertikal xulosasini jamlaydi. */
+export function combineEarnings(parts: EarningsSummary[]): EarningsSummary {
+  return parts.reduce(
+    (acc, p) => ({
+      count: acc.count + p.count,
+      earning: acc.earning + p.earning,
+      todayEarning: acc.todayEarning + p.todayEarning,
+      activeCount: acc.activeCount + p.activeCount,
+    }),
+    { count: 0, earning: 0, todayEarning: 0, activeCount: 0 },
+  );
+}

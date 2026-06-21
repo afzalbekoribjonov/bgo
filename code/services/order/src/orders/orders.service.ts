@@ -7,6 +7,7 @@ import {
 import { PromoService } from '../promo/promo.service';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TariffService } from '../tariff/tariff.service';
+import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order, OrderItem, OrderStatus } from './entities';
 import { OrderRepository } from './order.repository';
@@ -320,28 +321,16 @@ export class OrdersService {
   }
 
   /** Haydovchi daromadi — yetkazilgan buyurtmalar bo'yicha. */
-  async driverEarnings(driverId: string) {
+  /** Haydovchi ovqat yetkazish daromadi (EarningsSummary). */
+  async driverEarnings(driverId: string): Promise<EarningsSummary> {
     const orders = await this.repo.findByDriver(driverId);
-    const delivered = orders.filter((o) => o.status === 'DELIVERED');
-    const totalEarning = delivered.reduce((sum, o) => sum + o.courierEarning, 0);
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayDelivered = delivered.filter(
-      (o) => new Date(o.createdAt) >= todayStart,
+    return summarizeEarnings(
+      orders,
+      (o) => o.status === 'DELIVERED',
+      (o) => ['ASSIGNED', 'PICKED_UP'].includes(o.status),
+      (o) => o.courierEarning,
+      (o) => o.createdAt,
     );
-    const todayEarning = todayDelivered.reduce(
-      (sum, o) => sum + o.courierEarning,
-      0,
-    );
-    return {
-      deliveredCount: delivered.length,
-      totalEarning,
-      todayDeliveredCount: todayDelivered.length,
-      todayEarning,
-      activeCount: orders.filter((o) =>
-        ['ASSIGNED', 'PICKED_UP'].includes(o.status),
-      ).length,
-    };
   }
 
   /** Haydovchi yetkazishni qabul qiladi (READY -> ASSIGNED). */

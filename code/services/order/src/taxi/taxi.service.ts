@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { haversineKm } from '../common/geo';
 import { TariffService } from '../tariff/tariff.service';
 import { RequestTaxiDto } from './dto/request-taxi.dto';
@@ -76,6 +77,18 @@ export class TaxiService {
 
   listDriverTrips(driverId: string) {
     return this.repo.findByDriver(driverId);
+  }
+
+  /** Haydovchi taksi daromadi (EarningsSummary). */
+  async driverEarnings(driverId: string): Promise<EarningsSummary> {
+    const trips = await this.repo.findByDriver(driverId);
+    return summarizeEarnings(
+      trips,
+      (t) => t.status === 'COMPLETED',
+      (t) => ['ACCEPTED', 'IN_PROGRESS'].includes(t.status),
+      (t) => t.driverEarning,
+      (t) => t.createdAt,
+    );
   }
 
   /** Haydovchi qabul qiladi (PENDING -> ACCEPTED). */

@@ -33,29 +33,51 @@ class DeliveryOrder {
   }
 }
 
-/// Haydovchi daromadi — /courier/earnings javobi.
-class DriverEarnings {
-  final int deliveredCount;
-  final int totalEarning;
-  final int todayDeliveredCount;
+/// Bitta vertikal daromadi xulosasi.
+class EarningsPart {
+  final int count;
+  final int earning;
   final int todayEarning;
   final int activeCount;
 
-  const DriverEarnings({
-    required this.deliveredCount,
-    required this.totalEarning,
-    required this.todayDeliveredCount,
+  const EarningsPart({
+    required this.count,
+    required this.earning,
     required this.todayEarning,
     required this.activeCount,
   });
 
+  factory EarningsPart.fromJson(Map<String, dynamic>? json) {
+    final j = json ?? const {};
+    return EarningsPart(
+      count: (j['count'] as num?)?.toInt() ?? 0,
+      earning: (j['earning'] as num?)?.toInt() ?? 0,
+      todayEarning: (j['todayEarning'] as num?)?.toInt() ?? 0,
+      activeCount: (j['activeCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// Haydovchi daromadi — /courier/earnings javobi (uchala vertikal).
+class DriverEarnings {
+  final EarningsPart food;
+  final EarningsPart taxi;
+  final EarningsPart parcel;
+  final EarningsPart total;
+
+  const DriverEarnings({
+    required this.food,
+    required this.taxi,
+    required this.parcel,
+    required this.total,
+  });
+
   factory DriverEarnings.fromJson(Map<String, dynamic> json) {
     return DriverEarnings(
-      deliveredCount: (json['deliveredCount'] as num?)?.toInt() ?? 0,
-      totalEarning: (json['totalEarning'] as num?)?.toInt() ?? 0,
-      todayDeliveredCount: (json['todayDeliveredCount'] as num?)?.toInt() ?? 0,
-      todayEarning: (json['todayEarning'] as num?)?.toInt() ?? 0,
-      activeCount: (json['activeCount'] as num?)?.toInt() ?? 0,
+      food: EarningsPart.fromJson(json['food'] as Map<String, dynamic>?),
+      taxi: EarningsPart.fromJson(json['taxi'] as Map<String, dynamic>?),
+      parcel: EarningsPart.fromJson(json['parcel'] as Map<String, dynamic>?),
+      total: EarningsPart.fromJson(json['total'] as Map<String, dynamic>?),
     );
   }
 }

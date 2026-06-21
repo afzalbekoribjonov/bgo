@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { GeoPoint, haversineKm } from '../common/geo';
 import { TariffService } from '../tariff/tariff.service';
 import { EstimateParcelDto, RequestParcelDto } from './dto/request-parcel.dto';
@@ -88,6 +89,18 @@ export class ParcelService {
 
   listDriverParcels(driverId: string) {
     return this.repo.findByDriver(driverId);
+  }
+
+  /** Kuryer dostavka daromadi (EarningsSummary). */
+  async driverEarnings(driverId: string): Promise<EarningsSummary> {
+    const parcels = await this.repo.findByDriver(driverId);
+    return summarizeEarnings(
+      parcels,
+      (p) => p.status === 'DELIVERED',
+      (p) => ['ACCEPTED', 'PICKED_UP'].includes(p.status),
+      (p) => p.driverEarning,
+      (p) => p.createdAt,
+    );
   }
 
   /** Kuryer qabul qiladi (PENDING -> ACCEPTED). */

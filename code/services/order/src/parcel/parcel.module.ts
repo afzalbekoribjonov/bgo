@@ -20,5 +20,6 @@ import { PrismaParcelRepository } from './prisma-parcel.repository';
     RolesGuard,
     { provide: ParcelRepository, useClass: PrismaParcelRepository },
   ],
+  exports: [ParcelService],
 })
 export class ParcelModule {}
