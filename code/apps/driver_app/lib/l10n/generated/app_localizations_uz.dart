@@ -116,6 +116,46 @@ class AppLocalizationsUz extends AppLocalizations {
   String get yourEarning => 'Daromad';
 
   @override
+  String get deliveryTab => 'Yetkazish';
+
+  @override
+  String get taxiTab => 'Taksi';
+
+  @override
+  String get taxiAvailableTitle => 'Mavjud safarlar';
+
+  @override
+  String get taxiMyTripsTitle => 'Mening safarlarim';
+
+  @override
+  String get taxiNoAvailable => 'Hozircha safar yo\'q';
+
+  @override
+  String get taxiNoActive => 'Faol safar yo\'q';
+
+  @override
+  String get taxiStart => 'Yo\'lovchini oldim';
+
+  @override
+  String get taxiComplete => 'Yakunlash';
+
+  @override
+  String taxiTripNo(String no) {
+    return 'Safar #$no';
+  }
+
+  @override
+  String taxiKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String get taxiStatusAccepted => 'Qabul qilindi';
+
+  @override
+  String get taxiStatusInProgress => 'Yo\'lda';
+
+  @override
   String get errorInvalidPhone => 'Telefon raqami noto\'g\'ri (+998XXXXXXXXX)';
 
   @override
@@ -243,6 +283,46 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get yourEarning => 'Даромад';
+
+  @override
+  String get deliveryTab => 'Етказиш';
+
+  @override
+  String get taxiTab => 'Такси';
+
+  @override
+  String get taxiAvailableTitle => 'Мавжуд сафарлар';
+
+  @override
+  String get taxiMyTripsTitle => 'Менинг сафарларим';
+
+  @override
+  String get taxiNoAvailable => 'Ҳозирча сафар йўқ';
+
+  @override
+  String get taxiNoActive => 'Фаол сафар йўқ';
+
+  @override
+  String get taxiStart => 'Йўловчини олдим';
+
+  @override
+  String get taxiComplete => 'Якунлаш';
+
+  @override
+  String taxiTripNo(String no) {
+    return 'Сафар #$no';
+  }
+
+  @override
+  String taxiKm(String km) {
+    return '$km км';
+  }
+
+  @override
+  String get taxiStatusAccepted => 'Қабул қилинди';
+
+  @override
+  String get taxiStatusInProgress => 'Йўлда';
 
   @override
   String get errorInvalidPhone => 'Телефон рақами нотўғри (+998XXXXXXXXX)';

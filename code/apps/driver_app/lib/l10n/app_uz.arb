@@ -52,6 +52,25 @@
   },
   "yourEarning": "Daromad",
 
+  "deliveryTab": "Yetkazish",
+  "taxiTab": "Taksi",
+  "taxiAvailableTitle": "Mavjud safarlar",
+  "taxiMyTripsTitle": "Mening safarlarim",
+  "taxiNoAvailable": "Hozircha safar yo'q",
+  "taxiNoActive": "Faol safar yo'q",
+  "taxiStart": "Yo'lovchini oldim",
+  "taxiComplete": "Yakunlash",
+  "taxiTripNo": "Safar #{no}",
+  "@taxiTripNo": {
+    "placeholders": { "no": { "type": "String" } }
+  },
+  "taxiKm": "{km} km",
+  "@taxiKm": {
+    "placeholders": { "km": { "type": "String" } }
+  },
+  "taxiStatusAccepted": "Qabul qilindi",
+  "taxiStatusInProgress": "Yo'lda",
+
   "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
   "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
   "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",

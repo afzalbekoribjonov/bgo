@@ -116,6 +116,46 @@ class AppLocalizationsRu extends AppLocalizations {
   String get yourEarning => 'Доход';
 
   @override
+  String get deliveryTab => 'Доставка';
+
+  @override
+  String get taxiTab => 'Такси';
+
+  @override
+  String get taxiAvailableTitle => 'Доступные поездки';
+
+  @override
+  String get taxiMyTripsTitle => 'Мои поездки';
+
+  @override
+  String get taxiNoAvailable => 'Поездок пока нет';
+
+  @override
+  String get taxiNoActive => 'Нет активных поездок';
+
+  @override
+  String get taxiStart => 'Пассажир в машине';
+
+  @override
+  String get taxiComplete => 'Завершить';
+
+  @override
+  String taxiTripNo(String no) {
+    return 'Поездка #$no';
+  }
+
+  @override
+  String taxiKm(String km) {
+    return '$km км';
+  }
+
+  @override
+  String get taxiStatusAccepted => 'Принята';
+
+  @override
+  String get taxiStatusInProgress => 'В пути';
+
+  @override
   String get errorInvalidPhone => 'Неверный номер телефона (+998XXXXXXXXX)';
 
   @override
