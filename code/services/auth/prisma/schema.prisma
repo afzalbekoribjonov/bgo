@@ -50,6 +50,17 @@ enum PartnerStatus {
   REJECTED
 }
 
+/** Telefon ↔ Telegram chat bog'lanishi (OTP'ni bot orqali yuborish uchun). */
+model TelegramLink {
+  phone     String   @id // +998...
+  chatId    String // Telegram chat/user id
+  username  String? // @username (ixtiyoriy)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("telegram_links")
+}
+
 /** Hamkorlik arizasi (oshxona/haydovchi). plan/08-admin-workspace.md */
 model PartnerApplication {
   id        String        @id @default(uuid())
