@@ -6,6 +6,10 @@ export interface Tariff {
   deliveryFee: number;
   foodCommissionPercent: number;
   courierSharePercent: number;
+  taxiBaseFare: number;
+  taxiPerKm: number;
+  taxiMinFare: number;
+  taxiCommissionPercent: number;
 }
 
 /**
@@ -28,6 +32,10 @@ export class TariffService {
       deliveryFee: t.deliveryFee,
       foodCommissionPercent: t.foodCommissionPercent,
       courierSharePercent: t.courierSharePercent,
+      taxiBaseFare: t.taxiBaseFare,
+      taxiPerKm: t.taxiPerKm,
+      taxiMinFare: t.taxiMinFare,
+      taxiCommissionPercent: t.taxiCommissionPercent,
     };
   }
 
@@ -35,6 +43,10 @@ export class TariffService {
     deliveryFee?: number;
     foodCommissionPercent?: number;
     courierSharePercent?: number;
+    taxiBaseFare?: number;
+    taxiPerKm?: number;
+    taxiMinFare?: number;
+    taxiCommissionPercent?: number;
   }): Promise<Tariff> {
     const t = await this.prisma.tariff.upsert({
       where: { id: 'default' },
@@ -46,6 +58,10 @@ export class TariffService {
       deliveryFee: t.deliveryFee,
       foodCommissionPercent: t.foodCommissionPercent,
       courierSharePercent: t.courierSharePercent,
+      taxiBaseFare: t.taxiBaseFare,
+      taxiPerKm: t.taxiPerKm,
+      taxiMinFare: t.taxiMinFare,
+      taxiCommissionPercent: t.taxiCommissionPercent,
     };
   }
 }

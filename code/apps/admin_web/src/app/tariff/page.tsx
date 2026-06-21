@@ -9,6 +9,10 @@ export default function TariffPage() {
   const [fee, setFee] = useState('');
   const [pct, setPct] = useState('');
   const [courierPct, setCourierPct] = useState('');
+  const [taxiBase, setTaxiBase] = useState('');
+  const [taxiPerKm, setTaxiPerKm] = useState('');
+  const [taxiMin, setTaxiMin] = useState('');
+  const [taxiPct, setTaxiPct] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,6 +24,10 @@ export default function TariffPage() {
         setFee(String(t.deliveryFee));
         setPct(String(t.foodCommissionPercent));
         setCourierPct(String(t.courierSharePercent));
+        setTaxiBase(String(t.taxiBaseFare));
+        setTaxiPerKm(String(t.taxiPerKm));
+        setTaxiMin(String(t.taxiMinFare));
+        setTaxiPct(String(t.taxiCommissionPercent));
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -33,6 +41,10 @@ export default function TariffPage() {
         deliveryFee: parseInt(fee, 10) || 0,
         foodCommissionPercent: parseInt(pct, 10) || 0,
         courierSharePercent: parseInt(courierPct, 10) || 0,
+        taxiBaseFare: parseInt(taxiBase, 10) || 0,
+        taxiPerKm: parseInt(taxiPerKm, 10) || 0,
+        taxiMinFare: parseInt(taxiMin, 10) || 0,
+        taxiCommissionPercent: parseInt(taxiPct, 10) || 0,
       });
       setTariff(t);
       setSaved(true);
@@ -42,6 +54,8 @@ export default function TariffPage() {
       setLoading(false);
     }
   }
+
+  const onlyDigits = (v: string) => v.replace(/[^0-9]/g, '');
 
   // Tarif tushuntirishi (jonli hisob)
   const feeNum = parseInt(fee, 10) || 0;
@@ -97,6 +111,36 @@ export default function TariffPage() {
             so&apos;m, bizning yetkazish foydasi{' '}
             <b>{deliveryProfit.toLocaleString('ru-RU')}</b> so&apos;m.
           </div>
+          <hr style={{ margin: '16px 0', border: 0, borderTop: '1px solid var(--border, #e5e5e5)' }} />
+          <strong>🚕 Taksi tarifi</strong>
+          <label style={{ marginTop: 12 }}>Boshlang&apos;ich haq (so&apos;m)</label>
+          <input
+            value={taxiBase}
+            inputMode="numeric"
+            onChange={(e) => setTaxiBase(onlyDigits(e.target.value))}
+          />
+          <label style={{ marginTop: 12 }}>Har km uchun (so&apos;m)</label>
+          <input
+            value={taxiPerKm}
+            inputMode="numeric"
+            onChange={(e) => setTaxiPerKm(onlyDigits(e.target.value))}
+          />
+          <label style={{ marginTop: 12 }}>Minimal haq (so&apos;m)</label>
+          <input
+            value={taxiMin}
+            inputMode="numeric"
+            onChange={(e) => setTaxiMin(onlyDigits(e.target.value))}
+          />
+          <label style={{ marginTop: 12 }}>Platforma komissiyasi (%)</label>
+          <input
+            value={taxiPct}
+            inputMode="numeric"
+            onChange={(e) => setTaxiPct(onlyDigits(e.target.value))}
+          />
+          <p className="muted" style={{ marginTop: 8 }}>
+            Taksi haqi = max(minimal, boshlang&apos;ich + har km × masofa). Komissiyadan
+            keyin qolgani haydovchiga.
+          </p>
           {saved && <p style={{ color: 'var(--green, green)' }}>Saqlandi ✓</p>}
           <button
             className="btn"
