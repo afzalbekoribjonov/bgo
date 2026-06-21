@@ -148,6 +148,13 @@ export class OrdersService {
     return this.repo.findByRestaurant(restaurantId);
   }
 
+  /** Buyurtmaning oshxonasi (egalik tekshiruvi uchun). */
+  async restaurantIdOf(id: string): Promise<string> {
+    const order = await this.repo.findById(id);
+    if (!order) throw new NotFoundException('Buyurtma topilmadi');
+    return order.restaurantId;
+  }
+
   acceptByRestaurant(id: string) {
     return this.transition(id, ['PENDING'], 'ACCEPTED');
   }

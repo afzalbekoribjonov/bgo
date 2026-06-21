@@ -33,6 +33,8 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
 // Katalog
 export const getRestaurants = () => api<Restaurant[]>('/restaurants');
 export const getRestaurant = (id: string) => api<Restaurant>(`/restaurants/${id}`);
+/** Joriy foydalanuvchining (egalik) oshxonalari. */
+export const getMyRestaurants = () => api<Restaurant[]>('/restaurants/mine');
 
 // Oshxona buyurtmalari (kitchen)
 export const getKitchenOrders = (rid: string) =>
