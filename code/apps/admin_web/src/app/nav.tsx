@@ -10,6 +10,7 @@ const LINKS = [
   { href: '/tariff', label: 'Tariflar' },
   { href: '/promos', label: 'Promokodlar' },
   { href: '/partners', label: 'Hamkorlik' },
+  { href: '/geo', label: 'Hududlar' },
 ];
 
 export default function Nav() {

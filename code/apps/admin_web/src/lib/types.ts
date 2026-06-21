@@ -1,3 +1,31 @@
+export interface GeoPlace {
+  id: string;
+  areaId: string;
+  label: string;
+  lat: number;
+  lng: number;
+  category: string | null;
+  sortOrder: number;
+}
+
+export interface ServiceArea {
+  id: string;
+  name: string;
+  centerLat: number;
+  centerLng: number;
+  boundary: number[][][];
+  isActive: boolean;
+  places: GeoPlace[];
+}
+
+export interface CreateAreaInput {
+  name: string;
+  centerLat: number;
+  centerLng: number;
+  boundary: number[][][];
+  isActive?: boolean;
+}
+
 export interface VerticalStat {
   count: number;
   revenue: number;

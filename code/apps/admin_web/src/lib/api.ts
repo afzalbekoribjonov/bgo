@@ -1,13 +1,16 @@
 import type {
   AdminOrder,
   AdminRestaurant,
+  CreateAreaInput,
   CreateRestaurantInput,
+  GeoPlace,
   OrdersQuery,
   PartnerApplication,
   PromoCode,
   Report,
   ReportPeriod,
   Restaurant,
+  ServiceArea,
   Stats,
   Tariff,
   UpdateRestaurantInput,
@@ -126,6 +129,34 @@ export const updatePartnerStatus = (
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   });
+
+// ----- Geo (xizmat hududlari + joylar) -----
+export const getGeoAreas = () => api<ServiceArea[]>('/admin/geo/areas');
+export const createGeoArea = (body: CreateAreaInput) =>
+  api<ServiceArea>('/admin/geo/areas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const updateGeoArea = (id: string, body: { isActive?: boolean; name?: string }) =>
+  api<ServiceArea>(`/admin/geo/areas/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const deleteGeoArea = (id: string) =>
+  api<unknown>(`/admin/geo/areas/${id}`, { method: 'DELETE' });
+export const addGeoPlace = (
+  areaId: string,
+  body: { label: string; lat: number; lng: number; category?: string },
+) =>
+  api<GeoPlace>(`/admin/geo/areas/${areaId}/places`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const deleteGeoPlace = (id: string) =>
+  api<unknown>(`/admin/geo/places/${id}`, { method: 'DELETE' });
 
 export function formatSom(value: number): string {
   return value.toLocaleString('ru-RU').replace(/ /g, ' ').replace(/,/g, ' ') + " so'm";
