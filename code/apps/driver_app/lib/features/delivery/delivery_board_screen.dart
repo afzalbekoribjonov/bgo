@@ -579,24 +579,46 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
                     Expanded(
                       child: _earnStat(
                         t.earningsToday,
-                        t.priceSom(groupThousands(e.todayEarning)),
-                        t.deliveriesCount(e.todayDeliveredCount),
+                        t.priceSom(groupThousands(e.total.todayEarning)),
+                        t.deliveriesCount(e.total.count),
                       ),
                     ),
                     Expanded(
                       child: _earnStat(
                         t.earningsTotal,
-                        t.priceSom(groupThousands(e.totalEarning)),
-                        t.deliveriesCount(e.deliveredCount),
+                        t.priceSom(groupThousands(e.total.earning)),
+                        t.deliveriesCount(e.total.count),
                       ),
                     ),
                   ],
                 ),
+                const Divider(height: 20),
+                // Vertikal bo'yicha taqsimot (jami daromad)
+                _earnBreak(t.deliveryTab, e.food),
+                const SizedBox(height: 4),
+                _earnBreak(t.taxiTab, e.taxi),
+                const SizedBox(height: 4),
+                _earnBreak(t.parcelTab, e.parcel),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _earnBreak(String label, EarningsPart part) {
+    final scheme = Theme.of(context).colorScheme;
+    final t = AppLocalizations.of(context)!;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('$label · ${t.deliveriesCount(part.count)}',
+            style: TextStyle(color: scheme.onPrimaryContainer)),
+        Text(t.priceSom(groupThousands(part.earning)),
+            style: TextStyle(
+                color: scheme.onPrimaryContainer, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 

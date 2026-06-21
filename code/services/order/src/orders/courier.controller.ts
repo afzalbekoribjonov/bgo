@@ -1,4 +1,7 @@
 import { Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { combineEarnings } from '../common/earnings';
+import { ParcelService } from '../parcel/parcel.service';
+import { TaxiService } from '../taxi/taxi.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AccessTokenPayload } from '../auth/jwt-payload.interface';
@@ -14,7 +17,11 @@ import { OrdersService } from './orders.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('driver')
 export class CourierController {
-  constructor(private readonly orders: OrdersService) {}
+  constructor(
+    private readonly orders: OrdersService,
+    private readonly taxi: TaxiService,
+    private readonly parcel: ParcelService,
+  ) {}
 
   /** Yetkazishga tayyor (READY), hali biriktirilmagan buyurtmalar. */
   @Get('available')
@@ -28,10 +35,18 @@ export class CourierController {
     return { success: true, data: await this.orders.listDriverOrders(user.sub) };
   }
 
-  /** Haydovchi daromadi (yetkazilgan buyurtmalar bo'yicha). */
+  /** Haydovchi daromadi — uchala vertikal (ovqat + taksi + dostavka). */
   @Get('earnings')
   async earnings(@CurrentUser() user: AccessTokenPayload) {
-    return { success: true, data: await this.orders.driverEarnings(user.sub) };
+    const [food, taxi, parcel] = await Promise.all([
+      this.orders.driverEarnings(user.sub),
+      this.taxi.driverEarnings(user.sub),
+      this.parcel.driverEarnings(user.sub),
+    ]);
+    return {
+      success: true,
+      data: { food, taxi, parcel, total: combineEarnings([food, taxi, parcel]) },
+    };
   }
 
   @Post('orders/:id/accept')

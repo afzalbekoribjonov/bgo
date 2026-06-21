@@ -20,5 +20,6 @@ import { TaxiService } from './taxi.service';
     RolesGuard,
     { provide: TaxiRepository, useClass: PrismaTaxiRepository },
   ],
+  exports: [TaxiService],
 })
 export class TaxiModule {}
