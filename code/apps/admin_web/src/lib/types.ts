@@ -43,6 +43,40 @@ export interface Restaurant {
   rating: number;
 }
 
+export type ReportPeriod = 'today' | 'week' | 'month';
+
+export interface ReportDayPoint {
+  date: string; // YYYY-MM-DD
+  orders: number;
+  revenue: number;
+  profit: number;
+}
+
+export interface Report {
+  period: ReportPeriod;
+  from: string;
+  to: string;
+  summary: {
+    totalOrders: number;
+    delivered: number;
+    cancelled: number;
+    revenue: number;
+    profit: number;
+    avgOrder: number;
+  };
+  daily: ReportDayPoint[];
+}
+
+export interface OrdersQuery {
+  status?: string;
+  type?: string;
+  from?: string;
+  to?: string;
+  q?: string;
+  sort?: 'createdAt' | 'total';
+  order?: 'asc' | 'desc';
+}
+
 export interface PartnerApplication {
   id: string;
   phone: string;

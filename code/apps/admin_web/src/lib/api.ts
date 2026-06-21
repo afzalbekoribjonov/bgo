@@ -1,7 +1,10 @@
 import type {
   AdminOrder,
+  OrdersQuery,
   PartnerApplication,
   PromoCode,
+  Report,
+  ReportPeriod,
   Restaurant,
   Stats,
   Tariff,
@@ -35,8 +38,16 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
 }
 
 export const getStats = () => api<Stats>('/admin/stats');
-export const getOrders = (status?: string) =>
-  api<AdminOrder[]>(`/admin/orders${status ? `?status=${status}` : ''}`);
+export const getReport = (period: ReportPeriod) =>
+  api<Report>(`/admin/reports?period=${period}`);
+export const getOrders = (query: OrdersQuery = {}) => {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value) params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return api<AdminOrder[]>(`/admin/orders${qs ? `?${qs}` : ''}`);
+};
 export const getRestaurants = () => api<Restaurant[]>('/restaurants');
 export const getPromos = () => api<PromoCode[]>('/admin/promos');
 export const createPromo = (body: {
