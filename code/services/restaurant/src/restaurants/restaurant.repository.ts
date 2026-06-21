@@ -1,4 +1,26 @@
-import { Category, MenuItem, Restaurant } from './entities';
+import { Category, MenuItem, Restaurant, RestaurantStatus } from './entities';
+
+export interface CreateRestaurantData {
+  name: string;
+  address: string;
+  phone: string;
+  lat?: number;
+  lng?: number;
+  commissionPercent?: number;
+  isOpen?: boolean;
+  ownerUserId?: string;
+}
+
+export type UpdateRestaurantData = Partial<{
+  name: string;
+  address: string;
+  phone: string;
+  lat: number;
+  lng: number;
+  commissionPercent: number;
+  isOpen: boolean;
+  status: RestaurantStatus;
+}>;
 
 export interface CreateCategoryData {
   restaurantId: string;
@@ -26,6 +48,13 @@ export abstract class RestaurantRepository {
   /** Egalik: shu foydalanuvchiga tegishli oshxonalar. */
   abstract findByOwner(ownerUserId: string): Promise<Restaurant[]>;
   abstract setOwner(id: string, ownerUserId: string): Promise<Restaurant>;
+  /** Yangi oshxona yaratish (admin onboarding). */
+  abstract createRestaurant(data: CreateRestaurantData): Promise<Restaurant>;
+  /** Asosiy ma'lumotlarni yangilash (admin/ega). */
+  abstract updateRestaurant(
+    id: string,
+    patch: UpdateRestaurantData,
+  ): Promise<Restaurant>;
 
   abstract listCategories(restaurantId: string): Promise<Category[]>;
   abstract createCategory(data: CreateCategoryData): Promise<Category>;

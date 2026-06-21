@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { AdminRestaurantsController } from './admin-restaurants.controller';
 import { CatalogController } from './catalog.controller';
 import { ManagementController } from './management.controller';
 import { OwnerController } from './owner.controller';
@@ -13,7 +14,12 @@ import { RestaurantsService } from './restaurants.service';
 
 @Module({
   imports: [JwtModule.register({})],
-  controllers: [CatalogController, ManagementController, OwnerController],
+  controllers: [
+    CatalogController,
+    AdminRestaurantsController,
+    ManagementController,
+    OwnerController,
+  ],
   providers: [
     RestaurantsService,
     JwtAuthGuard,

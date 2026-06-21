@@ -6,11 +6,16 @@ import { Category, MenuItem, Restaurant, RestaurantStatus } from './entities';
 import {
   CreateCategoryData,
   CreateMenuItemData,
+  CreateRestaurantData,
   RestaurantRepository,
+  UpdateRestaurantData,
 } from './restaurant.repository';
 import { buildSeed } from './seed';
 
 type Row = Record<string, unknown>;
+
+/** Beshariq tumani markazi — yangi oshxona uchun standart koordinata. */
+const BESHARIQ_CENTER = { lat: 40.4236, lng: 70.6094 };
 
 /** PostgreSQL (restaurant_db) implementatsiyasi. plan/03-databases.md */
 @Injectable()
@@ -93,6 +98,36 @@ export class PrismaRestaurantRepository extends RestaurantRepository {
     const r = await this.prisma.restaurant.update({
       where: { id },
       data: { ownerUserId },
+    });
+    return this.toRestaurant(r as Row);
+  }
+
+  async createRestaurant(data: CreateRestaurantData): Promise<Restaurant> {
+    const r = await this.prisma.restaurant.create({
+      data: {
+        name: data.name,
+        address: data.address,
+        phone: data.phone,
+        // Beshariq markazi (standart) — xarita keyin ulanadi
+        lat: data.lat ?? BESHARIQ_CENTER.lat,
+        lng: data.lng ?? BESHARIQ_CENTER.lng,
+        ownerUserId: data.ownerUserId,
+        commissionPercent: data.commissionPercent ?? 0,
+        isOpen: data.isOpen ?? true,
+        status: 'ACTIVE',
+      },
+    });
+    return this.toRestaurant(r as Row);
+  }
+
+  async updateRestaurant(
+    id: string,
+    patch: UpdateRestaurantData,
+  ): Promise<Restaurant> {
+    await this.assertRestaurant(id);
+    const r = await this.prisma.restaurant.update({
+      where: { id },
+      data: patch,
     });
     return this.toRestaurant(r as Row);
   }
