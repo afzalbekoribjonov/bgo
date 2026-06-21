@@ -25,6 +25,7 @@
   "@devCodeHint": {
     "placeholders": { "code": { "type": "String" } }
   },
+  "telegramFreeHint": "Kodni bepul Telegram orqali oling",
 
   "consentTitle": "Maxfiylik va shartlar",
   "consentBody": "Davom etish orqali siz Foydalanish shartlari va Maxfiylik siyosatiga rozilik bildirasiz. Joylashuv ma'lumotlari xizmat ko'rsatish uchun ishlatiladi.",

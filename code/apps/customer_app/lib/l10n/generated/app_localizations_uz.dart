@@ -62,6 +62,9 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
+  String get telegramFreeHint => 'Kodni bepul Telegram orqali oling';
+
+  @override
   String get consentTitle => 'Maxfiylik va shartlar';
 
   @override
@@ -493,6 +496,9 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
   String devCodeHint(String code) {
     return 'Синов режими — код: $code';
   }
+
+  @override
+  String get telegramFreeHint => 'Кодни бепул Телеграм орқали олинг';
 
   @override
   String get consentTitle => 'Махфийлик ва шартлар';

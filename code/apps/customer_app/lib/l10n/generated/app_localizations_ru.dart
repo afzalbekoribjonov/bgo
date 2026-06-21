@@ -62,6 +62,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get telegramFreeHint => 'Получите код бесплатно через Telegram';
+
+  @override
   String get consentTitle => 'Конфиденциальность и условия';
 
   @override

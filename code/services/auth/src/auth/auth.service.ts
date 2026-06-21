@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OtpService } from '../otp/otp.service';
 import { SmsService } from '../sms/sms.service';
+import { TelegramService } from '../telegram/telegram.service';
 import { UserEntity } from '../users/user.entity';
 import { UserRepository } from '../users/user.repository';
 import { AccessTokenPayload, RefreshTokenPayload } from '@beshariq/nest-auth';
@@ -25,16 +26,45 @@ export class AuthService {
     private readonly users: UserRepository,
     private readonly otp: OtpService,
     private readonly sms: SmsService,
+    private readonly telegram: TelegramService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
 
-  /** OTP so'rash — kod yaratiladi va (dev'da logga) yuboriladi. */
-  async requestOtp(phone: string): Promise<{ devCode?: string }> {
+  /**
+   * OTP so'rash. Kanal tanlash: foydalanuvchi raqamini Telegram bot'ga ulagan
+   * bo'lsa — kod Telegram orqali (BEPUL), aks holda SMS (zaxira).
+   */
+  async requestOtp(
+    phone: string,
+  ): Promise<{
+    channel: 'telegram' | 'sms';
+    devCode?: string;
+    telegramBotUrl?: string;
+  }> {
     const code = this.otp.generate(phone);
-    await this.sms.sendOtp(phone, code);
-    // Dev rejimda kodni javobda ham qaytaramiz (test qulayligi uchun).
-    return this.sms.isDevMode ? { devCode: code } : {};
+
+    let channel: 'telegram' | 'sms' = 'sms';
+    if (this.telegram.isEnabled) {
+      const chatId = await this.telegram.findChatId(phone);
+      if (chatId && (await this.telegram.sendCode(chatId, code))) {
+        channel = 'telegram';
+      }
+    }
+    if (channel === 'sms') {
+      await this.sms.sendOtp(phone, code);
+    }
+
+    const devCode =
+      this.sms.isDevMode || this.telegram.isEnabled ? code : undefined;
+    return {
+      channel,
+      ...(devCode ? { devCode } : {}),
+      // Telegramga ulanmagan bo'lsa — bepul kanal uchun bot havolasini taklif qilamiz
+      ...(channel === 'sms' && this.telegram.botUrl
+        ? { telegramBotUrl: this.telegram.botUrl }
+        : {}),
+    };
   }
 
   /** OTP tasdiqlash — foydalanuvchini topadi/yaratadi va tokenlar beradi. */

@@ -41,7 +41,8 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<String?> requestOtp(String phone) => _api.requestOtp(phone);
+  Future<({String? devCode, String? telegramBotUrl})> requestOtp(String phone) =>
+      _api.requestOtp(phone);
 
   Future<void> verifyOtp(String phone, String code) async {
     final result = await _api.verifyOtp(phone, code);

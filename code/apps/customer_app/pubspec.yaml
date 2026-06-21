@@ -46,6 +46,9 @@ dependencies:
   # Tarmoq (backend bilan aloqa) — plan/14-api-design.md
   dio: ^5.7.0
 
+  # Tashqi havola (Telegram bot) ochish
+  url_launcher: ^6.3.0
+
   # Token (JWT) ni xavfsiz saqlash
   flutter_secure_storage: ^9.2.2
 
