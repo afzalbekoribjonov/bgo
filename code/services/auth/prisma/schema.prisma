@@ -24,6 +24,21 @@ model User {
   @@map("users")
 }
 
+/** Mijozning saqlangan yetkazib berish manzili. plan/05-customer-app.md */
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  label     String // "Uy", "Ish", ...
+  text      String // to'liq manzil matni
+  lat       Float?
+  lng       Float?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("addresses")
+}
+
 enum PartnerType {
   RESTAURANT
   DRIVER
