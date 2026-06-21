@@ -1,5 +1,7 @@
 import type {
   AdminOrder,
+  AdminRestaurant,
+  CreateRestaurantInput,
   OrdersQuery,
   PartnerApplication,
   PromoCode,
@@ -8,6 +10,7 @@ import type {
   Restaurant,
   Stats,
   Tariff,
+  UpdateRestaurantInput,
 } from './types';
 import { clearToken, getToken } from './auth';
 
@@ -49,6 +52,26 @@ export const getOrders = (query: OrdersQuery = {}) => {
   return api<AdminOrder[]>(`/admin/orders${qs ? `?${qs}` : ''}`);
 };
 export const getRestaurants = () => api<Restaurant[]>('/restaurants');
+export const getManageRestaurants = () =>
+  api<AdminRestaurant[]>('/restaurants/manage/all');
+export const createRestaurant = (body: CreateRestaurantInput) =>
+  api<AdminRestaurant>('/restaurants', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const updateRestaurant = (id: string, body: UpdateRestaurantInput) =>
+  api<AdminRestaurant>(`/restaurants/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const assignRestaurantOwner = (id: string, ownerUserId: string) =>
+  api<AdminRestaurant>(`/restaurants/${id}/owner`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ownerUserId }),
+  });
 export const getPromos = () => api<PromoCode[]>('/admin/promos');
 export const createPromo = (body: {
   code: string;

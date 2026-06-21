@@ -43,6 +43,37 @@ export interface Restaurant {
   rating: number;
 }
 
+export interface AdminRestaurant {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  lat: number;
+  lng: number;
+  isOpen: boolean;
+  rating: number;
+  status: 'ACTIVE' | 'PENDING' | 'BLOCKED';
+  commissionPercent: number;
+  ownerUserId: string | null;
+  createdAt: string;
+}
+
+export interface CreateRestaurantInput {
+  name: string;
+  address: string;
+  phone: string;
+  commissionPercent?: number;
+}
+
+export interface UpdateRestaurantInput {
+  name?: string;
+  address?: string;
+  phone?: string;
+  isOpen?: boolean;
+  commissionPercent?: number;
+  status?: 'ACTIVE' | 'PENDING' | 'BLOCKED';
+}
+
 export type ReportPeriod = 'today' | 'week' | 'month';
 
 export interface ReportDayPoint {

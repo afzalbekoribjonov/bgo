@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { pickLocale, SupportedLocale } from '../common/i18n';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import { CreateMenuItemDto, UpdateMenuItemDto } from './dto/menu-item.dto';
+import { CreateRestaurantDto, UpdateRestaurantDto } from './dto/restaurant.dto';
 import { Restaurant } from './entities';
 import { RestaurantRepository } from './restaurant.repository';
 
@@ -35,6 +36,29 @@ export class RestaurantsService {
   async assignOwner(id: string, ownerUserId: string) {
     const restaurant = await this.repo.setOwner(id, ownerUserId);
     return this.toPublicRestaurant(restaurant);
+  }
+
+  // ---------- Admin onboarding ----------
+
+  /** Barcha oshxonalar (admin ko'rinishi — ega/status/komissiya bilan). */
+  async adminListRestaurants() {
+    const restaurants = await this.repo.listRestaurants();
+    return restaurants
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((r) => this.toAdminRestaurant(r));
+  }
+
+  /** Yangi oshxona yaratish (admin). */
+  async createRestaurant(dto: CreateRestaurantDto) {
+    const restaurant = await this.repo.createRestaurant(dto);
+    return this.toAdminRestaurant(restaurant);
+  }
+
+  /** Oshxona ma'lumotlarini yangilash (admin). */
+  async updateRestaurant(id: string, dto: UpdateRestaurantDto) {
+    await this.requireRestaurant(id);
+    const restaurant = await this.repo.updateRestaurant(id, dto);
+    return this.toAdminRestaurant(restaurant);
   }
 
   /** Foydalanuvchi shu oshxona egasimi? (OwnerGuard uchun) */
@@ -133,6 +157,24 @@ export class RestaurantsService {
       isOpen: r.isOpen,
       rating: r.rating,
       logoUrl: r.logoUrl ?? null,
+    };
+  }
+
+  /** Admin ko'rinishi — to'liq (ega/status/telefon/komissiya). */
+  private toAdminRestaurant(r: Restaurant) {
+    return {
+      id: r.id,
+      name: r.name,
+      address: r.address,
+      phone: r.phone,
+      lat: r.lat,
+      lng: r.lng,
+      isOpen: r.isOpen,
+      rating: r.rating,
+      status: r.status,
+      commissionPercent: r.commissionPercent,
+      ownerUserId: r.ownerUserId ?? null,
+      createdAt: r.createdAt,
     };
   }
 }
