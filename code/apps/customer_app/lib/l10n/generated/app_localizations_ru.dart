@@ -265,4 +265,49 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get partnerStatusRejected => 'Отклонено';
+
+  @override
+  String get profileTitle => 'Профиль';
+
+  @override
+  String get profileName => 'Имя и фамилия';
+
+  @override
+  String get profileNameHint => 'Введите ваше имя';
+
+  @override
+  String get profileSave => 'Сохранить';
+
+  @override
+  String get profileSaved => 'Сохранено';
+
+  @override
+  String get addressesTitle => 'Мои адреса';
+
+  @override
+  String get addressAdd => 'Добавить адрес';
+
+  @override
+  String get addressLabelField => 'Название (Дом, Работа...)';
+
+  @override
+  String get addressTextField => 'Полный адрес';
+
+  @override
+  String get addressDefault => 'По умолчанию';
+
+  @override
+  String get addressSetDefault => 'Сделать основным';
+
+  @override
+  String get addressDelete => 'Удалить';
+
+  @override
+  String get addressNone => 'Нет сохранённых адресов';
+
+  @override
+  String get addressNew => 'Новый адрес';
+
+  @override
+  String get addressChoose => 'Выберите адрес';
 }

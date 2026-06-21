@@ -6,6 +6,7 @@ import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
 import '../order/my_orders_screen.dart';
 import '../partner/partner_screen.dart';
+import '../profile/profile_screen.dart';
 import '../restaurant/restaurant_list_screen.dart';
 
 /// Bosh ekran — xizmat kartalari. To'liq oqimlar Faza 2+ da. plan/05-customer-app.md
@@ -24,6 +25,13 @@ class HomeScreen extends ConsumerWidget {
             tooltip: t.myOrders,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: t.profileTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
           ),
           const LanguageButton(),
