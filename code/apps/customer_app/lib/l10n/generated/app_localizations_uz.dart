@@ -310,6 +310,70 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get addressChoose => 'Manzilni tanlang';
+
+  @override
+  String get taxiTitle => 'Taksi';
+
+  @override
+  String get taxiFrom => 'Qayerdan';
+
+  @override
+  String get taxiTo => 'Qayerga';
+
+  @override
+  String get taxiEstimate => 'Narxni hisoblash';
+
+  @override
+  String get taxiRequest => 'Taksi chaqirish';
+
+  @override
+  String get taxiDistance => 'Masofa';
+
+  @override
+  String get taxiFare => 'Narx';
+
+  @override
+  String taxiKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String get taxiSamePoint => 'Boshlanish va manzil bir xil bo\'lmasin';
+
+  @override
+  String get taxiActiveTrip => 'Joriy safar';
+
+  @override
+  String get taxiMyTrips => 'Safarlarim';
+
+  @override
+  String get taxiNoTrips => 'Hali safar yo\'q';
+
+  @override
+  String get taxiRequested => 'Taksi chaqirildi';
+
+  @override
+  String get taxiCancel => 'Bekor qilish';
+
+  @override
+  String taxiTripNo(String no) {
+    return 'Safar #$no';
+  }
+
+  @override
+  String get taxiStatusPending => 'Haydovchi kutilmoqda';
+
+  @override
+  String get taxiStatusAccepted => 'Haydovchi yo\'lda';
+
+  @override
+  String get taxiStatusInProgress => 'Yo\'ldasiz';
+
+  @override
+  String get taxiStatusCompleted => 'Yakunlandi';
+
+  @override
+  String get taxiStatusCancelled => 'Bekor qilindi';
 }
 
 /// The translations for Uzbek, using the Cyrillic script (`uz_Cyrl`).
@@ -620,4 +684,68 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get addressChoose => 'Манзилни танланг';
+
+  @override
+  String get taxiTitle => 'Такси';
+
+  @override
+  String get taxiFrom => 'Қаердан';
+
+  @override
+  String get taxiTo => 'Қаерга';
+
+  @override
+  String get taxiEstimate => 'Нархни ҳисоблаш';
+
+  @override
+  String get taxiRequest => 'Такси чақириш';
+
+  @override
+  String get taxiDistance => 'Масофа';
+
+  @override
+  String get taxiFare => 'Нарх';
+
+  @override
+  String taxiKm(String km) {
+    return '$km км';
+  }
+
+  @override
+  String get taxiSamePoint => 'Бошланиш ва манзил бир хил бўлмасин';
+
+  @override
+  String get taxiActiveTrip => 'Жорий сафар';
+
+  @override
+  String get taxiMyTrips => 'Сафарларим';
+
+  @override
+  String get taxiNoTrips => 'Ҳали сафар йўқ';
+
+  @override
+  String get taxiRequested => 'Такси чақирилди';
+
+  @override
+  String get taxiCancel => 'Бекор қилиш';
+
+  @override
+  String taxiTripNo(String no) {
+    return 'Сафар #$no';
+  }
+
+  @override
+  String get taxiStatusPending => 'Ҳайдовчи кутилмоқда';
+
+  @override
+  String get taxiStatusAccepted => 'Ҳайдовчи йўлда';
+
+  @override
+  String get taxiStatusInProgress => 'Йўлдасиз';
+
+  @override
+  String get taxiStatusCompleted => 'Якунланди';
+
+  @override
+  String get taxiStatusCancelled => 'Бекор қилинди';
 }

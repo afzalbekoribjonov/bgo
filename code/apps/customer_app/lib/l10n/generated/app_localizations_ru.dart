@@ -310,4 +310,68 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get addressChoose => 'Выберите адрес';
+
+  @override
+  String get taxiTitle => 'Такси';
+
+  @override
+  String get taxiFrom => 'Откуда';
+
+  @override
+  String get taxiTo => 'Куда';
+
+  @override
+  String get taxiEstimate => 'Рассчитать цену';
+
+  @override
+  String get taxiRequest => 'Вызвать такси';
+
+  @override
+  String get taxiDistance => 'Расстояние';
+
+  @override
+  String get taxiFare => 'Цена';
+
+  @override
+  String taxiKm(String km) {
+    return '$km км';
+  }
+
+  @override
+  String get taxiSamePoint => 'Точки отправления и назначения должны отличаться';
+
+  @override
+  String get taxiActiveTrip => 'Текущая поездка';
+
+  @override
+  String get taxiMyTrips => 'Мои поездки';
+
+  @override
+  String get taxiNoTrips => 'Поездок пока нет';
+
+  @override
+  String get taxiRequested => 'Такси вызвано';
+
+  @override
+  String get taxiCancel => 'Отменить';
+
+  @override
+  String taxiTripNo(String no) {
+    return 'Поездка #$no';
+  }
+
+  @override
+  String get taxiStatusPending => 'Ожидание водителя';
+
+  @override
+  String get taxiStatusAccepted => 'Водитель в пути';
+
+  @override
+  String get taxiStatusInProgress => 'В пути';
+
+  @override
+  String get taxiStatusCompleted => 'Завершена';
+
+  @override
+  String get taxiStatusCancelled => 'Отменена';
 }

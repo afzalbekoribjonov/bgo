@@ -106,5 +106,26 @@
   "addressDelete": "Удалить",
   "addressNone": "Нет сохранённых адресов",
   "addressNew": "Новый адрес",
-  "addressChoose": "Выберите адрес"
+  "addressChoose": "Выберите адрес",
+
+  "taxiTitle": "Такси",
+  "taxiFrom": "Откуда",
+  "taxiTo": "Куда",
+  "taxiEstimate": "Рассчитать цену",
+  "taxiRequest": "Вызвать такси",
+  "taxiDistance": "Расстояние",
+  "taxiFare": "Цена",
+  "taxiKm": "{km} км",
+  "taxiSamePoint": "Точки отправления и назначения должны отличаться",
+  "taxiActiveTrip": "Текущая поездка",
+  "taxiMyTrips": "Мои поездки",
+  "taxiNoTrips": "Поездок пока нет",
+  "taxiRequested": "Такси вызвано",
+  "taxiCancel": "Отменить",
+  "taxiTripNo": "Поездка #{no}",
+  "taxiStatusPending": "Ожидание водителя",
+  "taxiStatusAccepted": "Водитель в пути",
+  "taxiStatusInProgress": "В пути",
+  "taxiStatusCompleted": "Завершена",
+  "taxiStatusCancelled": "Отменена"
 }

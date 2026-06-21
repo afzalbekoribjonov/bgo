@@ -689,6 +689,126 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Manzilni tanlang'**
   String get addressChoose;
+
+  /// No description provided for @taxiTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Taksi'**
+  String get taxiTitle;
+
+  /// No description provided for @taxiFrom.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qayerdan'**
+  String get taxiFrom;
+
+  /// No description provided for @taxiTo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qayerga'**
+  String get taxiTo;
+
+  /// No description provided for @taxiEstimate.
+  ///
+  /// In uz, this message translates to:
+  /// **'Narxni hisoblash'**
+  String get taxiEstimate;
+
+  /// No description provided for @taxiRequest.
+  ///
+  /// In uz, this message translates to:
+  /// **'Taksi chaqirish'**
+  String get taxiRequest;
+
+  /// No description provided for @taxiDistance.
+  ///
+  /// In uz, this message translates to:
+  /// **'Masofa'**
+  String get taxiDistance;
+
+  /// No description provided for @taxiFare.
+  ///
+  /// In uz, this message translates to:
+  /// **'Narx'**
+  String get taxiFare;
+
+  /// No description provided for @taxiKm.
+  ///
+  /// In uz, this message translates to:
+  /// **'{km} km'**
+  String taxiKm(String km);
+
+  /// No description provided for @taxiSamePoint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Boshlanish va manzil bir xil bo\'lmasin'**
+  String get taxiSamePoint;
+
+  /// No description provided for @taxiActiveTrip.
+  ///
+  /// In uz, this message translates to:
+  /// **'Joriy safar'**
+  String get taxiActiveTrip;
+
+  /// No description provided for @taxiMyTrips.
+  ///
+  /// In uz, this message translates to:
+  /// **'Safarlarim'**
+  String get taxiMyTrips;
+
+  /// No description provided for @taxiNoTrips.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hali safar yo\'q'**
+  String get taxiNoTrips;
+
+  /// No description provided for @taxiRequested.
+  ///
+  /// In uz, this message translates to:
+  /// **'Taksi chaqirildi'**
+  String get taxiRequested;
+
+  /// No description provided for @taxiCancel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilish'**
+  String get taxiCancel;
+
+  /// No description provided for @taxiTripNo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Safar #{no}'**
+  String taxiTripNo(String no);
+
+  /// No description provided for @taxiStatusPending.
+  ///
+  /// In uz, this message translates to:
+  /// **'Haydovchi kutilmoqda'**
+  String get taxiStatusPending;
+
+  /// No description provided for @taxiStatusAccepted.
+  ///
+  /// In uz, this message translates to:
+  /// **'Haydovchi yo\'lda'**
+  String get taxiStatusAccepted;
+
+  /// No description provided for @taxiStatusInProgress.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'ldasiz'**
+  String get taxiStatusInProgress;
+
+  /// No description provided for @taxiStatusCompleted.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yakunlandi'**
+  String get taxiStatusCompleted;
+
+  /// No description provided for @taxiStatusCancelled.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilindi'**
+  String get taxiStatusCancelled;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
