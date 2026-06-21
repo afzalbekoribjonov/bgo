@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:customer_app/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/providers.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 
 /// Til almashtirish tugmasi (uz / uz-Cyrl / ru). plan/13-localization.md
 class LanguageButton extends ConsumerWidget {

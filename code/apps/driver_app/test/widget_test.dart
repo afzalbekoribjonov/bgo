@@ -1,6 +1,5 @@
 // Beshariq haydovchi ilovasi — asosiy smoke test.
-import 'package:driver_app/core/providers.dart';
-import 'package:driver_app/core/token_storage.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import 'package:driver_app/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

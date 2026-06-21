@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/places.dart';
-import '../../core/providers.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import 'parcel_models.dart';
 
 /// Dostavka API'si (gateway orqali, Bearer token). plan/05-customer-app.md

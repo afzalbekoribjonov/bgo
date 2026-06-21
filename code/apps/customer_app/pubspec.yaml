@@ -31,6 +31,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Umumiy data-layer (token, API, providerlar) — packages/beshariq_core
+  beshariq_core:
+    path: ../../packages/beshariq_core
+
   # Ko'p tillilik (uz / uz-Cyrl / ru) — plan/13-localization.md
   flutter_localizations:
     sdk: flutter

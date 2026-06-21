@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/format.dart';
+import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../cart/cart_controller.dart';
