@@ -8,24 +8,25 @@ import { PromoService } from '../promo/promo.service';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TariffService } from '../tariff/tariff.service';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
+import {
+  buildVerticalReport,
+  buildVerticalStats,
+  combineVerticalReports,
+  periodStart,
+  ReportPeriod,
+} from '../common/reporting';
+import { TaxiService } from '../taxi/taxi.service';
+import { ParcelService } from '../parcel/parcel.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order, OrderItem, OrderStatus } from './entities';
 import { OrderRepository } from './order.repository';
 
-export type ReportPeriod = 'today' | 'week' | 'month';
+export type { ReportPeriod };
 
 /** Yakuniy (muvaffaqiyatli yopilgan) holatlar — aylanma/foyda shulardan. */
 const TERMINAL_STATUSES: OrderStatus[] = ['DELIVERED', 'COMPLETED'];
 /** Bekor qilingan holatlar. */
 const CANCELLED_STATUSES: OrderStatus[] = ['CANCELLED', 'FAILED'];
-
-/** Mahalliy (TZ) sana kaliti YYYY-MM-DD. */
-function localDateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 /**
  * Sana chegarasini ms'ga aylantiradi. Faqat sana (YYYY-MM-DD) berilsa,
@@ -51,6 +52,8 @@ export class OrdersService {
     private readonly restaurant: RestaurantClient,
     private readonly tariff: TariffService,
     private readonly promo: PromoService,
+    private readonly taxi: TaxiService,
+    private readonly parcel: ParcelService,
   ) {}
 
   /** Buyurtma yaratish — narx/komissiya SERVER tomonda (katalog + tarif). */
@@ -185,91 +188,73 @@ export class OrdersService {
     const closed = [...TERMINAL_STATUSES, ...CANCELLED_STATUSES];
 
     const byStatus: Record<string, number> = {};
-    let revenue = 0;
-    let profit = 0;
     let today = 0;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
     for (const o of orders) {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
-      if (TERMINAL_STATUSES.includes(o.status)) {
-        revenue += o.total;
-        profit += this.orderProfit(o);
-      }
       if (new Date(o.createdAt) >= startOfDay) today += 1;
     }
 
+    // Vertikallar bo'yicha aylanma/foyda (ovqat + taksi + dostavka)
+    const food = buildVerticalStats(orders, {
+      isDone: (o) => TERMINAL_STATUSES.includes(o.status),
+      revenueOf: (o) => o.total,
+      profitOf: (o) => this.orderProfit(o),
+    });
+    const [taxi, parcel] = await Promise.all([
+      this.taxi.adminStats(),
+      this.parcel.adminStats(),
+    ]);
+
     return {
+      // Ovqat buyurtmalari (mavjud maydonlar)
       totalOrders: orders.length,
       activeOrders: orders.filter((o) => !closed.includes(o.status)).length,
       todayOrders: today,
-      revenue, // yetkazilgan buyurtmalar aylanmasi (so'm)
-      profit, // bizning foyda (komissiya), so'm
       byStatus,
+      // Birlashgan moliya (uchala vertikal)
+      revenue: food.revenue + taxi.revenue + parcel.revenue,
+      profit: food.profit + taxi.profit + parcel.profit,
+      byVertical: { food, taxi, parcel },
     };
   }
 
-  /** Davr hisoboti (bugun/hafta/oy) — xulosa + kunlik time-series. */
+  /** Davr hisoboti (bugun/hafta/oy) — uchala vertikal jamlangan. */
   async adminReport(period: ReportPeriod) {
     const orders = await this.repo.findAll();
-    const days = period === 'today' ? 1 : period === 'week' ? 7 : 30;
-
-    const from = new Date();
-    from.setHours(0, 0, 0, 0);
-    from.setDate(from.getDate() - (days - 1));
-    const fromTs = from.getTime();
-
-    // Kunlik chelaklarni oldindan to'ldiramiz (bo'sh kunlar ham ko'rinadi)
-    const daily = new Map<
-      string,
-      { date: string; orders: number; revenue: number; profit: number }
-    >();
-    for (let i = 0; i < days; i++) {
-      const d = new Date(from);
-      d.setDate(from.getDate() + i);
-      const key = localDateKey(d);
-      daily.set(key, { date: key, orders: 0, revenue: 0, profit: 0 });
-    }
-
-    let totalOrders = 0;
-    let delivered = 0;
-    let cancelled = 0;
-    let revenue = 0;
-    let profit = 0;
-
-    for (const o of orders) {
-      if (new Date(o.createdAt).getTime() < fromTs) continue;
-      totalOrders += 1;
-      const bucket = daily.get(localDateKey(new Date(o.createdAt)));
-      if (bucket) bucket.orders += 1;
-      if (TERMINAL_STATUSES.includes(o.status)) {
-        delivered += 1;
-        const p = this.orderProfit(o);
-        revenue += o.total;
-        profit += p;
-        if (bucket) {
-          bucket.revenue += o.total;
-          bucket.profit += p;
-        }
-      } else if (CANCELLED_STATUSES.includes(o.status)) {
-        cancelled += 1;
-      }
-    }
+    const food = buildVerticalReport(orders, period, {
+      createdAtOf: (o) => o.createdAt,
+      isDone: (o) => TERMINAL_STATUSES.includes(o.status),
+      isCancelled: (o) => CANCELLED_STATUSES.includes(o.status),
+      revenueOf: (o) => o.total,
+      profitOf: (o) => this.orderProfit(o),
+    });
+    const [taxi, parcel] = await Promise.all([
+      this.taxi.adminReport(period),
+      this.parcel.adminReport(period),
+    ]);
+    const all = combineVerticalReports([food, taxi, parcel]);
 
     return {
       period,
-      from: from.toISOString(),
+      from: periodStart(period).toISOString(),
       to: new Date().toISOString(),
       summary: {
-        totalOrders,
-        delivered,
-        cancelled,
-        revenue,
-        profit,
-        avgOrder: delivered > 0 ? Math.round(revenue / delivered) : 0,
+        totalOrders: all.count,
+        delivered: all.delivered,
+        cancelled: all.cancelled,
+        revenue: all.revenue,
+        profit: all.profit,
+        avgOrder: all.delivered > 0 ? Math.round(all.revenue / all.delivered) : 0,
       },
-      daily: Array.from(daily.values()),
+      daily: all.daily,
+      byVertical: {
+        food: { revenue: food.revenue, profit: food.profit, delivered: food.delivered },
+        taxi: { revenue: taxi.revenue, profit: taxi.profit, delivered: taxi.delivered },
+        parcel: { revenue: parcel.revenue, profit: parcel.profit, delivered: parcel.delivered },
+      },
     };
   }
 

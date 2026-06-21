@@ -1,3 +1,9 @@
+export interface VerticalStat {
+  count: number;
+  revenue: number;
+  profit: number;
+}
+
 export interface Stats {
   totalOrders: number;
   activeOrders: number;
@@ -5,6 +11,7 @@ export interface Stats {
   revenue: number;
   profit: number;
   byStatus: Record<string, number>;
+  byVertical?: { food: VerticalStat; taxi: VerticalStat; parcel: VerticalStat };
 }
 
 export interface Tariff {
@@ -104,6 +111,11 @@ export interface Report {
     avgOrder: number;
   };
   daily: ReportDayPoint[];
+  byVertical?: {
+    food: { revenue: number; profit: number; delivered: number };
+    taxi: { revenue: number; profit: number; delivered: number };
+    parcel: { revenue: number; profit: number; delivered: number };
+  };
 }
 
 export interface OrdersQuery {

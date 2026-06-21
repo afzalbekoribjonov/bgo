@@ -48,6 +48,13 @@ export class PrismaParcelRepository extends ParcelRepository {
     return p ? this.toParcel(p as Row) : null;
   }
 
+  async findAll(): Promise<ParcelDelivery[]> {
+    const rows = await this.prisma.parcelDelivery.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((p) => this.toParcel(p as Row));
+  }
+
   async findByCustomer(customerId: string): Promise<ParcelDelivery[]> {
     const rows = await this.prisma.parcelDelivery.findMany({
       where: { customerId },

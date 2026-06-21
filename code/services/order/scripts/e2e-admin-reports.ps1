@@ -46,9 +46,10 @@ $before = (Invoke-RestMethod "$ord/admin/reports?period=today" -Headers $ah).dat
 
 # 1) Yetkaziladigan buyurtma (qty=1 -> total 35000)
 $o1 = New-Order 1
-Invoke-RestMethod "$ord/kitchen/orders/$($o1.id)/accept"    -Method Post -Headers (Hdr $rst.accessToken) | Out-Null
-Invoke-RestMethod "$ord/kitchen/orders/$($o1.id)/preparing" -Method Post -Headers (Hdr $rst.accessToken) | Out-Null
-Invoke-RestMethod "$ord/kitchen/orders/$($o1.id)/ready"     -Method Post -Headers (Hdr $rst.accessToken) | Out-Null
+# Kitchen amallari admin token bilan (egalik bypass — r1 egasi boshqa test'da o'rnatilgan)
+Invoke-RestMethod "$ord/kitchen/orders/$($o1.id)/accept"    -Method Post -Headers $ah | Out-Null
+Invoke-RestMethod "$ord/kitchen/orders/$($o1.id)/preparing" -Method Post -Headers $ah | Out-Null
+Invoke-RestMethod "$ord/kitchen/orders/$($o1.id)/ready"     -Method Post -Headers $ah | Out-Null
 Invoke-RestMethod "$ord/courier/orders/$($o1.id)/accept"    -Method Post -Headers (Hdr $drv.accessToken) | Out-Null
 Invoke-RestMethod "$ord/courier/orders/$($o1.id)/pickup"    -Method Post -Headers (Hdr $drv.accessToken) | Out-Null
 Invoke-RestMethod "$ord/courier/orders/$($o1.id)/delivered" -Method Post -Headers (Hdr $drv.accessToken) | Out-Null
@@ -68,7 +69,9 @@ Check (($rep.summary.delivered - $before.summary.delivered) -eq 1) "delivered de
 Check (($rep.summary.cancelled - $before.summary.cancelled) -eq 1) "cancelled delta=1"
 Check (($rep.summary.revenue - $before.summary.revenue) -eq 35000) "revenue delta=35000"
 Check (($rep.summary.profit - $before.summary.profit) -eq 4600) "profit delta=4600"
-Check ($rep.summary.avgOrder -ge 35000) "avgOrder >= 35000 (joriy: $($rep.summary.avgOrder))"
+# avgOrder endi 3 vertikal (food+taxi+parcel) bo'yicha umumiy o'rtacha — formulani tekshiramiz
+$expAvg = if ($rep.summary.delivered -gt 0) { [math]::Round($rep.summary.revenue / $rep.summary.delivered) } else { 0 }
+Check ($rep.summary.avgOrder -eq $expAvg) "avgOrder = revenue/delivered (joriy: $($rep.summary.avgOrder))"
 
 # ----- Hisobot (hafta) -----
 $wk = (Invoke-RestMethod "$ord/admin/reports?period=week" -Headers $ah).data

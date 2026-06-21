@@ -6,6 +6,11 @@ import {
 } from '@nestjs/common';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { GeoPoint, haversineKm } from '../common/geo';
+import {
+  buildVerticalReport,
+  buildVerticalStats,
+  ReportPeriod,
+} from '../common/reporting';
 import { TariffService } from '../tariff/tariff.service';
 import { EstimateParcelDto, RequestParcelDto } from './dto/request-parcel.dto';
 import { ParcelDelivery, ParcelSize } from './entities';
@@ -89,6 +94,30 @@ export class ParcelService {
 
   listDriverParcels(driverId: string) {
     return this.repo.findByDriver(driverId);
+  }
+
+  // ---------- Admin hisobot ----------
+
+  /** Dostavka davr hisoboti (admin jamlash uchun). */
+  async adminReport(period: ReportPeriod) {
+    const parcels = await this.repo.findAll();
+    return buildVerticalReport(parcels, period, {
+      createdAtOf: (p) => p.createdAt,
+      isDone: (p) => p.status === 'DELIVERED',
+      isCancelled: (p) => p.status === 'CANCELLED',
+      revenueOf: (p) => p.fare,
+      profitOf: (p) => p.commission,
+    });
+  }
+
+  /** Dostavka umumiy statistikasi (aylanma/foyda). */
+  async adminStats() {
+    const parcels = await this.repo.findAll();
+    return buildVerticalStats(parcels, {
+      isDone: (p) => p.status === 'DELIVERED',
+      revenueOf: (p) => p.fare,
+      profitOf: (p) => p.commission,
+    });
   }
 
   /** Kuryer dostavka daromadi (EarningsSummary). */
