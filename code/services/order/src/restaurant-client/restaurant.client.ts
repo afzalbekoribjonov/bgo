@@ -63,4 +63,28 @@ export class RestaurantClient {
     }
     return map;
   }
+
+  /**
+   * Joriy foydalanuvchi (restaurant roli) egalik qiladigan oshxona id'lari.
+   * Token forward qilinadi — restaurant servisi GET /restaurants/mine.
+   */
+  async getOwnedRestaurantIds(token: string): Promise<string[]> {
+    const url = `${this.baseUrl}/api/v1/restaurants/mine`;
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (err) {
+      this.logger.error(`Egalik so'rovida xato: ${(err as Error).message}`);
+      throw new ServiceUnavailableException('Katalog xizmati ishlamayapti');
+    }
+    if (!response.ok) {
+      throw new ServiceUnavailableException(
+        "Oshxona egaligini aniqlab bo'lmadi",
+      );
+    }
+    const body = (await response.json()) as { data: Array<{ id: string }> };
+    return (body.data ?? []).map((r) => r.id);
+  }
 }

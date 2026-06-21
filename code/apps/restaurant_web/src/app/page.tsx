@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getRestaurants } from '@/lib/api';
+import { getMyRestaurants } from '@/lib/api';
 import type { Restaurant } from '@/lib/types';
 
 export default function HomePage() {
@@ -11,7 +11,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getRestaurants()
+    getMyRestaurants()
       .then(setRestaurants)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -25,7 +25,9 @@ export default function HomePage() {
       {loading && <p className="muted">Yuklanmoqda…</p>}
       {error && <p className="error">{error}</p>}
       {!loading && !error && restaurants.length === 0 && (
-        <p className="empty">Oshxona topilmadi</p>
+        <p className="empty">
+          Sizga biriktirilgan oshxona yo&apos;q. Administrator bilan bog&apos;laning.
+        </p>
       )}
       {restaurants.map((r) => (
         <Link key={r.id} href={`/restaurants/${r.id}/orders`} className="link">
