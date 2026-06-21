@@ -2,11 +2,7 @@ import { Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/commo
 import { combineEarnings } from '../common/earnings';
 import { ParcelService } from '../parcel/parcel.service';
 import { TaxiService } from '../taxi/taxi.service';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { AccessTokenPayload } from '../auth/jwt-payload.interface';
-import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
+import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { OrdersService } from './orders.service';
 
 /**

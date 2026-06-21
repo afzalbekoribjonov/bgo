@@ -1,12 +1,10 @@
 import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CurrentUser } from './current-user.decorator';
+import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
 import { ConsentDto } from './dto/consent.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { AccessTokenPayload } from './jwt-payload.interface';
 
 @Controller('auth')
 export class AuthController {

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 import { ParcelModule } from '../parcel/parcel.module';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TaxiModule } from '../taxi/taxi.module';

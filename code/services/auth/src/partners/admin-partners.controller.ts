@@ -7,9 +7,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { UpdatePartnerStatusDto } from './dto/update-partner-status.dto';
 import { PartnerStatus } from './partner.entity';
 import { PartnersService } from './partners.service';

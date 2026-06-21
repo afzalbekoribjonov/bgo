@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 import { TariffService } from '../tariff/tariff.service';
 import { PrismaTaxiRepository } from './prisma-taxi.repository';
 import { TaxiController } from './taxi.controller';
