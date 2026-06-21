@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { GeoModule } from './geo/geo.module';
 import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
 import { ParcelModule } from './parcel/parcel.module';
@@ -16,6 +17,7 @@ import { TaxiModule } from './taxi/taxi.module';
     OrdersModule,
     TaxiModule,
     ParcelModule,
+    GeoModule,
     HealthModule,
   ],
 })
