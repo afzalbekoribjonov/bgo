@@ -4,24 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { haversineKm } from '../common/geo';
 import { TariffService } from '../tariff/tariff.service';
 import { RequestTaxiDto } from './dto/request-taxi.dto';
 import { GeoPoint, TaxiTrip } from './entities';
 import { TaxiRepository } from './taxi.repository';
-
-/** Ikki nuqta orasidagi masofa (km) — Haversine. */
-export function haversineKm(a: GeoPoint, b: GeoPoint): number {
-  const R = 6371; // Yer radiusi, km
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
 
 /** Taksi safari — narx SERVER tomonda (tarif + masofa). plan/06-driver-app.md */
 @Injectable()

@@ -10,6 +10,10 @@ export interface Tariff {
   taxiPerKm: number;
   taxiMinFare: number;
   taxiCommissionPercent: number;
+  parcelBaseFare: number;
+  parcelPerKm: number;
+  parcelMinFare: number;
+  parcelCommissionPercent: number;
 }
 
 /**
@@ -36,6 +40,10 @@ export class TariffService {
       taxiPerKm: t.taxiPerKm,
       taxiMinFare: t.taxiMinFare,
       taxiCommissionPercent: t.taxiCommissionPercent,
+      parcelBaseFare: t.parcelBaseFare,
+      parcelPerKm: t.parcelPerKm,
+      parcelMinFare: t.parcelMinFare,
+      parcelCommissionPercent: t.parcelCommissionPercent,
     };
   }
 
@@ -47,6 +55,10 @@ export class TariffService {
     taxiPerKm?: number;
     taxiMinFare?: number;
     taxiCommissionPercent?: number;
+    parcelBaseFare?: number;
+    parcelPerKm?: number;
+    parcelMinFare?: number;
+    parcelCommissionPercent?: number;
   }): Promise<Tariff> {
     const t = await this.prisma.tariff.upsert({
       where: { id: 'default' },
@@ -62,6 +74,10 @@ export class TariffService {
       taxiPerKm: t.taxiPerKm,
       taxiMinFare: t.taxiMinFare,
       taxiCommissionPercent: t.taxiCommissionPercent,
+      parcelBaseFare: t.parcelBaseFare,
+      parcelPerKm: t.parcelPerKm,
+      parcelMinFare: t.parcelMinFare,
+      parcelCommissionPercent: t.parcelCommissionPercent,
     };
   }
 }
