@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from '@beshariq/nest-auth';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 import { AddressRepository } from './address.repository';
 import { PrismaAddressRepository } from './prisma-address.repository';
@@ -9,7 +10,7 @@ import { ProfileService } from './profile.service';
 
 /** Profil + manzillar moduli. plan/05-customer-app.md */
 @Module({
-  imports: [UsersModule, JwtModule.register({})],
+  imports: [UsersModule, NotificationsModule, JwtModule.register({})],
   controllers: [ProfileController],
   providers: [
     ProfileService,

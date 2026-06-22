@@ -46,9 +46,10 @@ Check ($a2.isDefault -eq $false) "Ikkinchi manzil standart emas"
 # 5) Ikkinchini standart qilamiz -> birinchi standart bo'lmaydi
 Invoke-RestMethod "$auth/profile/addresses/$($a2.id)" -Method Patch -Headers $h -Body (J @{ isDefault = $true }) -ContentType 'application/json' | Out-Null
 $list = (Invoke-RestMethod "$auth/profile/addresses" -Headers $h).data
-$def = $list | Where-Object { $_.isDefault -eq $true }
+# @(...) — bitta natija ham massiv bo'lsin (PowerShell skalyar .Count muammosi)
+$def = @($list | Where-Object { $_.isDefault -eq $true })
 Check ($def.Count -eq 1) "Faqat bitta standart manzil"
-Check ($def.id -eq $a2.id) "Standart = ikkinchi manzil"
+Check ($def[0].id -eq $a2.id) "Standart = ikkinchi manzil"
 
 # 6) Begona foydalanuvchi boshqaning manzilini o'chira olmaydi -> 403
 $other = Login ('+99890' + (Get-Random -Minimum 1000000 -Maximum 9999999))

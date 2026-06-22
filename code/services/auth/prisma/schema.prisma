@@ -50,6 +50,19 @@ enum PartnerStatus {
   REJECTED
 }
 
+/** FCM push qurilma tokeni (foydalanuvchi ↔ qurilma). plan/10-auth-security.md */
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique // FCM registration token
+  platform  String   @default("android") // android | ios | web
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
 /** Telefon ↔ Telegram chat bog'lanishi (OTP'ni bot orqali yuborish uchun). */
 model TelegramLink {
   phone     String   @id // +998...

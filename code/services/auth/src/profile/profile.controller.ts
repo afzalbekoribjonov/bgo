@@ -10,6 +10,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
+import {
+  RegisterDeviceTokenDto,
+  RemoveDeviceTokenDto,
+} from '../notifications/dto/device-token.dto';
+import { NotificationService } from '../notifications/notification.service';
 import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';
@@ -21,7 +26,10 @@ import { ProfileService } from './profile.service';
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
-  constructor(private readonly profile: ProfileService) {}
+  constructor(
+    private readonly profile: ProfileService,
+    private readonly notifications: NotificationService,
+  ) {}
 
   @Patch()
   async update(
@@ -63,6 +71,37 @@ export class ProfileController {
     @Param('id') id: string,
   ) {
     await this.profile.deleteAddress(user.sub, id);
+    return { success: true };
+  }
+
+  // ---------- Push qurilma tokenlari (FCM) ----------
+
+  @Get('device-tokens')
+  async listDeviceTokens(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.notifications.listTokens(user.sub) };
+  }
+
+  @Post('device-token')
+  async registerDeviceToken(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: RegisterDeviceTokenDto,
+  ) {
+    const data = await this.notifications.registerToken(
+      user.sub,
+      dto.token,
+      dto.platform ?? 'android',
+    );
+    return { success: true, data };
+  }
+
+  /** Chiqishda/qurilma almashtirishda tokenni o'chirish. */
+  @Post('device-token/remove')
+  @HttpCode(200)
+  async removeDeviceToken(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: RemoveDeviceTokenDto,
+  ) {
+    await this.notifications.unregisterToken(user.sub, dto.token);
     return { success: true };
   }
 }
