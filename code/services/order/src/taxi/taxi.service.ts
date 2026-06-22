@@ -12,7 +12,7 @@ import {
   ReportPeriod,
 } from '../common/reporting';
 import { TariffService } from '../tariff/tariff.service';
-import { RequestTaxiDto } from './dto/request-taxi.dto';
+import { CompleteTaxiDto, RequestTaxiDto } from './dto/request-taxi.dto';
 import { GeoPoint, TaxiTrip } from './entities';
 import { TaxiRepository } from './taxi.repository';
 
@@ -40,15 +40,29 @@ export class TaxiService {
   }
 
   async create(customerId: string, dto: RequestTaxiDto): Promise<TaxiTrip> {
-    const e = await this.estimate(dto.pickup, dto.destination);
+    // Manzil belgilangan -> narx oldindan (FIXED). Belgilanmagan -> metered
+    // (narx safar yakunida masofa + kutishdan hisoblanadi).
+    if (dto.destination) {
+      const e = await this.estimate(dto.pickup, dto.destination);
+      return this.repo.create({
+        customerId,
+        pickup: dto.pickup,
+        destination: dto.destination,
+        metered: false,
+        distanceKm: e.distanceKm,
+        fare: e.fare,
+        commission: e.commission,
+        driverEarning: e.driverEarning,
+      });
+    }
     return this.repo.create({
       customerId,
       pickup: dto.pickup,
-      destination: dto.destination,
-      distanceKm: e.distanceKm,
-      fare: e.fare,
-      commission: e.commission,
-      driverEarning: e.driverEarning,
+      metered: true,
+      distanceKm: 0,
+      fare: 0,
+      commission: 0,
+      driverEarning: 0,
     });
   }
 
@@ -142,13 +156,44 @@ export class TaxiService {
     return this.repo.updateStatus(id, 'IN_PROGRESS');
   }
 
-  /** Yakunladi (IN_PROGRESS -> COMPLETED). */
-  async complete(id: string, driverId: string): Promise<TaxiTrip> {
+  /**
+   * Yakunladi (IN_PROGRESS -> COMPLETED). Metered bo'lsa yakuniy narx masofa
+   * (haydovchi) + pulli kutishdan; FIXED bo'lsa belgilangan narx + kutish haqi.
+   */
+  async complete(
+    id: string,
+    driverId: string,
+    dto: CompleteTaxiDto = {},
+  ): Promise<TaxiTrip> {
     const trip = await this.requireDriverTrip(id, driverId);
     if (trip.status !== 'IN_PROGRESS') {
       throw new BadRequestException('Safar yakunlash holatida emas');
     }
-    return this.repo.updateStatus(id, 'COMPLETED');
+    const t = await this.tariff.getTariff();
+    const waitMinutes = dto.waitMinutes ?? trip.waitMinutes ?? 0;
+
+    let distanceKm = trip.distanceKm;
+    let baseFare: number;
+    if (trip.metered) {
+      distanceKm = dto.distanceKm ?? trip.distanceKm;
+      baseFare = Math.max(
+        t.taxiMinFare,
+        t.taxiBaseFare + Math.round(t.taxiPerKm * distanceKm),
+      );
+    } else {
+      baseFare = trip.fare; // FIXED — yaratishda belgilangan
+    }
+    const waitFee = Math.round(t.taxiWaitPerMin * waitMinutes);
+    const fare = baseFare + waitFee;
+    const commission = Math.round((fare * t.taxiCommissionPercent) / 100);
+
+    return this.repo.finalize(id, {
+      distanceKm,
+      waitMinutes,
+      fare,
+      commission,
+      driverEarning: fare - commission,
+    });
   }
 
   private async requireDriverTrip(

@@ -1,8 +1,10 @@
 import { Type } from 'class-transformer';
 import {
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsObject,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -31,8 +33,23 @@ export class RequestTaxiDto {
   @Type(() => GeoPointDto)
   pickup!: GeoPointDto;
 
+  // Ixtiyoriy: manzil belgilansa narx oldindan; belgilanmasa — metered (yakunda).
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => GeoPointDto)
-  destination!: GeoPointDto;
+  destination?: GeoPointDto;
+}
+
+/** Safarni yakunlash — metered uchun masofa, pulli kutish (ixtiyoriy). */
+export class CompleteTaxiDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  distanceKm?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  waitMinutes?: number;
 }

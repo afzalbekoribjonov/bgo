@@ -51,6 +51,7 @@ export interface Tariff {
   taxiPerKm: number;
   taxiMinFare: number;
   taxiCommissionPercent: number;
+  taxiWaitPerMin: number;
   parcelBaseFare: number;
   parcelPerKm: number;
   parcelMinFare: number;

@@ -10,6 +10,7 @@ export interface Tariff {
   taxiPerKm: number;
   taxiMinFare: number;
   taxiCommissionPercent: number;
+  taxiWaitPerMin: number;
   parcelBaseFare: number;
   parcelPerKm: number;
   parcelMinFare: number;
@@ -40,6 +41,7 @@ export class TariffService {
       taxiPerKm: t.taxiPerKm,
       taxiMinFare: t.taxiMinFare,
       taxiCommissionPercent: t.taxiCommissionPercent,
+      taxiWaitPerMin: t.taxiWaitPerMin,
       parcelBaseFare: t.parcelBaseFare,
       parcelPerKm: t.parcelPerKm,
       parcelMinFare: t.parcelMinFare,
@@ -55,6 +57,7 @@ export class TariffService {
     taxiPerKm?: number;
     taxiMinFare?: number;
     taxiCommissionPercent?: number;
+    taxiWaitPerMin?: number;
     parcelBaseFare?: number;
     parcelPerKm?: number;
     parcelMinFare?: number;
@@ -74,6 +77,7 @@ export class TariffService {
       taxiPerKm: t.taxiPerKm,
       taxiMinFare: t.taxiMinFare,
       taxiCommissionPercent: t.taxiCommissionPercent,
+      taxiWaitPerMin: t.taxiWaitPerMin,
       parcelBaseFare: t.parcelBaseFare,
       parcelPerKm: t.parcelPerKm,
       parcelMinFare: t.parcelMinFare,

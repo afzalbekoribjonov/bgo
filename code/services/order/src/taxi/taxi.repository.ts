@@ -1,4 +1,9 @@
-import { NewTaxiTrip, TaxiStatus, TaxiTrip } from './entities';
+import {
+  FinalizeTaxiTrip,
+  NewTaxiTrip,
+  TaxiStatus,
+  TaxiTrip,
+} from './entities';
 
 /** Taksi safari repository interfeysi (abstrakt). */
 export abstract class TaxiRepository {
@@ -13,4 +18,6 @@ export abstract class TaxiRepository {
   /** Haydovchini biriktiradi va ACCEPTED holatga o'tkazadi. */
   abstract assignDriver(id: string, driverId: string): Promise<TaxiTrip>;
   abstract updateStatus(id: string, status: TaxiStatus): Promise<TaxiTrip>;
+  /** Safarni yakunlash — yakuniy narx/masofa/kutish. */
+  abstract finalize(id: string, data: FinalizeTaxiTrip): Promise<TaxiTrip>;
 }

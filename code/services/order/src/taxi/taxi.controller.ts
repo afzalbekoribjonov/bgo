@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -17,10 +18,13 @@ import { TaxiService } from './taxi.service';
 export class TaxiController {
   constructor(private readonly taxi: TaxiService) {}
 
-  /** Narx baholash (yaratmasdan). */
+  /** Narx baholash (yaratmasdan) — manzil belgilangan bo'lishi shart. */
   @Post('estimate')
   @HttpCode(200)
   async estimate(@Body() dto: RequestTaxiDto) {
+    if (!dto.destination) {
+      throw new BadRequestException('Narx baholash uchun manzil kerak');
+    }
     return {
       success: true,
       data: await this.taxi.estimate(dto.pickup, dto.destination),

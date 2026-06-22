@@ -77,6 +77,7 @@ model Tariff {
   taxiPerKm             Int      @default(2000) // har km uchun, so'm
   taxiMinFare           Int      @default(8000) // minimal taksi haqi, so'm
   taxiCommissionPercent Int      @default(15) // taksi haqidan platforma ulushi, %
+  taxiWaitPerMin        Int      @default(500) // pulli kutish, har daqiqa, so'm
   parcelBaseFare          Int    @default(4000) // dostavka boshlang'ich haq, so'm
   parcelPerKm             Int    @default(1500) // har km uchun, so'm
   parcelMinFare           Int    @default(6000) // minimal dostavka haqi, so'm
@@ -101,9 +102,11 @@ model TaxiTrip {
   customerId    String
   driverId      String? // biriktirilgan haydovchi
   pickup        Json // { text, lat, lng }
-  destination   Json // { text, lat, lng }
-  distanceKm    Float
-  fare          Int // umumiy haq (so'm)
+  destination   Json? // { text, lat, lng } — manzilsiz (metered) rejimda bo'sh
+  metered       Boolean     @default(false) // manzilsiz: narx yakunda hisoblanadi
+  distanceKm    Float       @default(0)
+  waitMinutes   Int         @default(0) // pulli kutish (daqiqa)
+  fare          Int         @default(0) // umumiy haq (so'm)
   commission    Int         @default(0) // platforma ulushi
   driverEarning Int         @default(0) // haydovchiga
   status        TaxiStatus  @default(PENDING)
