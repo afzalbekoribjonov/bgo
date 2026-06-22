@@ -58,6 +58,8 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Tokenni serverdan o'chiramiz (token hali yaroqli) — best-effort.
+    await ref.read(pushServiceProvider).unregister();
     await ref.read(tokenStorageProvider).clear();
     state = const AuthState(AuthStatus.unauthenticated);
   }

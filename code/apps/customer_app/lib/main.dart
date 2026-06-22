@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:customer_app/l10n/generated/app_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth_gate.dart';
 import 'package:beshariq_core/beshariq_core.dart';
 
-void main() => runApp(const ProviderScope(child: BeshariqApp()));
+/// Ilova fonda/yopiq bo'lganda kelgan push (tizim o'zi ko'rsatadi).
+@pragma('vm:entry-point')
+Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Firebase sozlanmagan bo'lsa ham ilova ishlayveradi (push'siz).
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+  } catch (_) {}
+  runApp(const ProviderScope(child: BeshariqApp()));
+}
 
 /// Beshariq mijoz ilovasi. Faza 1: telefon + OTP kirish oqimi.
 /// Reja: plan/05-customer-app.md

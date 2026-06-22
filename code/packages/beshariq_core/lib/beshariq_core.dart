@@ -7,3 +7,4 @@ export 'src/token_storage.dart';
 export 'src/error_text.dart';
 export 'src/format.dart';
 export 'src/providers.dart';
+export 'src/push_service.dart';
