@@ -11,6 +11,7 @@ import {
   buildVerticalStats,
   ReportPeriod,
 } from '../common/reporting';
+import { NotificationClient } from '../notification-client/notification.client';
 import { TariffService } from '../tariff/tariff.service';
 import { EstimateParcelDto, RequestParcelDto } from './dto/request-parcel.dto';
 import { ParcelDelivery, ParcelSize } from './entities';
@@ -29,6 +30,7 @@ export class ParcelService {
   constructor(
     private readonly repo: ParcelRepository,
     private readonly tariff: TariffService,
+    private readonly notifications: NotificationClient,
   ) {}
 
   async estimate(pickup: GeoPoint, destination: GeoPoint, size: ParcelSize) {
@@ -142,7 +144,9 @@ export class ParcelService {
     if (parcel.driverId) {
       throw new BadRequestException('Dostavka allaqachon biriktirilgan');
     }
-    return this.repo.assignDriver(id, driverId);
+    const updated = await this.repo.assignDriver(id, driverId);
+    await this.notifyCustomer(updated, 'Kuryer dostavkani qabul qildi');
+    return updated;
   }
 
   /** Jo'natuvchidan oldi (ACCEPTED -> PICKED_UP). */
@@ -151,7 +155,9 @@ export class ParcelService {
     if (parcel.status !== 'ACCEPTED') {
       throw new BadRequestException('Dostavka olishga tayyor emas');
     }
-    return this.repo.updateStatus(id, 'PICKED_UP');
+    const updated = await this.repo.updateStatus(id, 'PICKED_UP');
+    await this.notifyCustomer(updated, "Kuryer posilkani oldi, yo'lda");
+    return updated;
   }
 
   /** Qabul qiluvchiga yetkazdi (PICKED_UP -> DELIVERED). */
@@ -160,7 +166,17 @@ export class ParcelService {
     if (parcel.status !== 'PICKED_UP') {
       throw new BadRequestException('Dostavka yetkazish holatida emas');
     }
-    return this.repo.updateStatus(id, 'DELIVERED');
+    const updated = await this.repo.updateStatus(id, 'DELIVERED');
+    await this.notifyCustomer(updated, 'Posilka yetkazildi');
+    return updated;
+  }
+
+  private notifyCustomer(parcel: ParcelDelivery, body: string): Promise<void> {
+    return this.notifications.notify(parcel.customerId, 'Dostavka', body, {
+      type: 'parcel',
+      id: parcel.id,
+      status: parcel.status,
+    });
   }
 
   private async requireDriverParcel(

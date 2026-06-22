@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
+import { NotificationClientModule } from '../notification-client/notification-client.module';
 import { TariffService } from '../tariff/tariff.service';
 import { ParcelController } from './parcel.controller';
 import { ParcelDriverController } from './parcel-driver.controller';
@@ -10,7 +11,7 @@ import { PrismaParcelRepository } from './prisma-parcel.repository';
 
 /** Dostavka (pochta) vertikali moduli. plan/06-driver-app.md */
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({}), NotificationClientModule],
   controllers: [ParcelController, ParcelDriverController],
   providers: [
     ParcelService,

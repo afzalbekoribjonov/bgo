@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { NotificationClient } from '../notification-client/notification.client';
 import { PromoService } from '../promo/promo.service';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TariffService } from '../tariff/tariff.service';
@@ -27,6 +28,17 @@ export type { ReportPeriod };
 const TERMINAL_STATUSES: OrderStatus[] = ['DELIVERED', 'COMPLETED'];
 /** Bekor qilingan holatlar. */
 const CANCELLED_STATUSES: OrderStatus[] = ['CANCELLED', 'FAILED'];
+
+/** Mijozga ko'rsatiladigan holat xabarlari (push). */
+const ORDER_STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
+  ACCEPTED: 'Buyurtmangiz qabul qilindi',
+  PREPARING: 'Buyurtmangiz tayyorlanmoqda',
+  READY: 'Buyurtmangiz tayyor',
+  ASSIGNED: 'Kuryer biriktirildi',
+  PICKED_UP: "Kuryer buyurtmani oldi, yo'lda",
+  DELIVERED: 'Buyurtmangiz yetkazildi',
+  CANCELLED: 'Buyurtmangiz bekor qilindi',
+};
 
 /**
  * Sana chegarasini ms'ga aylantiradi. Faqat sana (YYYY-MM-DD) berilsa,
@@ -54,7 +66,19 @@ export class OrdersService {
     private readonly promo: PromoService,
     private readonly taxi: TaxiService,
     private readonly parcel: ParcelService,
+    private readonly notifications: NotificationClient,
   ) {}
+
+  /** Mijozga buyurtma holati o'zgargani haqida push (best-effort). */
+  private notifyOrderStatus(order: Order): Promise<void> {
+    const body = ORDER_STATUS_MESSAGES[order.status];
+    if (!body) return Promise.resolve();
+    return this.notifications.notify(order.customerId, 'Buyurtma', body, {
+      type: 'order',
+      id: order.id,
+      status: order.status,
+    });
+  }
 
   /** Buyurtma yaratish — narx/komissiya SERVER tomonda (katalog + tarif). */
   async create(customerId: string, dto: CreateOrderDto, locale: string) {
@@ -328,7 +352,9 @@ export class OrdersService {
     if (order.driverId) {
       throw new BadRequestException('Buyurtma allaqachon haydovchiga biriktirilgan');
     }
-    return this.repo.assignDriver(id, driverId);
+    const updated = await this.repo.assignDriver(id, driverId);
+    await this.notifyOrderStatus(updated);
+    return updated;
   }
 
   /** Oshxonadan oldi (ASSIGNED -> PICKED_UP). */
@@ -337,7 +363,9 @@ export class OrdersService {
     if (order.status !== 'ASSIGNED') {
       throw new BadRequestException('Buyurtma olishga tayyor emas');
     }
-    return this.repo.updateStatus(id, 'PICKED_UP');
+    const updated = await this.repo.updateStatus(id, 'PICKED_UP');
+    await this.notifyOrderStatus(updated);
+    return updated;
   }
 
   /** Mijozga yetkazdi (PICKED_UP -> DELIVERED). */
@@ -346,7 +374,9 @@ export class OrdersService {
     if (order.status !== 'PICKED_UP') {
       throw new BadRequestException('Buyurtma yetkazish holatida emas');
     }
-    return this.repo.updateStatus(id, 'DELIVERED');
+    const updated = await this.repo.updateStatus(id, 'DELIVERED');
+    await this.notifyOrderStatus(updated);
+    return updated;
   }
 
   private async requireDriverOrder(id: string, driverId: string): Promise<Order> {
@@ -371,6 +401,8 @@ export class OrdersService {
         `Holatni '${order.status}' dan '${to}' ga o'zgartirib bo'lmaydi`,
       );
     }
-    return this.repo.updateStatus(id, to);
+    const updated = await this.repo.updateStatus(id, to);
+    await this.notifyOrderStatus(updated);
+    return updated;
   }
 }

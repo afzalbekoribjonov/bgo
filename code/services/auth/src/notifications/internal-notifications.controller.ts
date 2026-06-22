@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { SendNotificationDto } from './dto/send-notification.dto';
 import { InternalKeyGuard } from './internal-key.guard';
 import { NotificationService } from './notification.service';
@@ -21,5 +29,11 @@ export class InternalNotificationsController {
       data: dto.data,
     });
     return { success: true, data: result };
+  }
+
+  /** Dev introspeksiya — foydalanuvchiga yuborilgan oxirgi xabarlar (e2e). */
+  @Get('recent')
+  recent(@Query('userId') userId: string) {
+    return { success: true, data: this.notifications.recentFor(userId ?? '') };
   }
 }
