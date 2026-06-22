@@ -379,6 +379,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiStatusCancelled => 'Отменена';
 
   @override
+  String get chatTitle => 'Чат';
+
+  @override
+  String get chatInputHint => 'Напишите сообщение…';
+
+  @override
+  String get chatEmpty => 'Сообщений пока нет. Начните чат.';
+
+  @override
+  String get chatGreetingNote => 'Первое сообщение начинается с «Ассалому алайкум,»';
+
+  @override
+  String get chatYou => 'Вы';
+
+  @override
+  String get chatParty => 'Водитель';
+
+  @override
   String get parcelTitle => 'Доставка';
 
   @override

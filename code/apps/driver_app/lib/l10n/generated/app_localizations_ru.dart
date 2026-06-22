@@ -140,6 +140,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiComplete => 'Завершить';
 
   @override
+  String get chatTitle => 'Чат';
+
+  @override
+  String get chatInputHint => 'Напишите сообщение…';
+
+  @override
+  String get chatEmpty => 'Сообщений пока нет. Начните чат.';
+
+  @override
+  String get chatGreetingNote => 'Первое сообщение начинается с «Ассалому алайкум,»';
+
+  @override
+  String get chatYou => 'Вы';
+
+  @override
+  String get chatParty => 'Клиент';
+
+  @override
   String taxiTripNo(String no) {
     return 'Поездка #$no';
   }

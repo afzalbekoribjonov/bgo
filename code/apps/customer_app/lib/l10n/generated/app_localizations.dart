@@ -816,6 +816,42 @@ abstract class AppLocalizations {
   /// **'Bekor qilindi'**
   String get taxiStatusCancelled;
 
+  /// No description provided for @chatTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Suhbat'**
+  String get chatTitle;
+
+  /// No description provided for @chatInputHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Xabar yozing…'**
+  String get chatInputHint;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hali xabar yo\'q. Suhbatni boshlang.'**
+  String get chatEmpty;
+
+  /// No description provided for @chatGreetingNote.
+  ///
+  /// In uz, this message translates to:
+  /// **'Birinchi xabar «Assalomu alaykum,» bilan boshlanadi'**
+  String get chatGreetingNote;
+
+  /// No description provided for @chatYou.
+  ///
+  /// In uz, this message translates to:
+  /// **'Siz'**
+  String get chatYou;
+
+  /// No description provided for @chatParty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Haydovchi'**
+  String get chatParty;
+
   /// No description provided for @parcelTitle.
   ///
   /// In uz, this message translates to:

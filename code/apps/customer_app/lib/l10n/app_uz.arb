@@ -148,6 +148,13 @@
   "taxiStatusCompleted": "Yakunlandi",
   "taxiStatusCancelled": "Bekor qilindi",
 
+  "chatTitle": "Suhbat",
+  "chatInputHint": "Xabar yozing…",
+  "chatEmpty": "Hali xabar yo'q. Suhbatni boshlang.",
+  "chatGreetingNote": "Birinchi xabar «Assalomu alaykum,» bilan boshlanadi",
+  "chatYou": "Siz",
+  "chatParty": "Haydovchi",
+
   "parcelTitle": "Dostavka",
   "parcelSize": "O'lcham",
   "parcelSizeSmall": "Kichik",

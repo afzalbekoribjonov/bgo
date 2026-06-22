@@ -7,6 +7,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../geo/geo_api.dart';
 import 'taxi_api.dart';
+import 'taxi_chat_screen.dart';
 import 'taxi_models.dart';
 
 /// Taksi chaqirish ekrani. plan/05-customer-app.md
@@ -82,6 +83,18 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
         SnackBar(content: Text(isNetworkError(e) ? t.errorNetwork : t.errorGeneric)),
       );
     }
+  }
+
+  void _openChat(TaxiTrip tr) {
+    final t = AppLocalizations.of(context)!;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TaxiChatScreen(
+          tripId: tr.id,
+          tripTitle: t.taxiTripNo(tr.publicNo.toString()),
+        ),
+      ),
+    );
   }
 
   @override
@@ -251,13 +264,22 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
             const SizedBox(height: 4),
             Text('${tr.pickupText} → ${tr.destinationText}'),
             Text(t.priceSom(groupThousands(tr.fare))),
-            if (tr.isCancellable)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => _cancel(tr.id),
-                  child: Text(t.taxiCancel),
-                ),
+            if (tr.hasChat || tr.isCancellable)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (tr.hasChat)
+                    TextButton.icon(
+                      onPressed: () => _openChat(tr),
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: Text(t.chatTitle),
+                    ),
+                  if (tr.isCancellable)
+                    TextButton(
+                      onPressed: () => _cancel(tr.id),
+                      child: Text(t.taxiCancel),
+                    ),
+                ],
               ),
           ],
         ),

@@ -34,3 +34,27 @@ class TaxiTrip {
     );
   }
 }
+
+/// Taksi suhbat xabari. senderRole: 'customer' | 'driver'.
+class TaxiMessage {
+  final String id;
+  final String senderRole;
+  final String text;
+  final String createdAt;
+
+  const TaxiMessage({
+    required this.id,
+    required this.senderRole,
+    required this.text,
+    required this.createdAt,
+  });
+
+  factory TaxiMessage.fromJson(Map<String, dynamic> json) {
+    return TaxiMessage(
+      id: json['id'] as String,
+      senderRole: (json['senderRole'] as String?) ?? 'driver',
+      text: (json['text'] as String?) ?? '',
+      createdAt: (json['createdAt'] as String?) ?? '',
+    );
+  }
+}

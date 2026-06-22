@@ -130,6 +130,13 @@
   "taxiStatusCompleted": "Завершена",
   "taxiStatusCancelled": "Отменена",
 
+  "chatTitle": "Чат",
+  "chatInputHint": "Напишите сообщение…",
+  "chatEmpty": "Сообщений пока нет. Начните чат.",
+  "chatGreetingNote": "Первое сообщение начинается с «Ассалому алайкум,»",
+  "chatYou": "Вы",
+  "chatParty": "Водитель",
+
   "parcelTitle": "Доставка",
   "parcelSize": "Размер",
   "parcelSizeSmall": "Маленький",
