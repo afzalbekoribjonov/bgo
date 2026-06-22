@@ -379,6 +379,24 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiStatusCancelled => 'Bekor qilindi';
 
   @override
+  String get chatTitle => 'Suhbat';
+
+  @override
+  String get chatInputHint => 'Xabar yozing…';
+
+  @override
+  String get chatEmpty => 'Hali xabar yo\'q. Suhbatni boshlang.';
+
+  @override
+  String get chatGreetingNote => 'Birinchi xabar «Assalomu alaykum,» bilan boshlanadi';
+
+  @override
+  String get chatYou => 'Siz';
+
+  @override
+  String get chatParty => 'Haydovchi';
+
+  @override
   String get parcelTitle => 'Dostavka';
 
   @override
@@ -813,6 +831,24 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiStatusCancelled => 'Бекор қилинди';
+
+  @override
+  String get chatTitle => 'Суҳбат';
+
+  @override
+  String get chatInputHint => 'Хабар ёзинг…';
+
+  @override
+  String get chatEmpty => 'Ҳали хабар йўқ. Суҳбатни бошланг.';
+
+  @override
+  String get chatGreetingNote => 'Биринчи хабар «Ассалому алайкум,» билан бошланади';
+
+  @override
+  String get chatYou => 'Сиз';
+
+  @override
+  String get chatParty => 'Ҳайдовчи';
 
   @override
   String get parcelTitle => 'Достевка';

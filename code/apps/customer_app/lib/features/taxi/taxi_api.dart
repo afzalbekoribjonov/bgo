@@ -41,6 +41,19 @@ class TaxiApi {
   Future<void> cancel(String id) async {
     await _dio.post('/taxi/$id/cancel');
   }
+
+  Future<List<TaxiMessage>> messages(String id) async {
+    final res = await _dio.get('/taxi/$id/messages');
+    final list = (res.data['data'] as List?) ?? const [];
+    return list
+        .map((e) => TaxiMessage.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<TaxiMessage> sendMessage(String id, String text) async {
+    final res = await _dio.post('/taxi/$id/messages', data: {'text': text});
+    return TaxiMessage.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
 }
 
 final taxiApiProvider =

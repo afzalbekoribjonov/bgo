@@ -12,6 +12,7 @@ import '../auth/auth_controller.dart';
 import '../parcel/parcel_api.dart';
 import '../parcel/parcel_models.dart';
 import '../taxi/taxi_api.dart';
+import '../taxi/taxi_chat_screen.dart';
 import '../taxi/taxi_models.dart';
 import 'delivery_api.dart';
 import 'delivery_models.dart';
@@ -333,24 +334,47 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            FilledButton(
-              onPressed: busy
-                  ? null
-                  : () => _runTaxi(
-                        tr.id,
-                        () => isAccepted
-                            ? ref.read(taxiApiProvider).start(tr.id)
-                            : ref.read(taxiApiProvider).complete(tr.id),
-                      ),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(44),
-                backgroundColor: isAccepted ? null : Colors.green,
-              ),
-              child: busy
-                  ? const _Spinner()
-                  : Text(isAccepted ? t.taxiStart : t.taxiComplete),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _openTaxiChat(t, tr),
+                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                  label: Text(t.chatTitle),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: busy
+                        ? null
+                        : () => _runTaxi(
+                              tr.id,
+                              () => isAccepted
+                                  ? ref.read(taxiApiProvider).start(tr.id)
+                                  : ref.read(taxiApiProvider).complete(tr.id),
+                            ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                      backgroundColor: isAccepted ? null : Colors.green,
+                    ),
+                    child: busy
+                        ? const _Spinner()
+                        : Text(isAccepted ? t.taxiStart : t.taxiComplete),
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openTaxiChat(AppLocalizations t, TaxiTrip tr) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TaxiChatScreen(
+          tripId: tr.id,
+          tripTitle: t.taxiTripNo(tr.publicNo.toString()),
         ),
       ),
     );

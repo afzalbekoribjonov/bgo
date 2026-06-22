@@ -130,6 +130,13 @@
   "taxiStatusCompleted": "Якунланди",
   "taxiStatusCancelled": "Бекор қилинди",
 
+  "chatTitle": "Суҳбат",
+  "chatInputHint": "Хабар ёзинг…",
+  "chatEmpty": "Ҳали хабар йўқ. Суҳбатни бошланг.",
+  "chatGreetingNote": "Биринчи хабар «Ассалому алайкум,» билан бошланади",
+  "chatYou": "Сиз",
+  "chatParty": "Ҳайдовчи",
+
   "parcelTitle": "Достевка",
   "parcelSize": "Ўлчам",
   "parcelSizeSmall": "Кичик",

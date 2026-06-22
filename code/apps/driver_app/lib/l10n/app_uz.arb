@@ -60,6 +60,12 @@
   "taxiNoActive": "Faol safar yo'q",
   "taxiStart": "Yo'lovchini oldim",
   "taxiComplete": "Yakunlash",
+  "chatTitle": "Suhbat",
+  "chatInputHint": "Xabar yozing…",
+  "chatEmpty": "Hali xabar yo'q. Suhbatni boshlang.",
+  "chatGreetingNote": "Birinchi xabar «Assalomu alaykum,» bilan boshlanadi",
+  "chatYou": "Siz",
+  "chatParty": "Mijoz",
   "taxiTripNo": "Safar #{no}",
   "@taxiTripNo": {
     "placeholders": { "no": { "type": "String" } }
