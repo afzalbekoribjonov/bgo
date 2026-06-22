@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
+import { NotificationClientModule } from '../notification-client/notification-client.module';
 import { ParcelModule } from '../parcel/parcel.module';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TaxiModule } from '../taxi/taxi.module';
@@ -15,7 +16,12 @@ import { TariffService } from '../tariff/tariff.service';
 import { PromoService } from '../promo/promo.service';
 
 @Module({
-  imports: [JwtModule.register({}), TaxiModule, ParcelModule],
+  imports: [
+    JwtModule.register({}),
+    TaxiModule,
+    ParcelModule,
+    NotificationClientModule,
+  ],
   controllers: [
     OrdersController,
     KitchenController,

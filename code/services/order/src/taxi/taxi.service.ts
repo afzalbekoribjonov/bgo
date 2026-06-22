@@ -11,6 +11,7 @@ import {
   buildVerticalStats,
   ReportPeriod,
 } from '../common/reporting';
+import { NotificationClient } from '../notification-client/notification.client';
 import { TariffService } from '../tariff/tariff.service';
 import { CompleteTaxiDto, RequestTaxiDto } from './dto/request-taxi.dto';
 import { ChatRole, GeoPoint, TaxiMessage, TaxiTrip } from './entities';
@@ -27,6 +28,7 @@ export class TaxiService {
     private readonly repo: TaxiRepository,
     private readonly messages: TaxiMessageRepository,
     private readonly tariff: TariffService,
+    private readonly notifications: NotificationClient,
   ) {}
 
   /** Narx hisoblash (yaratmasdan): masofa + haq. */
@@ -125,12 +127,21 @@ export class TaxiService {
     if (count === 0 && !this.hasGreeting(text)) {
       text = CHAT_GREETING + text;
     }
-    return this.messages.create({
+    const message = await this.messages.create({
       tripId,
       senderId: userId,
       senderRole: role,
       text,
     });
+    // Qarshi tomonga (mijoz<->haydovchi) push xabar
+    const recipient = role === 'customer' ? trip.driverId : trip.customerId;
+    if (recipient) {
+      await this.notifications.notify(recipient, 'Yangi xabar', text, {
+        type: 'taxi_chat',
+        id: tripId,
+      });
+    }
+    return message;
   }
 
   /** Matn allaqachon salom bilan boshlanganmi (takrorlamaslik uchun). */
@@ -205,7 +216,14 @@ export class TaxiService {
     if (trip.driverId) {
       throw new BadRequestException('Safar allaqachon biriktirilgan');
     }
-    return this.repo.assignDriver(id, driverId);
+    const updated = await this.repo.assignDriver(id, driverId);
+    await this.notifications.notify(
+      updated.customerId,
+      'Taksi',
+      "Haydovchi qabul qildi va yo'lda",
+      { type: 'taxi', id: updated.id, status: 'ACCEPTED' },
+    );
+    return updated;
   }
 
   /** Yo'lovchini oldi (ACCEPTED -> IN_PROGRESS). */
@@ -214,7 +232,14 @@ export class TaxiService {
     if (trip.status !== 'ACCEPTED') {
       throw new BadRequestException('Safar boshlashga tayyor emas');
     }
-    return this.repo.updateStatus(id, 'IN_PROGRESS');
+    const updated = await this.repo.updateStatus(id, 'IN_PROGRESS');
+    await this.notifications.notify(
+      updated.customerId,
+      'Taksi',
+      'Safar boshlandi',
+      { type: 'taxi', id: updated.id, status: 'IN_PROGRESS' },
+    );
+    return updated;
   }
 
   /**
@@ -248,13 +273,20 @@ export class TaxiService {
     const fare = baseFare + waitFee;
     const commission = Math.round((fare * t.taxiCommissionPercent) / 100);
 
-    return this.repo.finalize(id, {
+    const updated = await this.repo.finalize(id, {
       distanceKm,
       waitMinutes,
       fare,
       commission,
       driverEarning: fare - commission,
     });
+    await this.notifications.notify(
+      updated.customerId,
+      'Taksi',
+      `Safar yakunlandi. To'lov: ${fare} so'm`,
+      { type: 'taxi', id: updated.id, status: 'COMPLETED' },
+    );
+    return updated;
   }
 
   private async requireDriverTrip(

@@ -35,8 +35,22 @@ export class NotificationService {
       !!this.projectId;
   }
 
+  /** Dev rejimda yuborilgan xabarlar (e2e introspeksiyasi uchun, RAM). */
+  private readonly recent: Array<{
+    userId: string;
+    title: string;
+    body: string;
+    delivered: number;
+    at: string;
+  }> = [];
+
   get isEnabled(): boolean {
     return this.devMode || this.live;
+  }
+
+  /** Dev introspeksiya — foydalanuvchiga yuborilgan oxirgi xabarlar. */
+  recentFor(userId: string) {
+    return this.recent.filter((r) => r.userId === userId);
   }
 
   registerToken(
@@ -61,8 +75,22 @@ export class NotificationService {
     payload: NotificationPayload,
   ): Promise<NotificationResult> {
     const tokens = (await this.repo.findByUser(userId)).map((t) => t.token);
-    if (tokens.length === 0) return { delivered: 0, channel: 'none' };
-    return this.sendPush(tokens, payload);
+    const result =
+      tokens.length === 0
+        ? ({ delivered: 0, channel: 'none' } as NotificationResult)
+        : await this.sendPush(tokens, payload);
+    // Dev introspeksiya — trigger ishlaganini e2e tekshira oladi
+    if (this.devMode) {
+      this.recent.push({
+        userId,
+        title: payload.title,
+        body: payload.body,
+        delivered: result.delivered,
+        at: new Date().toISOString(),
+      });
+      if (this.recent.length > 200) this.recent.shift();
+    }
+    return result;
   }
 
   private async sendPush(
