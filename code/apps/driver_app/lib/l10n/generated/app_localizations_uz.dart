@@ -140,6 +140,24 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiComplete => 'Yakunlash';
 
   @override
+  String get taxiCompleteTitle => 'Safarni yakunlash';
+
+  @override
+  String get taxiDistanceKm => 'Masofa (km)';
+
+  @override
+  String get taxiWaitMinutes => 'Kutish (daqiqa)';
+
+  @override
+  String get taxiMeteredBadge => 'Manzilsiz';
+
+  @override
+  String get taxiMeteredFareHint => 'Narx yakunda hisoblanadi';
+
+  @override
+  String get cancel => 'Bekor qilish';
+
+  @override
   String get chatTitle => 'Suhbat';
 
   @override
@@ -348,6 +366,24 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiComplete => 'Якунлаш';
+
+  @override
+  String get taxiCompleteTitle => 'Сафарни якунлаш';
+
+  @override
+  String get taxiDistanceKm => 'Масофа (км)';
+
+  @override
+  String get taxiWaitMinutes => 'Кутиш (дақиқа)';
+
+  @override
+  String get taxiMeteredBadge => 'Манзилсиз';
+
+  @override
+  String get taxiMeteredFareHint => 'Нарх якунда ҳисобланади';
+
+  @override
+  String get cancel => 'Бекор қилиш';
 
   @override
   String get chatTitle => 'Суҳбат';

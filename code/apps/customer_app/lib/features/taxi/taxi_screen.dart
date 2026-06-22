@@ -25,6 +25,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   TaxiEstimate? _estimate;
   bool _estimating = false;
   bool _requesting = false;
+  bool _noDestination = false; // manzilsiz (metered) chaqirish
   String? _error;
 
   Future<void> _doEstimate() async {
@@ -52,13 +53,16 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
 
   Future<void> _request() async {
     final t = AppLocalizations.of(context)!;
-    if (_from == null || _to == null || _from == _to) return;
+    if (_from == null) return;
+    if (!_noDestination && (_to == null || _from == _to)) return;
     setState(() {
       _requesting = true;
       _error = null;
     });
     try {
-      await ref.read(taxiApiProvider).request(_from!, _to!);
+      await ref
+          .read(taxiApiProvider)
+          .request(_from!, _noDestination ? null : _to);
       ref.invalidate(myTripsProvider);
       if (!mounted) return;
       setState(() => _estimate = null);
@@ -116,36 +120,69 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
                       _from = p;
                       _estimate = null;
                     })),
-            const SizedBox(height: 12),
-            _placeDropdown(t.taxiTo, Icons.location_on, _to, places,
-                (p) => setState(() {
-                      _to = p;
-                      _estimate = null;
-                    })),
+            if (!_noDestination) ...[
+              const SizedBox(height: 12),
+              _placeDropdown(t.taxiTo, Icons.location_on, _to, places,
+                  (p) => setState(() {
+                        _to = p;
+                        _estimate = null;
+                      })),
+            ],
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: Text(t.taxiNoDestination),
+              value: _noDestination,
+              onChanged: (v) => setState(() {
+                _noDestination = v;
+                _estimate = null;
+                _error = null;
+                if (v) _to = null;
+              }),
+            ),
+            if (_noDestination)
+              Card(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color:
+                              Theme.of(context).colorScheme.onSecondaryContainer),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(t.taxiMeteredHint,
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             const SizedBox(height: 16),
-            if (_estimate != null) _estimateCard(t, _estimate!),
+            if (!_noDestination && _estimate != null) _estimateCard(t, _estimate!),
             if (_error != null) ...[
               const SizedBox(height: 8),
               Text(_error!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ],
             const SizedBox(height: 12),
-            if (_estimate == null)
-              FilledButton.tonal(
-                onPressed: _estimating ? null : _doEstimate,
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48)),
-                child: _estimating
-                    ? const _Spin()
-                    : Text(t.taxiEstimate),
-              )
-            else
+            if (_noDestination || _estimate != null)
               FilledButton.icon(
                 onPressed: _requesting ? null : _request,
                 style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52)),
                 icon: _requesting ? const _Spin() : const Icon(Icons.local_taxi),
                 label: Text(t.taxiRequest),
+              )
+            else
+              FilledButton.tonal(
+                onPressed: _estimating ? null : _doEstimate,
+                style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48)),
+                child: _estimating ? const _Spin() : Text(t.taxiEstimate),
               ),
             const SizedBox(height: 24),
             Text(t.taxiMyTrips, style: Theme.of(context).textTheme.titleMedium),
@@ -262,8 +299,14 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
               ],
             ),
             const SizedBox(height: 4),
-            Text('${tr.pickupText} → ${tr.destinationText}'),
-            Text(t.priceSom(groupThousands(tr.fare))),
+            Text(tr.destinationText.isEmpty
+                ? '${tr.pickupText} → ${t.taxiMeteredBadge}'
+                : '${tr.pickupText} → ${tr.destinationText}'),
+            if (tr.fare > 0)
+              Text(t.priceSom(groupThousands(tr.fare)))
+            else
+              Text(t.taxiMeteredHint,
+                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
             if (tr.hasChat || tr.isCancellable)
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

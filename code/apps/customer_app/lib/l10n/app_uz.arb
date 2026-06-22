@@ -147,6 +147,9 @@
   "taxiStatusInProgress": "Yo'ldasiz",
   "taxiStatusCompleted": "Yakunlandi",
   "taxiStatusCancelled": "Bekor qilindi",
+  "taxiNoDestination": "Manzilni belgilamasdan chaqirish",
+  "taxiMeteredHint": "Narx safar oxirida masofa bo'yicha hisoblanadi",
+  "taxiMeteredBadge": "Manzilsiz",
 
   "chatTitle": "Suhbat",
   "chatInputHint": "Xabar yozing…",

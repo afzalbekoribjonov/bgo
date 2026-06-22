@@ -4,6 +4,7 @@ class TaxiTrip {
   final String id;
   final int publicNo;
   final String status;
+  final bool metered; // manzilsiz: narx yakunda masofadan
   final int fare;
   final int driverEarning;
   final double distanceKm;
@@ -14,6 +15,7 @@ class TaxiTrip {
     required this.id,
     required this.publicNo,
     required this.status,
+    required this.metered,
     required this.fare,
     required this.driverEarning,
     required this.distanceKm,
@@ -26,6 +28,7 @@ class TaxiTrip {
       id: json['id'] as String,
       publicNo: (json['publicNo'] as num?)?.toInt() ?? 0,
       status: (json['status'] as String?) ?? 'PENDING',
+      metered: (json['metered'] as bool?) ?? false,
       fare: (json['fare'] as num?)?.toInt() ?? 0,
       driverEarning: (json['driverEarning'] as num?)?.toInt() ?? 0,
       distanceKm: (json['distanceKm'] as num?)?.toDouble() ?? 0,

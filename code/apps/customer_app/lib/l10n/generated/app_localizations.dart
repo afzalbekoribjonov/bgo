@@ -816,6 +816,24 @@ abstract class AppLocalizations {
   /// **'Bekor qilindi'**
   String get taxiStatusCancelled;
 
+  /// No description provided for @taxiNoDestination.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilni belgilamasdan chaqirish'**
+  String get taxiNoDestination;
+
+  /// No description provided for @taxiMeteredHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Narx safar oxirida masofa bo\'yicha hisoblanadi'**
+  String get taxiMeteredHint;
+
+  /// No description provided for @taxiMeteredBadge.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilsiz'**
+  String get taxiMeteredBadge;
+
   /// No description provided for @chatTitle.
   ///
   /// In uz, this message translates to:
