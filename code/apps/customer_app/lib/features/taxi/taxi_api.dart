@@ -24,10 +24,11 @@ class TaxiApi {
     return TaxiEstimate.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
-  Future<TaxiTrip> request(GeoPlace pickup, GeoPlace destination) async {
+  /// [destination] null bo'lsa — manzilsiz (metered) so'rov: narx yakunda.
+  Future<TaxiTrip> request(GeoPlace pickup, GeoPlace? destination) async {
     final res = await _dio.post('/taxi/request', data: {
       'pickup': _point(pickup),
-      'destination': _point(destination),
+      if (destination != null) 'destination': _point(destination),
     });
     return TaxiTrip.fromJson(res.data['data'] as Map<String, dynamic>);
   }

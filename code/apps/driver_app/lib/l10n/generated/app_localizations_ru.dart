@@ -140,6 +140,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiComplete => 'Завершить';
 
   @override
+  String get taxiCompleteTitle => 'Завершение поездки';
+
+  @override
+  String get taxiDistanceKm => 'Расстояние (км)';
+
+  @override
+  String get taxiWaitMinutes => 'Ожидание (мин)';
+
+  @override
+  String get taxiMeteredBadge => 'Без адреса';
+
+  @override
+  String get taxiMeteredFareHint => 'Цена рассчитывается в конце';
+
+  @override
+  String get cancel => 'Отмена';
+
+  @override
   String get chatTitle => 'Чат';
 
   @override

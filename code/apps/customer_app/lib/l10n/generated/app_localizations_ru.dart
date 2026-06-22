@@ -379,6 +379,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiStatusCancelled => 'Отменена';
 
   @override
+  String get taxiNoDestination => 'Вызвать без указания адреса';
+
+  @override
+  String get taxiMeteredHint => 'Цена рассчитывается в конце поездки по расстоянию';
+
+  @override
+  String get taxiMeteredBadge => 'Без адреса';
+
+  @override
   String get chatTitle => 'Чат';
 
   @override

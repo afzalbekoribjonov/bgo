@@ -342,6 +342,42 @@ abstract class AppLocalizations {
   /// **'Yakunlash'**
   String get taxiComplete;
 
+  /// No description provided for @taxiCompleteTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Safarni yakunlash'**
+  String get taxiCompleteTitle;
+
+  /// No description provided for @taxiDistanceKm.
+  ///
+  /// In uz, this message translates to:
+  /// **'Masofa (km)'**
+  String get taxiDistanceKm;
+
+  /// No description provided for @taxiWaitMinutes.
+  ///
+  /// In uz, this message translates to:
+  /// **'Kutish (daqiqa)'**
+  String get taxiWaitMinutes;
+
+  /// No description provided for @taxiMeteredBadge.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilsiz'**
+  String get taxiMeteredBadge;
+
+  /// No description provided for @taxiMeteredFareHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Narx yakunda hisoblanadi'**
+  String get taxiMeteredFareHint;
+
+  /// No description provided for @cancel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilish'**
+  String get cancel;
+
   /// No description provided for @chatTitle.
   ///
   /// In uz, this message translates to:

@@ -379,6 +379,15 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiStatusCancelled => 'Bekor qilindi';
 
   @override
+  String get taxiNoDestination => 'Manzilni belgilamasdan chaqirish';
+
+  @override
+  String get taxiMeteredHint => 'Narx safar oxirida masofa bo\'yicha hisoblanadi';
+
+  @override
+  String get taxiMeteredBadge => 'Manzilsiz';
+
+  @override
   String get chatTitle => 'Suhbat';
 
   @override
@@ -831,6 +840,15 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiStatusCancelled => 'Бекор қилинди';
+
+  @override
+  String get taxiNoDestination => 'Манзилни белгиламасдан чақириш';
+
+  @override
+  String get taxiMeteredHint => 'Нарх сафар охирида масофа бўйича ҳисобланади';
+
+  @override
+  String get taxiMeteredBadge => 'Манзилсиз';
 
   @override
   String get chatTitle => 'Суҳбат';

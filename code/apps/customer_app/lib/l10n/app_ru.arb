@@ -129,6 +129,9 @@
   "taxiStatusInProgress": "В пути",
   "taxiStatusCompleted": "Завершена",
   "taxiStatusCancelled": "Отменена",
+  "taxiNoDestination": "Вызвать без указания адреса",
+  "taxiMeteredHint": "Цена рассчитывается в конце поездки по расстоянию",
+  "taxiMeteredBadge": "Без адреса",
 
   "chatTitle": "Чат",
   "chatInputHint": "Напишите сообщение…",

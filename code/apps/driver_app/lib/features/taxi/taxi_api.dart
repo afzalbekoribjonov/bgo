@@ -24,7 +24,15 @@ class TaxiApi {
 
   Future<void> accept(String id) => _action(id, 'accept');
   Future<void> start(String id) => _action(id, 'start');
-  Future<void> complete(String id) => _action(id, 'complete');
+
+  /// Yakunlash — metered uchun [distanceKm], hamma uchun [waitMinutes] (ixtiyoriy).
+  Future<void> complete(String id, {double? distanceKm, int? waitMinutes}) async {
+    final data = <String, dynamic>{};
+    if (distanceKm != null) data['distanceKm'] = distanceKm;
+    if (waitMinutes != null) data['waitMinutes'] = waitMinutes;
+    await _dio.post('/taxi/driver/trips/$id/complete',
+        data: data.isEmpty ? null : data);
+  }
 
   Future<void> _action(String id, String action) async {
     await _dio.post('/taxi/driver/trips/$id/$action');

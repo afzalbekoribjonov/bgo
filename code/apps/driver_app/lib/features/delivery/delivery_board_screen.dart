@@ -267,20 +267,28 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
   }
 
   Widget _taxiRoute(AppLocalizations t, TaxiTrip tr) {
+    final hasDest = tr.destinationText.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(t.taxiTripNo(tr.publicNo.toString()),
             style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('${tr.pickupText} → ${tr.destinationText}'),
-        Text('${t.taxiKm(tr.distanceKm.toStringAsFixed(1))} · '
-            '${t.priceSom(groupThousands(tr.fare))}'),
-        Text('${t.yourEarning}: ${t.priceSom(groupThousands(tr.driverEarning))}',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            )),
+        Text(hasDest
+            ? '${tr.pickupText} → ${tr.destinationText}'
+            : '${tr.pickupText} → ${t.taxiMeteredBadge}'),
+        if (tr.fare > 0) ...[
+          Text('${t.taxiKm(tr.distanceKm.toStringAsFixed(1))} · '
+              '${t.priceSom(groupThousands(tr.fare))}'),
+          Text(
+              '${t.yourEarning}: ${t.priceSom(groupThousands(tr.driverEarning))}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              )),
+        ] else
+          Text(t.taxiMeteredFareHint,
+              style: TextStyle(color: Theme.of(context).colorScheme.outline)),
       ],
     );
   }
@@ -346,12 +354,14 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
                   child: FilledButton(
                     onPressed: busy
                         ? null
-                        : () => _runTaxi(
-                              tr.id,
-                              () => isAccepted
-                                  ? ref.read(taxiApiProvider).start(tr.id)
-                                  : ref.read(taxiApiProvider).complete(tr.id),
-                            ),
+                        : () {
+                            if (isAccepted) {
+                              _runTaxi(tr.id,
+                                  () => ref.read(taxiApiProvider).start(tr.id));
+                            } else {
+                              _completeTaxi(tr);
+                            }
+                          },
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(44),
                       backgroundColor: isAccepted ? null : Colors.green,
@@ -377,6 +387,68 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
           tripTitle: t.taxiTripNo(tr.publicNo.toString()),
         ),
       ),
+    );
+  }
+
+  /// Yakunlash dialogi — metered safarga masofa, hammasiga kutish daqiqasi.
+  Future<void> _completeTaxi(TaxiTrip tr) async {
+    final t = AppLocalizations.of(context)!;
+    final distCtrl = TextEditingController(
+        text: tr.distanceKm > 0 ? tr.distanceKm.toStringAsFixed(1) : '');
+    final waitCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.taxiCompleteTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (tr.metered) ...[
+              TextField(
+                controller: distCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: t.taxiDistanceKm,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            TextField(
+              controller: waitCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: t.taxiWaitMinutes,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.taxiComplete),
+          ),
+        ],
+      ),
+    );
+    final distanceKm = tr.metered
+        ? double.tryParse(distCtrl.text.trim().replaceAll(',', '.'))
+        : null;
+    final waitMinutes = int.tryParse(waitCtrl.text.trim());
+    distCtrl.dispose();
+    waitCtrl.dispose();
+    if (confirmed != true) return;
+    await _runTaxi(
+      tr.id,
+      () => ref
+          .read(taxiApiProvider)
+          .complete(tr.id, distanceKm: distanceKm, waitMinutes: waitMinutes),
     );
   }
 

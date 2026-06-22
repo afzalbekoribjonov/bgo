@@ -129,6 +129,9 @@
   "taxiStatusInProgress": "Йўлдасиз",
   "taxiStatusCompleted": "Якунланди",
   "taxiStatusCancelled": "Бекор қилинди",
+  "taxiNoDestination": "Манзилни белгиламасдан чақириш",
+  "taxiMeteredHint": "Нарх сафар охирида масофа бўйича ҳисобланади",
+  "taxiMeteredBadge": "Манзилсиз",
 
   "chatTitle": "Суҳбат",
   "chatInputHint": "Хабар ёзинг…",
