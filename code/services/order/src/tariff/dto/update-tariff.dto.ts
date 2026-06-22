@@ -42,6 +42,11 @@ export class UpdateTariffDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  taxiWaitPerMin?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   parcelBaseFare?: number;
 
   @IsOptional()

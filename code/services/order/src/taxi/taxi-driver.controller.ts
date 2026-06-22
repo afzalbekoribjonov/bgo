@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -7,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
+import { CompleteTaxiDto } from './dto/request-taxi.dto';
 import { TaxiService } from './taxi.service';
 
 /**
@@ -54,7 +56,8 @@ export class TaxiDriverController {
   async complete(
     @Param('id') id: string,
     @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: CompleteTaxiDto,
   ) {
-    return { success: true, data: await this.taxi.complete(id, user.sub) };
+    return { success: true, data: await this.taxi.complete(id, user.sub, dto) };
   }
 }

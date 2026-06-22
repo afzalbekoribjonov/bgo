@@ -105,6 +105,7 @@ export const updateTariff = (body: {
   taxiPerKm: number;
   taxiMinFare: number;
   taxiCommissionPercent: number;
+  taxiWaitPerMin: number;
   parcelBaseFare: number;
   parcelPerKm: number;
   parcelMinFare: number;

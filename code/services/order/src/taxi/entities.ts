@@ -22,8 +22,10 @@ export interface TaxiTrip {
   customerId: string;
   driverId?: string;
   pickup: GeoPoint;
-  destination: GeoPoint;
+  destination?: GeoPoint; // manzilsiz (metered) rejimda bo'sh
+  metered: boolean;
   distanceKm: number;
+  waitMinutes: number;
   fare: number;
   commission: number;
   driverEarning: number;
@@ -36,8 +38,18 @@ export interface TaxiTrip {
 export interface NewTaxiTrip {
   customerId: string;
   pickup: GeoPoint;
-  destination: GeoPoint;
+  destination?: GeoPoint;
+  metered: boolean;
   distanceKm: number;
+  fare: number;
+  commission: number;
+  driverEarning: number;
+}
+
+/** Safarni yakunlash ma'lumotlari (metered: masofa; pulli kutish). */
+export interface FinalizeTaxiTrip {
+  distanceKm: number;
+  waitMinutes: number;
   fare: number;
   commission: number;
   driverEarning: number;

@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "tariffs" ADD COLUMN     "taxiWaitPerMin" INTEGER NOT NULL DEFAULT 500;
+
+-- AlterTable
+ALTER TABLE "taxi_trips" ADD COLUMN     "metered" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "waitMinutes" INTEGER NOT NULL DEFAULT 0,
+ALTER COLUMN "destination" DROP NOT NULL,
+ALTER COLUMN "distanceKm" SET DEFAULT 0,
+ALTER COLUMN "fare" SET DEFAULT 0;

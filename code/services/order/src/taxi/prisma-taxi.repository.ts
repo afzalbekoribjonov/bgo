@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  FinalizeTaxiTrip,
   GeoPoint,
   NewTaxiTrip,
   TaxiStatus,
@@ -26,7 +27,8 @@ export class PrismaTaxiRepository extends TaxiRepository {
       data: {
         customerId: data.customerId,
         pickup: data.pickup as unknown as Prisma.InputJsonValue,
-        destination: data.destination as unknown as Prisma.InputJsonValue,
+        destination: (data.destination ?? undefined) as unknown as Prisma.InputJsonValue,
+        metered: data.metered,
         distanceKm: data.distanceKm,
         fare: data.fare,
         commission: data.commission,
@@ -109,6 +111,28 @@ export class PrismaTaxiRepository extends TaxiRepository {
     return this.toTrip(updated as Row);
   }
 
+  async finalize(id: string, data: FinalizeTaxiTrip): Promise<TaxiTrip> {
+    const existing = await this.prisma.taxiTrip.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Safar topilmadi');
+    const history = [
+      ...((existing.statusHistory as unknown as TaxiStatusEntry[]) ?? []),
+      { status: 'COMPLETED' as TaxiStatus, at: new Date().toISOString() },
+    ];
+    const updated = await this.prisma.taxiTrip.update({
+      where: { id },
+      data: {
+        status: 'COMPLETED',
+        distanceKm: data.distanceKm,
+        waitMinutes: data.waitMinutes,
+        fare: data.fare,
+        commission: data.commission,
+        driverEarning: data.driverEarning,
+        statusHistory: history as unknown as Prisma.InputJsonValue,
+      },
+    });
+    return this.toTrip(updated as Row);
+  }
+
   private toTrip(t: Row): TaxiTrip {
     return {
       id: t.id as string,
@@ -116,8 +140,10 @@ export class PrismaTaxiRepository extends TaxiRepository {
       customerId: t.customerId as string,
       driverId: (t.driverId as string) ?? undefined,
       pickup: t.pickup as unknown as GeoPoint,
-      destination: t.destination as unknown as GeoPoint,
-      distanceKm: t.distanceKm as number,
+      destination: (t.destination as unknown as GeoPoint) ?? undefined,
+      metered: (t.metered as boolean) ?? false,
+      distanceKm: (t.distanceKm as number) ?? 0,
+      waitMinutes: (t.waitMinutes as number) ?? 0,
       fare: t.fare as number,
       commission: (t.commission as number) ?? 0,
       driverEarning: (t.driverEarning as number) ?? 0,
