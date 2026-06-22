@@ -13,14 +13,19 @@ import {
 } from '../common/reporting';
 import { TariffService } from '../tariff/tariff.service';
 import { CompleteTaxiDto, RequestTaxiDto } from './dto/request-taxi.dto';
-import { GeoPoint, TaxiTrip } from './entities';
+import { ChatRole, GeoPoint, TaxiMessage, TaxiTrip } from './entities';
+import { TaxiMessageRepository } from './taxi-message.repository';
 import { TaxiRepository } from './taxi.repository';
+
+/** Suhbatning birinchi xabari oldidan majburiy salom. */
+const CHAT_GREETING = 'Assalomu alaykum, ';
 
 /** Taksi safari — narx SERVER tomonda (tarif + masofa). plan/06-driver-app.md */
 @Injectable()
 export class TaxiService {
   constructor(
     private readonly repo: TaxiRepository,
+    private readonly messages: TaxiMessageRepository,
     private readonly tariff: TariffService,
   ) {}
 
@@ -77,6 +82,62 @@ export class TaxiService {
       throw new ForbiddenException('Bu safar sizga tegishli emas');
     }
     return trip;
+  }
+
+  // ---------- Suhbat (mijoz↔haydovchi) ----------
+
+  /** Safar ishtirokchisi (mijoz yoki biriktirilgan haydovchi) rolini aniqlaydi. */
+  private async requireParticipant(
+    tripId: string,
+    userId: string,
+  ): Promise<{ trip: TaxiTrip; role: ChatRole }> {
+    const trip = await this.repo.findById(tripId);
+    if (!trip) throw new NotFoundException('Safar topilmadi');
+    if (trip.customerId === userId) return { trip, role: 'customer' };
+    if (trip.driverId === userId) return { trip, role: 'driver' };
+    throw new ForbiddenException('Bu safar suhbatiga ruxsat yo\'q');
+  }
+
+  /** Safar suhbati xabarlari (vaqt bo'yicha). */
+  async listMessages(tripId: string, userId: string): Promise<TaxiMessage[]> {
+    await this.requireParticipant(tripId, userId);
+    return this.messages.listByTrip(tripId);
+  }
+
+  /**
+   * Xabar yuborish. Haydovchi biriktirilgach mumkin. Suhbatning birinchi
+   * xabari oldidan majburiy "Assalomu alaykum, " qo'yiladi (agar yo'q bo'lsa).
+   */
+  async sendMessage(
+    tripId: string,
+    userId: string,
+    rawText: string,
+  ): Promise<TaxiMessage> {
+    const { trip, role } = await this.requireParticipant(tripId, userId);
+    if (!trip.driverId) {
+      throw new BadRequestException('Hali haydovchi biriktirilmagan');
+    }
+    if (['COMPLETED', 'CANCELLED'].includes(trip.status)) {
+      throw new BadRequestException('Yakunlangan safarda yozib bo\'lmaydi');
+    }
+    let text = rawText.trim();
+    const count = await this.messages.countByTrip(tripId);
+    if (count === 0 && !this.hasGreeting(text)) {
+      text = CHAT_GREETING + text;
+    }
+    return this.messages.create({
+      tripId,
+      senderId: userId,
+      senderRole: role,
+      text,
+    });
+  }
+
+  /** Matn allaqachon salom bilan boshlanganmi (takrorlamaslik uchun). */
+  private hasGreeting(text: string): boolean {
+    return text
+      .toLocaleLowerCase('uz')
+      .startsWith('assalomu alaykum');
   }
 
   /** Mijoz bekor qiladi — faqat PENDING yoki ACCEPTED holatda. */

@@ -54,3 +54,22 @@ export interface FinalizeTaxiTrip {
   commission: number;
   driverEarning: number;
 }
+
+export type ChatRole = 'customer' | 'driver';
+
+/** Taksi suhbat xabari (mijoz↔haydovchi). */
+export interface TaxiMessage {
+  id: string;
+  tripId: string;
+  senderId: string;
+  senderRole: ChatRole;
+  text: string;
+  createdAt: string;
+}
+
+export interface NewTaxiMessage {
+  tripId: string;
+  senderId: string;
+  senderRole: ChatRole;
+  text: string;
+}

@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
-import { RequestTaxiDto } from './dto/request-taxi.dto';
+import { RequestTaxiDto, SendTaxiMessageDto } from './dto/request-taxi.dto';
 import { TaxiService } from './taxi.service';
 
 /** Mijoz taksi buyurtmasi. plan/05-customer-app.md */
@@ -60,5 +60,27 @@ export class TaxiController {
     @Param('id') id: string,
   ) {
     return { success: true, data: await this.taxi.cancel(user.sub, id) };
+  }
+
+  /** Suhbat xabarlari (mijoz yoki haydovchi — ishtirokchi bo'lsa). */
+  @Get(':id/messages')
+  async messages(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') id: string,
+  ) {
+    return { success: true, data: await this.taxi.listMessages(id, user.sub) };
+  }
+
+  /** Xabar yuborish — birinchi xabarga "Assalomu alaykum, " qo'shiladi. */
+  @Post(':id/messages')
+  async sendMessage(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') id: string,
+    @Body() dto: SendTaxiMessageDto,
+  ) {
+    return {
+      success: true,
+      data: await this.taxi.sendMessage(id, user.sub, dto.text),
+    };
   }
 }

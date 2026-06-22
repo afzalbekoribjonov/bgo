@@ -114,10 +114,26 @@ model TaxiTrip {
   statusHistory Json
   createdAt     DateTime    @default(now())
 
+  messages TaxiMessage[]
+
   @@index([customerId])
   @@index([driverId])
   @@index([status])
   @@map("taxi_trips")
+}
+
+/** Taksi suhbat xabari (mijoz↔haydovchi). plan/06-driver-app.md */
+model TaxiMessage {
+  id         String   @id @default(uuid())
+  tripId     String
+  trip       TaxiTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  senderId   String
+  senderRole String // "customer" | "driver"
+  text       String
+  createdAt  DateTime @default(now())
+
+  @@index([tripId])
+  @@map("taxi_messages")
 }
 
 enum OrderStatus {

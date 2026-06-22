@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -52,4 +53,12 @@ export class CompleteTaxiDto {
   @IsInt()
   @Min(0)
   waitMinutes?: number;
+}
+
+/** Suhbat xabari yuborish. Birinchi xabarga "Assalomu alaykum, " server qo'shadi. */
+export class SendTaxiMessageDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1000)
+  text!: string;
 }
