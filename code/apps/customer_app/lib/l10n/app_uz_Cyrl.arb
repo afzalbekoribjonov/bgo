@@ -167,6 +167,12 @@
   "taxiSearchingCars": "Яқин ҳайдовчилар қидирилмоқда…",
   "taxiSelectFromHint": "Қаердан?",
   "taxiSelectToHint": "Қаерга?",
+  "rateTitle": "Сафарни баҳоланг",
+  "rateSubtitle": "Хизмат сизга ёқдими?",
+  "rateHint": "Изоҳ (ихтиёрий)",
+  "rateSubmit": "Юбориш",
+  "rateSkip": "Кейинроқ",
+  "rateThanks": "Баҳоингиз учун раҳмат!",
 
   "chatTitle": "Суҳбат",
   "chatInputHint": "Хабар ёзинг…",

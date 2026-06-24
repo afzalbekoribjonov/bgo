@@ -9,7 +9,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
-import { RequestTaxiDto, SendTaxiMessageDto } from './dto/request-taxi.dto';
+import {
+  RateTaxiDto,
+  RequestTaxiDto,
+  SendTaxiMessageDto,
+} from './dto/request-taxi.dto';
 import { TaxiService } from './taxi.service';
 
 /** Mijoz taksi buyurtmasi. plan/05-customer-app.md */
@@ -66,6 +70,20 @@ export class TaxiController {
     @Param('id') id: string,
   ) {
     return { success: true, data: await this.taxi.cancel(user.sub, id) };
+  }
+
+  /** Safarni baholash (1-5) — yakunlangach. */
+  @Post(':id/rate')
+  @HttpCode(200)
+  async rate(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') id: string,
+    @Body() dto: RateTaxiDto,
+  ) {
+    return {
+      success: true,
+      data: await this.taxi.rate(user.sub, id, dto.rating, dto.comment),
+    };
   }
 
   /** Suhbat xabarlari (mijoz yoki haydovchi — ishtirokchi bo'lsa). */

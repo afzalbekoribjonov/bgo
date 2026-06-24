@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -32,17 +33,41 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   bool _requesting = false;
   String? _error;
   List<LatLng> _cars = const [];
+  Timer? _ticker;
+  int _tick = 0;
+  DateTime? _orderedAt;
+  String? _ratedHandledId;
 
   @override
   void initState() {
     super.initState();
     _initLocation();
+    // Har soniya: mashinalar harakati + 5 soniyada safar holatini yangilash.
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _map.dispose();
     super.dispose();
+  }
+
+  void _onTick() {
+    if (!mounted) return;
+    _tick++;
+    if (_cars.isNotEmpty) {
+      final rnd = Random();
+      setState(() {
+        _cars = _cars
+            .map((c) => LatLng(c.latitude + (rnd.nextDouble() - 0.5) * 0.0009,
+                c.longitude + (rnd.nextDouble() - 0.5) * 0.0009))
+            .toList();
+      });
+    } else {
+      setState(() {}); // taymerni yangilab turish
+    }
+    if (_tick % 5 == 0) ref.invalidate(myTripsProvider);
   }
 
   Future<void> _initLocation() async {
@@ -56,7 +81,10 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
         _from = GeoPlace(t.taxiCurrentLocation, pos.latitude, pos.longitude);
       }
     });
-    if (pos != null) _map.move(pos, 15);
+    if (pos != null) {
+      _map.move(pos, 15);
+      _spawnCars(); // atrofdagi mashinalar doim ko'rinib tursin
+    }
   }
 
   LatLng get _center =>
@@ -110,6 +138,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
       await ref.read(taxiApiProvider).request(_from!, _noDest ? null : _to);
       ref.invalidate(myTripsProvider);
       if (!mounted) return;
+      _orderedAt = DateTime.now();
       _spawnCars();
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(t.taxiRequested)));
@@ -158,6 +187,9 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
             tr.status == 'IN_PROGRESS')
         .toList();
     final activeTrip = active.isNotEmpty ? active.first : null;
+
+    // Yakunlangan, hali baholanmagan safar — reyting oynasini ko'rsatamiz.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRate(trips));
 
     return Scaffold(
       appBar: AppBar(title: Text(t.taxiTitle)),
@@ -209,26 +241,46 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
         ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
         : null;
 
-    return FlutterMap(
-      mapController: _map,
-      options: MapOptions(
-        initialCenter: _center,
-        initialZoom: 14,
-        minZoom: 11,
-        maxZoom: 18,
-      ),
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.beshariq.customer_app',
+        FlutterMap(
+          mapController: _map,
+          options: MapOptions(
+            initialCenter: _center,
+            initialZoom: 14,
+            minZoom: 11,
+            maxZoom: 18,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.beshariq.customer_app',
+            ),
+            if (line != null)
+              PolylineLayer(polylines: [
+                Polyline(points: line, strokeWidth: 4, color: scheme.primary),
+              ]),
+            MarkerLayer(markers: markers),
+          ],
         ),
-        if (line != null)
-          PolylineLayer(polylines: [
-            Polyline(points: line, strokeWidth: 4, color: scheme.primary),
-          ]),
-        MarkerLayer(markers: markers),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton.small(
+            heroTag: 'taxiMyLoc',
+            onPressed: _recenter,
+            child: const Icon(Icons.my_location),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _recenter() async {
+    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    if (!mounted || pos == null) return;
+    _map.move(pos, 16);
+    setState(() => _myLoc = pos);
   }
 
   Marker _pin(LatLng p, Color color) => Marker(
@@ -377,6 +429,12 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
                 Expanded(
                     child: Text(t.taxiSearchingCars,
                         style: TextStyle(color: scheme.outline))),
+                if (_elapsed() != null)
+                  Text(_elapsed()!,
+                      style: TextStyle(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontFeatures: const [FontFeature.tabularFigures()])),
               ],
             )
           else
@@ -487,5 +545,135 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
       default:
         return (t.taxiStatusPending, Colors.grey);
     }
+  }
+
+  String? _elapsed() {
+    if (_orderedAt == null) return null;
+    final s = DateTime.now().difference(_orderedAt!).inSeconds;
+    final m = s ~/ 60;
+    final sec = (s % 60).toString().padLeft(2, '0');
+    return '$m:$sec';
+  }
+
+  /// Yakunlangan, baholanmagan safar uchun reyting oynasi (bir marta).
+  Future<void> _maybeRate(List<TaxiTrip> trips) async {
+    final done = trips
+        .where((tr) => tr.status == 'COMPLETED' && tr.rating == null)
+        .toList();
+    if (done.isEmpty) return;
+    final trip = done.first;
+    if (_ratedHandledId == trip.id) return;
+    _ratedHandledId = trip.id;
+    _orderedAt = null;
+    final result = await showModalBottomSheet<({int rating, String? comment})>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _RatingSheet(fare: trip.fare),
+    );
+    if (result == null) return;
+    try {
+      await ref
+          .read(taxiApiProvider)
+          .rate(trip.id, result.rating, comment: result.comment);
+      ref.invalidate(myTripsProvider);
+      if (!mounted) return;
+      final t = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t.rateThanks)));
+    } catch (_) {/* best-effort */}
+  }
+}
+
+/// Safarni baholash varaqasi — yulduzlar + ixtiyoriy izoh.
+class _RatingSheet extends StatefulWidget {
+  final int fare;
+  const _RatingSheet({required this.fare});
+
+  @override
+  State<_RatingSheet> createState() => _RatingSheetState();
+}
+
+class _RatingSheetState extends State<_RatingSheet> {
+  int _rating = 5;
+  final _commentCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: scheme.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Icon(Icons.check_circle, color: Colors.green, size: 48),
+          const SizedBox(height: 8),
+          Text(t.taxiStatusCompleted,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold)),
+          if (widget.fare > 0)
+            Text(t.priceSom(groupThousands(widget.fare)),
+                style: TextStyle(color: scheme.outline)),
+          const SizedBox(height: 12),
+          Text(t.rateSubtitle, style: TextStyle(color: scheme.outline)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              final filled = i < _rating;
+              return IconButton(
+                iconSize: 38,
+                onPressed: () => setState(() => _rating = i + 1),
+                icon: Icon(filled ? Icons.star : Icons.star_border,
+                    color: Colors.amber),
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _commentCtrl,
+            minLines: 1,
+            maxLines: 3,
+            decoration: InputDecoration(hintText: t.rateHint),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, (
+              rating: _rating,
+              comment: _commentCtrl.text.trim().isEmpty
+                  ? null
+                  : _commentCtrl.text.trim(),
+            )),
+            child: Text(t.rateSubmit),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t.rateSkip),
+          ),
+        ],
+      ),
+    );
   }
 }

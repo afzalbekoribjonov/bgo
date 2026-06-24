@@ -492,6 +492,24 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiSelectToHint => 'Qayerga?';
 
   @override
+  String get rateTitle => 'Safarni baholang';
+
+  @override
+  String get rateSubtitle => 'Xizmat sizga yoqdimi?';
+
+  @override
+  String get rateHint => 'Izoh (ixtiyoriy)';
+
+  @override
+  String get rateSubmit => 'Yuborish';
+
+  @override
+  String get rateSkip => 'Keyinroq';
+
+  @override
+  String get rateThanks => 'Bahoyingiz uchun rahmat!';
+
+  @override
   String get chatTitle => 'Suhbat';
 
   @override
@@ -1057,6 +1075,24 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiSelectToHint => 'Қаерга?';
+
+  @override
+  String get rateTitle => 'Сафарни баҳоланг';
+
+  @override
+  String get rateSubtitle => 'Хизмат сизга ёқдими?';
+
+  @override
+  String get rateHint => 'Изоҳ (ихтиёрий)';
+
+  @override
+  String get rateSubmit => 'Юбориш';
+
+  @override
+  String get rateSkip => 'Кейинроқ';
+
+  @override
+  String get rateThanks => 'Баҳоингиз учун раҳмат!';
 
   @override
   String get chatTitle => 'Суҳбат';

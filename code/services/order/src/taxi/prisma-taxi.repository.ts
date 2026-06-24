@@ -133,6 +133,18 @@ export class PrismaTaxiRepository extends TaxiRepository {
     return this.toTrip(updated as Row);
   }
 
+  async setRating(
+    id: string,
+    rating: number,
+    comment?: string,
+  ): Promise<TaxiTrip> {
+    const updated = await this.prisma.taxiTrip.update({
+      where: { id },
+      data: { rating, ratingComment: comment ?? null },
+    });
+    return this.toTrip(updated as Row);
+  }
+
   private toTrip(t: Row): TaxiTrip {
     return {
       id: t.id as string,
@@ -150,6 +162,8 @@ export class PrismaTaxiRepository extends TaxiRepository {
       status: t.status as TaxiStatus,
       paymentType: 'CASH',
       statusHistory: t.statusHistory as unknown as TaxiStatusEntry[],
+      rating: (t.rating as number) ?? undefined,
+      ratingComment: (t.ratingComment as string) ?? undefined,
       createdAt: (t.createdAt as Date).toISOString(),
     };
   }

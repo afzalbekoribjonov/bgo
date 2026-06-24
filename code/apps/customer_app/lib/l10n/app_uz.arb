@@ -185,6 +185,12 @@
   "taxiSearchingCars": "Yaqin haydovchilar qidirilmoqda…",
   "taxiSelectFromHint": "Qayerdan?",
   "taxiSelectToHint": "Qayerga?",
+  "rateTitle": "Safarni baholang",
+  "rateSubtitle": "Xizmat sizga yoqdimi?",
+  "rateHint": "Izoh (ixtiyoriy)",
+  "rateSubmit": "Yuborish",
+  "rateSkip": "Keyinroq",
+  "rateThanks": "Bahoyingiz uchun rahmat!",
 
   "chatTitle": "Suhbat",
   "chatInputHint": "Xabar yozing…",

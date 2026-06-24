@@ -1038,6 +1038,42 @@ abstract class AppLocalizations {
   /// **'Qayerga?'**
   String get taxiSelectToHint;
 
+  /// No description provided for @rateTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Safarni baholang'**
+  String get rateTitle;
+
+  /// No description provided for @rateSubtitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Xizmat sizga yoqdimi?'**
+  String get rateSubtitle;
+
+  /// No description provided for @rateHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Izoh (ixtiyoriy)'**
+  String get rateHint;
+
+  /// No description provided for @rateSubmit.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yuborish'**
+  String get rateSubmit;
+
+  /// No description provided for @rateSkip.
+  ///
+  /// In uz, this message translates to:
+  /// **'Keyinroq'**
+  String get rateSkip;
+
+  /// No description provided for @rateThanks.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bahoyingiz uchun rahmat!'**
+  String get rateThanks;
+
   /// No description provided for @chatTitle.
   ///
   /// In uz, this message translates to:

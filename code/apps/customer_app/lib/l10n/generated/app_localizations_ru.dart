@@ -492,6 +492,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiSelectToHint => 'Куда?';
 
   @override
+  String get rateTitle => 'Оцените поездку';
+
+  @override
+  String get rateSubtitle => 'Вам понравился сервис?';
+
+  @override
+  String get rateHint => 'Комментарий (необязательно)';
+
+  @override
+  String get rateSubmit => 'Отправить';
+
+  @override
+  String get rateSkip => 'Позже';
+
+  @override
+  String get rateThanks => 'Спасибо за оценку!';
+
+  @override
   String get chatTitle => 'Чат';
 
   @override
