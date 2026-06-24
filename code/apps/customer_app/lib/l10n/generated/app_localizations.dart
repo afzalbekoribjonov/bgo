@@ -264,6 +264,18 @@ abstract class AppLocalizations {
   /// **'Hisobingizdan chiqmoqchimisiz?'**
   String get logoutConfirm;
 
+  /// No description provided for @personalInfo.
+  ///
+  /// In uz, this message translates to:
+  /// **'Shaxsiy ma\'lumotlar'**
+  String get personalInfo;
+
+  /// No description provided for @profilePhone.
+  ///
+  /// In uz, this message translates to:
+  /// **'Telefon raqami'**
+  String get profilePhone;
+
   /// No description provided for @errorInvalidPhone.
   ///
   /// In uz, this message translates to:
@@ -815,6 +827,12 @@ abstract class AppLocalizations {
   /// In uz, this message translates to:
   /// **'Saqlangan manzil yo\'q'**
   String get addressNone;
+
+  /// No description provided for @addressDefaultBadge.
+  ///
+  /// In uz, this message translates to:
+  /// **'Standart'**
+  String get addressDefaultBadge;
 
   /// No description provided for @addressNew.
   ///

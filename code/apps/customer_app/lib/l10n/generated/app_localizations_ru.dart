@@ -95,6 +95,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get logoutConfirm => 'Выйти из аккаунта?';
 
   @override
+  String get personalInfo => 'Личные данные';
+
+  @override
+  String get profilePhone => 'Номер телефона';
+
+  @override
   String get errorInvalidPhone => 'Неверный номер телефона (+998XXXXXXXXX)';
 
   @override
@@ -373,6 +379,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get addressNone => 'Нет сохранённых адресов';
+
+  @override
+  String get addressDefaultBadge => 'По умолчанию';
 
   @override
   String get addressNew => 'Новый адрес';
