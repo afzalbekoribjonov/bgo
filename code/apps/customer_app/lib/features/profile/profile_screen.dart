@@ -5,6 +5,8 @@ import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../auth/auth_controller.dart';
+import '../order/my_orders_screen.dart';
+import '../partner/partner_screen.dart';
 import 'profile_api.dart';
 import 'profile_models.dart';
 
@@ -75,14 +77,138 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  void _open(Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
+  Future<void> _pickLanguage() async {
+    final locale = await showDialog<Locale>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(AppLocalizations.of(ctx)!.language),
+        children: const [
+          _LangOption(Locale('uz'), "O'zbekcha"),
+          _LangOption(
+            Locale.fromSubtags(languageCode: 'uz', scriptCode: 'Cyrl'),
+            'Ўзбекча',
+          ),
+          _LangOption(Locale('ru'), 'Русский'),
+        ],
+      ),
+    );
+    if (locale != null) ref.read(localeProvider.notifier).state = locale;
+  }
+
+  Future<void> _confirmLogout() async {
+    final t = AppLocalizations.of(context)!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.logout),
+        content: Text(t.logoutConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.logout),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(authControllerProvider.notifier).logout();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final user = ref.watch(authControllerProvider).user;
+    final scheme = Theme.of(context).colorScheme;
+    final name = (user?.fullName?.trim().isNotEmpty ?? false)
+        ? user!.fullName!.trim()
+        : t.guestUser;
     return Scaffold(
       appBar: AppBar(title: Text(t.profileTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // --- Hisob sarlavhasi ---
+          Card(
+            color: scheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: scheme.primary,
+                    child: Icon(Icons.person, color: scheme.onPrimary, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: scheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                )),
+                        if (user != null)
+                          Text(user.phone,
+                              style: TextStyle(color: scheme.onPrimaryContainer)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // --- Sozlamalar menyusi ---
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.receipt_long),
+                  title: Text(t.myOrders),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _open(const MyOrdersScreen()),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.language),
+                  title: Text(t.language),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _pickLanguage,
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.handshake_outlined),
+                  title: Text(t.partnerBanner),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _open(const PartnerScreen()),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // --- Shaxsiy ma'lumotlar ---
+          Text(t.profileName,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
           TextField(
             controller: _nameCtrl,
             decoration: InputDecoration(
@@ -118,6 +244,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           _buildAddresses(t),
+          const SizedBox(height: 24),
+
+          // --- Chiqish (tasdiqlash bilan) ---
+          OutlinedButton.icon(
+            onPressed: _confirmLogout,
+            icon: Icon(Icons.logout, color: scheme.error),
+            label: Text(t.logout, style: TextStyle(color: scheme.error)),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              side: BorderSide(color: scheme.error),
+            ),
+          ),
         ],
       ),
     );
@@ -168,6 +306,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             PopupMenuItem(value: 'delete', child: Text(t.addressDelete)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Til tanlash varianti (SimpleDialog ichida).
+class _LangOption extends StatelessWidget {
+  final Locale locale;
+  final String label;
+  const _LangOption(this.locale, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialogOption(
+      onPressed: () => Navigator.pop(context, locale),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(label),
       ),
     );
   }

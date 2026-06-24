@@ -27,6 +27,11 @@
   "continueButton": "Продолжить",
 
   "logout": "Выход",
+  "cancel": "Отмена",
+  "settingsTitle": "Настройки",
+  "accountTitle": "Аккаунт",
+  "guestUser": "Гость",
+  "logoutConfirm": "Выйти из аккаунта?",
   "errorInvalidPhone": "Неверный номер телефона (+998XXXXXXXXX)",
   "errorInvalidCode": "Неверный код или истёк срок действия",
   "errorGeneric": "Произошла ошибка. Попробуйте снова.",

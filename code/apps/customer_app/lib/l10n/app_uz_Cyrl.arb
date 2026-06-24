@@ -27,6 +27,11 @@
   "continueButton": "Давом этиш",
 
   "logout": "Чиқиш",
+  "cancel": "Бекор қилиш",
+  "settingsTitle": "Созламалар",
+  "accountTitle": "Ҳисоб",
+  "guestUser": "Меҳмон",
+  "logoutConfirm": "Ҳисобингиздан чиқмоқчимисиз?",
   "errorInvalidPhone": "Телефон рақами нотўғри (+998XXXXXXXXX)",
   "errorInvalidCode": "Код нотўғри ёки муддати тугаган",
   "errorGeneric": "Хатолик юз берди. Қайта уриниб кўринг.",
