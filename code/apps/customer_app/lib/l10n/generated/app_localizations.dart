@@ -378,6 +378,60 @@ abstract class AppLocalizations {
   /// **'Hech narsa topilmadi'**
   String get foodNothingFound;
 
+  /// No description provided for @greetingHi.
+  ///
+  /// In uz, this message translates to:
+  /// **'Salom'**
+  String get greetingHi;
+
+  /// No description provided for @homeLocation.
+  ///
+  /// In uz, this message translates to:
+  /// **'Beshariq tumani'**
+  String get homeLocation;
+
+  /// No description provided for @homePopular.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mashhur oshxonalar'**
+  String get homePopular;
+
+  /// No description provided for @homeAllRestaurants.
+  ///
+  /// In uz, this message translates to:
+  /// **'Barcha oshxonalar'**
+  String get homeAllRestaurants;
+
+  /// No description provided for @homeSeeAll.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hammasi'**
+  String get homeSeeAll;
+
+  /// No description provided for @homeBanner2Title.
+  ///
+  /// In uz, this message translates to:
+  /// **'Birinchi buyurtmaga -20%'**
+  String get homeBanner2Title;
+
+  /// No description provided for @homeBanner2Sub.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yangi mijozlar uchun chegirma'**
+  String get homeBanner2Sub;
+
+  /// No description provided for @homeBanner3Title.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tez va issiq'**
+  String get homeBanner3Title;
+
+  /// No description provided for @homeBanner3Sub.
+  ///
+  /// In uz, this message translates to:
+  /// **'O\'rtacha 30 daqiqada yetkazamiz'**
+  String get homeBanner3Sub;
+
   /// No description provided for @retry.
   ///
   /// In uz, this message translates to:

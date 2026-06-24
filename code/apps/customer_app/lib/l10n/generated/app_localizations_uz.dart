@@ -154,6 +154,33 @@ class AppLocalizationsUz extends AppLocalizations {
   String get foodNothingFound => 'Hech narsa topilmadi';
 
   @override
+  String get greetingHi => 'Salom';
+
+  @override
+  String get homeLocation => 'Beshariq tumani';
+
+  @override
+  String get homePopular => 'Mashhur oshxonalar';
+
+  @override
+  String get homeAllRestaurants => 'Barcha oshxonalar';
+
+  @override
+  String get homeSeeAll => 'Hammasi';
+
+  @override
+  String get homeBanner2Title => 'Birinchi buyurtmaga -20%';
+
+  @override
+  String get homeBanner2Sub => 'Yangi mijozlar uchun chegirma';
+
+  @override
+  String get homeBanner3Title => 'Tez va issiq';
+
+  @override
+  String get homeBanner3Sub => 'O\'rtacha 30 daqiqada yetkazamiz';
+
+  @override
   String get retry => 'Qayta urinish';
 
   @override
@@ -654,6 +681,33 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get foodNothingFound => 'Ҳеч нарса топилмади';
+
+  @override
+  String get greetingHi => 'Салом';
+
+  @override
+  String get homeLocation => 'Бешариқ тумани';
+
+  @override
+  String get homePopular => 'Машҳур ошхоналар';
+
+  @override
+  String get homeAllRestaurants => 'Барча ошхоналар';
+
+  @override
+  String get homeSeeAll => 'Ҳаммаси';
+
+  @override
+  String get homeBanner2Title => 'Биринчи буюртмага -20%';
+
+  @override
+  String get homeBanner2Sub => 'Янги мижозлар учун чегирма';
+
+  @override
+  String get homeBanner3Title => 'Тез ва иссиқ';
+
+  @override
+  String get homeBanner3Sub => 'Ўртача 30 дақиқада етказамиз';
 
   @override
   String get retry => 'Қайта уриниш';

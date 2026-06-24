@@ -154,6 +154,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get foodNothingFound => 'Ничего не найдено';
 
   @override
+  String get greetingHi => 'Привет';
+
+  @override
+  String get homeLocation => 'Бешарикский район';
+
+  @override
+  String get homePopular => 'Популярные рестораны';
+
+  @override
+  String get homeAllRestaurants => 'Все рестораны';
+
+  @override
+  String get homeSeeAll => 'Все';
+
+  @override
+  String get homeBanner2Title => '-20% на первый заказ';
+
+  @override
+  String get homeBanner2Sub => 'Скидка для новых клиентов';
+
+  @override
+  String get homeBanner3Title => 'Быстро и горячо';
+
+  @override
+  String get homeBanner3Sub => 'Доставим в среднем за 30 минут';
+
+  @override
   String get retry => 'Повторить';
 
   @override
