@@ -112,6 +112,8 @@ model TaxiTrip {
   status        TaxiStatus  @default(PENDING)
   paymentType   PaymentType @default(CASH)
   statusHistory Json
+  rating        Int? // mijoz bahosi (1-5), safar yakunidan keyin
+  ratingComment String?
   createdAt     DateTime    @default(now())
 
   messages TaxiMessage[]

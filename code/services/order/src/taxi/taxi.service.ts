@@ -163,6 +163,23 @@ export class TaxiService {
       .startsWith('assalomu alaykum');
   }
 
+  /** Mijoz safarni baholaydi (1-5) — faqat yakunlangan safar. */
+  async rate(
+    customerId: string,
+    id: string,
+    rating: number,
+    comment?: string,
+  ): Promise<TaxiTrip> {
+    const trip = await this.getOwned(customerId, id);
+    if (trip.status !== 'COMPLETED') {
+      throw new BadRequestException('Faqat yakunlangan safarni baholash mumkin');
+    }
+    if (rating < 1 || rating > 5) {
+      throw new BadRequestException('Baho 1-5 oralig\'ida bo\'lishi kerak');
+    }
+    return this.repo.setRating(id, rating, comment);
+  }
+
   /** Mijoz bekor qiladi — faqat PENDING yoki ACCEPTED holatda. */
   async cancel(customerId: string, id: string): Promise<TaxiTrip> {
     const trip = await this.getOwned(customerId, id);

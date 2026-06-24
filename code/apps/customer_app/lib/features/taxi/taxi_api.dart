@@ -48,6 +48,11 @@ class TaxiApi {
     await _dio.post('/taxi/$id/cancel');
   }
 
+  Future<void> rate(String id, int rating, {String? comment}) async {
+    await _dio.post('/taxi/$id/rate',
+        data: {'rating': rating, if (comment != null) 'comment': comment});
+  }
+
   Future<List<TaxiMessage>> messages(String id) async {
     final res = await _dio.get('/taxi/$id/messages');
     final list = (res.data['data'] as List?) ?? const [];

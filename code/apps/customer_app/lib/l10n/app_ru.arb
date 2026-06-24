@@ -167,6 +167,12 @@
   "taxiSearchingCars": "Поиск ближайших водителей…",
   "taxiSelectFromHint": "Откуда?",
   "taxiSelectToHint": "Куда?",
+  "rateTitle": "Оцените поездку",
+  "rateSubtitle": "Вам понравился сервис?",
+  "rateHint": "Комментарий (необязательно)",
+  "rateSubmit": "Отправить",
+  "rateSkip": "Позже",
+  "rateThanks": "Спасибо за оценку!",
 
   "chatTitle": "Чат",
   "chatInputHint": "Напишите сообщение…",

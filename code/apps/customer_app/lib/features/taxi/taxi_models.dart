@@ -47,6 +47,7 @@ class TaxiTrip {
   final double distanceKm;
   final String pickupText;
   final String destinationText;
+  final int? rating;
 
   const TaxiTrip({
     required this.id,
@@ -56,6 +57,7 @@ class TaxiTrip {
     required this.distanceKm,
     required this.pickupText,
     required this.destinationText,
+    this.rating,
   });
 
   factory TaxiTrip.fromJson(Map<String, dynamic> json) {
@@ -67,6 +69,7 @@ class TaxiTrip {
       distanceKm: (json['distanceKm'] as num?)?.toDouble() ?? 0,
       pickupText: (json['pickup']?['text'] as String?) ?? '',
       destinationText: (json['destination']?['text'] as String?) ?? '',
+      rating: (json['rating'] as num?)?.toInt(),
     );
   }
 

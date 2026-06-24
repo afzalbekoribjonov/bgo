@@ -62,3 +62,16 @@ export class SendTaxiMessageDto {
   @MaxLength(1000)
   text!: string;
 }
+
+/** Safarni baholash (yakunlangach). */
+export class RateTaxiDto {
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  comment?: string;
+}

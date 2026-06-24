@@ -101,23 +101,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name == null ? '${t.greetingHi}!' : '${t.greetingHi}, $name!',
+                        name == null ? t.greetingHi : '${t.greetingHi}, $name',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             color: scheme.onPrimary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Row(
                         children: [
                           Icon(Icons.location_on,
-                              size: 15,
+                              size: 14,
                               color: scheme.onPrimary.withValues(alpha: 0.85)),
                           const SizedBox(width: 4),
                           Text(t.homeLocation,
                               style: TextStyle(
                                   color: scheme.onPrimary.withValues(alpha: 0.85),
-                                  fontSize: 13)),
+                                  fontSize: 12)),
                         ],
                       ),
                     ],

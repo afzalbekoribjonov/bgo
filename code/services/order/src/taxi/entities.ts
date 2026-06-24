@@ -32,6 +32,8 @@ export interface TaxiTrip {
   status: TaxiStatus;
   paymentType: 'CASH';
   statusHistory: TaxiStatusEntry[];
+  rating?: number;
+  ratingComment?: string;
   createdAt: string;
 }
 
