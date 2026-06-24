@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../core/location_service.dart';
 import '../../core/places.dart';
+import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../map/map_picker_screen.dart';
 import 'taxi_api.dart';
@@ -33,6 +34,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   bool _requesting = false;
   String? _error;
   List<LatLng> _cars = const [];
+  List<LatLng> _routeLine = const [];
   Timer? _ticker;
   int _tick = 0;
   DateTime? _orderedAt;
@@ -115,7 +117,10 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
 
   Future<void> _recompute() async {
     if (_noDest || _from == null || _to == null) {
-      setState(() => _estimate = null);
+      setState(() {
+        _estimate = null;
+        _routeLine = const [];
+      });
       return;
     }
     try {
@@ -124,6 +129,12 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     } catch (_) {
       if (mounted) setState(() => _estimate = null);
     }
+    // Yo'l marshruti — chiziq yo'llar ustidan ketsin (to'g'ri chiziq emas).
+    final pts = await ref.read(routingServiceProvider).route(
+          LatLng(_from!.lat, _from!.lng),
+          LatLng(_to!.lat, _to!.lng),
+        );
+    if (mounted) setState(() => _routeLine = pts);
   }
 
   Future<void> _request() async {
@@ -237,9 +248,12 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
       ));
     }
 
-    final line = (_from != null && _to != null && !_noDest)
-        ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
-        : null;
+    // Marshrut: yo'l geometriyasi bo'lsa (OSRM), aks holda to'g'ri chiziq zaxira.
+    final line = _routeLine.isNotEmpty
+        ? _routeLine
+        : ((_from != null && _to != null && !_noDest)
+            ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
+            : null);
 
     return Stack(
       children: [
@@ -258,7 +272,10 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
             ),
             if (line != null)
               PolylineLayer(polylines: [
-                Polyline(points: line, strokeWidth: 4, color: scheme.primary),
+                Polyline(
+                    points: line,
+                    strokeWidth: 5,
+                    color: const Color(0xFF2E7D32)),
               ]),
             MarkerLayer(markers: markers),
           ],
