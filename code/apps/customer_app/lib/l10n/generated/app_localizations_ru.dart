@@ -80,6 +80,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get logout => 'Выход';
 
   @override
+  String get cancel => 'Отмена';
+
+  @override
+  String get settingsTitle => 'Настройки';
+
+  @override
+  String get accountTitle => 'Аккаунт';
+
+  @override
+  String get guestUser => 'Гость';
+
+  @override
+  String get logoutConfirm => 'Выйти из аккаунта?';
+
+  @override
   String get errorInvalidPhone => 'Неверный номер телефона (+998XXXXXXXXX)';
 
   @override

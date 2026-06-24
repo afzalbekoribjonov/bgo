@@ -33,6 +33,11 @@
   "continueButton": "Davom etish",
 
   "logout": "Chiqish",
+  "cancel": "Bekor qilish",
+  "settingsTitle": "Sozlamalar",
+  "accountTitle": "Hisob",
+  "guestUser": "Mehmon",
+  "logoutConfirm": "Hisobingizdan chiqmoqchimisiz?",
   "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
   "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
   "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",

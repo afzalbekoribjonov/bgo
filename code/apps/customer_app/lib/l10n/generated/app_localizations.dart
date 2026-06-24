@@ -234,6 +234,36 @@ abstract class AppLocalizations {
   /// **'Chiqish'**
   String get logout;
 
+  /// No description provided for @cancel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bekor qilish'**
+  String get cancel;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Sozlamalar'**
+  String get settingsTitle;
+
+  /// No description provided for @accountTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hisob'**
+  String get accountTitle;
+
+  /// No description provided for @guestUser.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mehmon'**
+  String get guestUser;
+
+  /// No description provided for @logoutConfirm.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hisobingizdan chiqmoqchimisiz?'**
+  String get logoutConfirm;
+
   /// No description provided for @errorInvalidPhone.
   ///
   /// In uz, this message translates to:

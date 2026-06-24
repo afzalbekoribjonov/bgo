@@ -80,6 +80,21 @@ class AppLocalizationsUz extends AppLocalizations {
   String get logout => 'Chiqish';
 
   @override
+  String get cancel => 'Bekor qilish';
+
+  @override
+  String get settingsTitle => 'Sozlamalar';
+
+  @override
+  String get accountTitle => 'Hisob';
+
+  @override
+  String get guestUser => 'Mehmon';
+
+  @override
+  String get logoutConfirm => 'Hisobingizdan chiqmoqchimisiz?';
+
+  @override
   String get errorInvalidPhone => 'Telefon raqami noto\'g\'ri (+998XXXXXXXXX)';
 
   @override
@@ -541,6 +556,21 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get logout => 'Чиқиш';
+
+  @override
+  String get cancel => 'Бекор қилиш';
+
+  @override
+  String get settingsTitle => 'Созламалар';
+
+  @override
+  String get accountTitle => 'Ҳисоб';
+
+  @override
+  String get guestUser => 'Меҳмон';
+
+  @override
+  String get logoutConfirm => 'Ҳисобингиздан чиқмоқчимисиз?';
 
   @override
   String get errorInvalidPhone => 'Телефон рақами нотўғри (+998XXXXXXXXX)';

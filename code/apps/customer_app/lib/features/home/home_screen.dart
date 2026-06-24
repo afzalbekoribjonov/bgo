@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:customer_app/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
-import '../order/my_orders_screen.dart';
 import '../parcel/parcel_screen.dart';
 import '../partner/partner_screen.dart';
 import '../profile/profile_screen.dart';
@@ -18,29 +16,21 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context)!;
+    final user = ref.watch(authControllerProvider).user;
+    final name = (user?.fullName?.trim().isNotEmpty ?? false)
+        ? user!.fullName!.trim()
+        : null;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.appName),
         actions: [
+          // Barcha sozlamalar/profil/buyurtmalar yagona Profil markazida.
           IconButton(
-            icon: const Icon(Icons.receipt_long),
-            tooltip: t.myOrders,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(Icons.account_circle_outlined),
             tooltip: t.profileTitle,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
-          ),
-          const LanguageButton(),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: t.logout,
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
           ),
         ],
       ),
@@ -49,7 +39,8 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t.welcome, style: Theme.of(context).textTheme.headlineSmall),
+            Text(name == null ? t.welcome : '${t.welcome} $name',
+                style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 4),
             Text(t.chooseService, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 16),
