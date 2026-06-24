@@ -108,7 +108,7 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
         actions: const [LanguageButton()],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: _otpStep ? _buildOtpStep(t) : _buildPhoneStep(t),
         ),
@@ -116,15 +116,44 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
     );
   }
 
+  Widget _hero(AppLocalizations t) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(26),
+          ),
+          child: const Icon(Icons.storefront, color: Colors.white, size: 46),
+        ),
+        const SizedBox(height: 16),
+        Text(t.appName,
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        Text(t.loginSubtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: scheme.outline)),
+      ],
+    );
+  }
+
   Widget _buildPhoneStep(AppLocalizations t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 8),
-        Text(t.loginTitle, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
-        Text(t.loginSubtitle, style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 24),
+        _hero(t),
+        const SizedBox(height: 36),
         TextField(
           controller: _phoneCtrl,
           keyboardType: TextInputType.phone,
@@ -135,16 +164,13 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
           decoration: InputDecoration(
             labelText: t.phoneLabel,
             prefixIcon: const Icon(Icons.phone),
-            border: const OutlineInputBorder(),
           ),
         ),
         if (_error != null) _ErrorText(_error!),
         const SizedBox(height: 24),
         FilledButton(
           onPressed: _loading ? null : _sendCode,
-          child: _loading
-              ? const _ButtonSpinner()
-              : Text(t.sendCode),
+          child: _loading ? const _ButtonSpinner() : Text(t.sendCode),
         ),
       ],
     );
@@ -192,7 +218,6 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
           ],
           decoration: InputDecoration(
             labelText: t.otpLabel,
-            border: const OutlineInputBorder(),
           ),
         ),
         if (_error != null) _ErrorText(_error!),
