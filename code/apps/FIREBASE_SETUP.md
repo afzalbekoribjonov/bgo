@@ -37,15 +37,18 @@ Console → **Build → Cloud Messaging** ochiq bo'lsa kifoya (FCM API v1 standa
 ## 5. Backend'ni jonli rejimga o'tkazish (push haqiqatda yuborilishi uchun)
 Hozir backend **dev rejim** (`FCM_DEV_MODE=true`) — push log'ga chiqadi, qurilmaga
 bormaydi. Jonli yuborish uchun auth servisi `.env`:
+Backend `firebase-admin` SDK'dan foydalanadi — service account JSON'dan access
+tokenni o'zi yaratadi (eskirish muammosi yo'q).
+1. Console → **Project settings → Service accounts → Generate new private key** →
+   JSON yuklab olinadi.
+2. Faylni `code/services/auth/firebase-service-account.json` ga qo'y (gitignore'da).
+3. auth servisi `.env`:
 ```
 FCM_DEV_MODE=false
 FCM_ENABLED=true
-FCM_PROJECT_ID=<firebase-project-id>
-FCM_ACCESS_TOKEN=<service account OAuth2 access token>
+FCM_SERVICE_ACCOUNT=./firebase-service-account.json
 ```
-`FCM_ACCESS_TOKEN` — service account (Console → Project settings → Service accounts →
-"Generate new private key") asosida OAuth2 token. Deploy bosqichida avtomatlashtiriladi
-(google-auth kutubxonasi bilan). Sinov uchun qo'lda token olib qo'yish ham mumkin.
+4. auth servisini qayta ishga tushir.
 
 ## 6. Sinash (telefon = emulyator)
 1. `google-services.json` o'z joyida.

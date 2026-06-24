@@ -21,3 +21,6 @@ Thumbs.db
 
 # Claude Code (lokal sozlama)
 .claude/
+
+# Firebase service account (maxfiy — har muhit o'ziniki)
+**/firebase-service-account.json
