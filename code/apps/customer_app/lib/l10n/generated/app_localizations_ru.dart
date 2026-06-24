@@ -130,6 +130,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get emptyMenu => 'Меню пока пусто';
 
   @override
+  String get foodSearchHint => 'Поиск ресторана…';
+
+  @override
+  String get foodFilterAll => 'Все';
+
+  @override
+  String get foodFilterOpen => 'Открыто';
+
+  @override
+  String get foodFilterTop => 'Высокий рейтинг';
+
+  @override
+  String get foodPromoTitle => 'Бесплатная доставка';
+
+  @override
+  String get foodPromoSubtitle => 'На первый заказ из выбранных ресторанов';
+
+  @override
+  String get foodSectionRestaurants => 'Рестораны';
+
+  @override
+  String get foodNothingFound => 'Ничего не найдено';
+
+  @override
   String get retry => 'Повторить';
 
   @override
