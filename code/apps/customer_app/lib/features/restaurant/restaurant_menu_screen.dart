@@ -7,9 +7,10 @@ import '../../widgets/async_error.dart';
 import '../cart/cart_controller.dart';
 import '../cart/cart_screen.dart';
 import 'restaurant_api.dart';
+import 'restaurant_card.dart';
 import 'restaurant_models.dart';
 
-/// Oshxona menyusi — kategoriya bo'yicha taomlar + savatga qo'shish. plan/05-customer-app.md
+/// Oshxona menyusi — gradient banner + chiroyli taom kartalari. plan/05-customer-app.md
 class RestaurantMenuScreen extends ConsumerWidget {
   final String restaurantId;
   final String restaurantName;
@@ -38,44 +39,68 @@ class RestaurantMenuScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(t.cartUpdatedNewRestaurant)),
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item.name} — ${t.cart}'),
+            duration: const Duration(milliseconds: 900),
+          ),
+        );
       }
     }
 
     final showCartBar = !cart.isEmpty && cart.restaurantId == restaurantId;
 
     return Scaffold(
-      appBar: AppBar(title: Text(restaurantName)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => AsyncErrorRetry(
-          error: e,
-          onRetry: () => ref.invalidate(menuProvider(restaurantId)),
-        ),
+        loading: () => CustomScrollView(slivers: [
+          _appBar(context, rating: null, address: null),
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ]),
+        error: (e, _) => CustomScrollView(slivers: [
+          _appBar(context, rating: null, address: null),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: AsyncErrorRetry(
+              error: e,
+              onRetry: () => ref.invalidate(menuProvider(restaurantId)),
+            ),
+          ),
+        ]),
         data: (menu) {
           final categories =
               menu.categories.where((c) => c.items.isNotEmpty).toList();
-          if (categories.isEmpty) {
-            return Center(child: Text(t.emptyMenu));
-          }
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 88, top: 8),
-            children: [
-              for (final category in categories) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text(
-                    category.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+          return CustomScrollView(
+            slivers: [
+              _appBar(context,
+                  rating: menu.restaurant.rating,
+                  address: menu.restaurant.address,
+                  isOpen: menu.restaurant.isOpen),
+              if (categories.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: Text(t.emptyMenu)),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 96, top: 4),
+                  sliver: SliverList.list(
+                    children: [
+                      for (final category in categories) ...[
+                        _categoryHeader(context, category.name),
+                        for (final item in category.items)
+                          _MenuItemCard(
+                            item: item,
+                            onAdd:
+                                item.isAvailable ? () => addToCart(item) : null,
+                          ),
+                      ],
+                    ],
                   ),
                 ),
-                for (final item in category.items)
-                  _MenuItemTile(
-                    item: item,
-                    onAdd: item.isAvailable ? () => addToCart(item) : null,
-                  ),
-              ],
             ],
           );
         },
@@ -91,46 +116,169 @@ class RestaurantMenuScreen extends ConsumerWidget {
           : null,
     );
   }
+
+  Widget _appBar(BuildContext context,
+      {double? rating, String? address, bool isOpen = true}) {
+    final accent = restaurantAccent(restaurantName);
+    return SliverAppBar(
+      expandedHeight: 170,
+      pinned: true,
+      foregroundColor: Colors.white,
+      backgroundColor: accent,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.symmetric(horizontal: 56, vertical: 14),
+        title: Text(restaurantName,
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [accent, accent.withValues(alpha: 0.6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              const Positioned(
+                right: 16,
+                bottom: 40,
+                child: Icon(Icons.restaurant_menu,
+                    size: 90, color: Colors.white24),
+              ),
+              Positioned(
+                left: 16,
+                bottom: 46,
+                child: Row(
+                  children: [
+                    if (rating != null) ...[
+                      const Icon(Icons.star, color: Colors.amber, size: 18),
+                      const SizedBox(width: 4),
+                      Text(rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 12),
+                    ],
+                    if (address != null && address.isNotEmpty)
+                      const Icon(Icons.location_on,
+                          color: Colors.white70, size: 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _categoryHeader(BuildContext context, String name) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 20,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(name,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
 }
 
-class _MenuItemTile extends StatelessWidget {
+class _MenuItemCard extends StatelessWidget {
   final MenuItemView item;
   final VoidCallback? onAdd;
 
-  const _MenuItemTile({required this.item, this.onAdd});
+  const _MenuItemCard({required this.item, this.onAdd});
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final priceText = t.priceSom(groupThousands(item.price));
+    final scheme = Theme.of(context).colorScheme;
     final disabled = !item.isAvailable;
+    final accent = restaurantAccent(item.name);
 
     return Opacity(
-      opacity: disabled ? 0.5 : 1,
-      child: ListTile(
-        title: Text(item.name),
-        subtitle: item.description != null && item.description!.isNotEmpty
-            ? Text(item.description!)
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (disabled)
-              Text(
-                t.unavailable,
-                style: TextStyle(
-                    fontSize: 11, color: Theme.of(context).colorScheme.error),
-              )
-            else ...[
-              Text(priceText,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                icon: const Icon(Icons.add),
-                onPressed: onAdd,
-              ),
-            ],
-          ],
+      opacity: disabled ? 0.55 : 1,
+      child: Card(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onAdd,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                // Taom rasmi (placeholder gradient)
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [accent, accent.withValues(alpha: 0.6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.fastfood,
+                      color: Colors.white70, size: 28),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      if (item.description != null &&
+                          item.description!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(item.description!,
+                            style:
+                                TextStyle(color: scheme.outline, fontSize: 12),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                      const SizedBox(height: 6),
+                      Text(
+                        disabled
+                            ? t.unavailable
+                            : t.priceSom(groupThousands(item.price)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: disabled ? scheme.error : scheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!disabled)
+                  IconButton.filled(
+                    icon: const Icon(Icons.add),
+                    onPressed: onAdd,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -156,13 +304,17 @@ class _CartBar extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: FilledButton(
           onPressed: onTap,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-          ),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${t.cart} ($itemCount)'),
+              Row(
+                children: [
+                  const Icon(Icons.shopping_cart_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Text('${t.cart} ($itemCount)'),
+                ],
+              ),
               Text(t.priceSom(groupThousands(subtotal))),
             ],
           ),
