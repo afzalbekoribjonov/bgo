@@ -330,6 +330,54 @@ abstract class AppLocalizations {
   /// **'Menyu hozircha bo\'sh'**
   String get emptyMenu;
 
+  /// No description provided for @foodSearchHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oshxona qidirish…'**
+  String get foodSearchHint;
+
+  /// No description provided for @foodFilterAll.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hammasi'**
+  String get foodFilterAll;
+
+  /// No description provided for @foodFilterOpen.
+  ///
+  /// In uz, this message translates to:
+  /// **'Ochiq'**
+  String get foodFilterOpen;
+
+  /// No description provided for @foodFilterTop.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yuqori reyting'**
+  String get foodFilterTop;
+
+  /// No description provided for @foodPromoTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bepul yetkazib berish'**
+  String get foodPromoTitle;
+
+  /// No description provided for @foodPromoSubtitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tanlangan oshxonalardan birinchi buyurtmaga'**
+  String get foodPromoSubtitle;
+
+  /// No description provided for @foodSectionRestaurants.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oshxonalar'**
+  String get foodSectionRestaurants;
+
+  /// No description provided for @foodNothingFound.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hech narsa topilmadi'**
+  String get foodNothingFound;
+
   /// No description provided for @retry.
   ///
   /// In uz, this message translates to:

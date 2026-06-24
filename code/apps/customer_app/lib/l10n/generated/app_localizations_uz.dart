@@ -130,6 +130,30 @@ class AppLocalizationsUz extends AppLocalizations {
   String get emptyMenu => 'Menyu hozircha bo\'sh';
 
   @override
+  String get foodSearchHint => 'Oshxona qidirish…';
+
+  @override
+  String get foodFilterAll => 'Hammasi';
+
+  @override
+  String get foodFilterOpen => 'Ochiq';
+
+  @override
+  String get foodFilterTop => 'Yuqori reyting';
+
+  @override
+  String get foodPromoTitle => 'Bepul yetkazib berish';
+
+  @override
+  String get foodPromoSubtitle => 'Tanlangan oshxonalardan birinchi buyurtmaga';
+
+  @override
+  String get foodSectionRestaurants => 'Oshxonalar';
+
+  @override
+  String get foodNothingFound => 'Hech narsa topilmadi';
+
+  @override
   String get retry => 'Qayta urinish';
 
   @override
@@ -606,6 +630,30 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get emptyMenu => 'Меню ҳозирча бўш';
+
+  @override
+  String get foodSearchHint => 'Ошхона қидириш…';
+
+  @override
+  String get foodFilterAll => 'Ҳаммаси';
+
+  @override
+  String get foodFilterOpen => 'Очиқ';
+
+  @override
+  String get foodFilterTop => 'Юқори рейтинг';
+
+  @override
+  String get foodPromoTitle => 'Бепул етказиб бериш';
+
+  @override
+  String get foodPromoSubtitle => 'Танланган ошхоналардан биринчи буюртмага';
+
+  @override
+  String get foodSectionRestaurants => 'Ошхоналар';
+
+  @override
+  String get foodNothingFound => 'Ҳеч нарса топилмади';
 
   @override
   String get retry => 'Қайта уриниш';
