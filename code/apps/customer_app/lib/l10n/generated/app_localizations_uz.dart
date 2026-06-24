@@ -463,6 +463,35 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiMeteredBadge => 'Manzilsiz';
 
   @override
+  String get mapPickTitle => 'Joyni tanlang';
+
+  @override
+  String get mapSearchHint => 'Joy qidirish…';
+
+  @override
+  String get mapConfirm => 'Tanlash';
+
+  @override
+  String get mapPickedPoint => 'Xaritadan tanlangan joy';
+
+  @override
+  String get taxiCurrentLocation => 'Joriy joylashuv';
+
+  @override
+  String taxiFareFrom(String price) {
+    return '$price dan';
+  }
+
+  @override
+  String get taxiSearchingCars => 'Yaqin haydovchilar qidirilmoqda…';
+
+  @override
+  String get taxiSelectFromHint => 'Qayerdan?';
+
+  @override
+  String get taxiSelectToHint => 'Qayerga?';
+
+  @override
   String get chatTitle => 'Suhbat';
 
   @override
@@ -999,6 +1028,35 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiMeteredBadge => 'Манзилсиз';
+
+  @override
+  String get mapPickTitle => 'Жойни танланг';
+
+  @override
+  String get mapSearchHint => 'Жой қидириш…';
+
+  @override
+  String get mapConfirm => 'Танлаш';
+
+  @override
+  String get mapPickedPoint => 'Харитадан танланган жой';
+
+  @override
+  String get taxiCurrentLocation => 'Жорий жойлашув';
+
+  @override
+  String taxiFareFrom(String price) {
+    return '$price дан';
+  }
+
+  @override
+  String get taxiSearchingCars => 'Яқин ҳайдовчилар қидирилмоқда…';
+
+  @override
+  String get taxiSelectFromHint => 'Қаердан?';
+
+  @override
+  String get taxiSelectToHint => 'Қаерга?';
 
   @override
   String get chatTitle => 'Суҳбат';

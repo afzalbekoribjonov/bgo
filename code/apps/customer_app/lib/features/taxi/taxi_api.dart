@@ -16,6 +16,11 @@ class TaxiApi {
         'lng': p.lng,
       };
 
+  Future<TaxiTariff> tariff() async {
+    final res = await _dio.get('/taxi/tariff');
+    return TaxiTariff.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
   Future<TaxiEstimate> estimate(GeoPlace pickup, GeoPlace destination) async {
     final res = await _dio.post('/taxi/estimate', data: {
       'pickup': _point(pickup),
@@ -64,3 +69,6 @@ final myTripsProvider = FutureProvider<List<TaxiTrip>>((ref) {
   ref.watch(localeProvider);
   return ref.read(taxiApiProvider).listMine();
 });
+
+final taxiTariffProvider =
+    FutureProvider<TaxiTariff>((ref) => ref.read(taxiApiProvider).tariff());

@@ -1,17 +1,20 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/location_service.dart';
 import '../../core/places.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../widgets/async_error.dart';
-import '../geo/geo_api.dart';
+import '../map/map_picker_screen.dart';
 import 'taxi_api.dart';
 import 'taxi_chat_screen.dart';
 import 'taxi_models.dart';
 
-/// Taksi chaqirish ekrani. plan/05-customer-app.md
-/// Xarita ulanmaguncha: Beshariq preset nuqtalari.
+/// Taksi chaqirish — xaritali oqim. plan/05-customer-app.md, plan/12-maps-navigation.md
 class TaxiScreen extends ConsumerStatefulWidget {
   const TaxiScreen({super.key});
 
@@ -20,52 +23,94 @@ class TaxiScreen extends ConsumerStatefulWidget {
 }
 
 class _TaxiScreenState extends ConsumerState<TaxiScreen> {
+  final MapController _map = MapController();
+  LatLng? _myLoc;
   GeoPlace? _from;
   GeoPlace? _to;
+  bool _noDest = false;
   TaxiEstimate? _estimate;
-  bool _estimating = false;
   bool _requesting = false;
-  bool _noDestination = false; // manzilsiz (metered) chaqirish
   String? _error;
+  List<LatLng> _cars = const [];
 
-  Future<void> _doEstimate() async {
+  @override
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
+
+  @override
+  void dispose() {
+    _map.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initLocation() async {
     final t = AppLocalizations.of(context)!;
-    if (_from == null || _to == null) return;
-    if (_from == _to) {
-      setState(() => _error = t.taxiSamePoint);
+    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    if (!mounted) return;
+    setState(() {
+      _myLoc = pos;
+      // Joriy joylashuvni "Qayerdan" sifatida avtomatik o'rnatamiz.
+      if (pos != null && _from == null) {
+        _from = GeoPlace(t.taxiCurrentLocation, pos.latitude, pos.longitude);
+      }
+    });
+    if (pos != null) _map.move(pos, 15);
+  }
+
+  LatLng get _center =>
+      _myLoc ??
+      (_from != null
+          ? LatLng(_from!.lat, _from!.lng)
+          : LocationService.beshariqCenter);
+
+  Future<void> _pick({required bool isFrom}) async {
+    final initial = isFrom
+        ? (_from != null ? LatLng(_from!.lat, _from!.lng) : _myLoc)
+        : (_to != null ? LatLng(_to!.lat, _to!.lng) : _myLoc);
+    final result = await Navigator.of(context).push<GeoPlace>(
+      MaterialPageRoute(
+        builder: (_) => MapPickerScreen(initial: initial ?? _center),
+      ),
+    );
+    if (result == null) return;
+    setState(() {
+      if (isFrom) {
+        _from = result;
+      } else {
+        _to = result;
+      }
+    });
+    await _recompute();
+  }
+
+  Future<void> _recompute() async {
+    if (_noDest || _from == null || _to == null) {
+      setState(() => _estimate = null);
       return;
     }
-    setState(() {
-      _estimating = true;
-      _error = null;
-      _estimate = null;
-    });
     try {
       final e = await ref.read(taxiApiProvider).estimate(_from!, _to!);
-      setState(() => _estimate = e);
-    } catch (e) {
-      setState(() =>
-          _error = isNetworkError(e) ? t.errorNetwork : t.errorGeneric);
-    } finally {
-      if (mounted) setState(() => _estimating = false);
+      if (mounted) setState(() => _estimate = e);
+    } catch (_) {
+      if (mounted) setState(() => _estimate = null);
     }
   }
 
   Future<void> _request() async {
     final t = AppLocalizations.of(context)!;
     if (_from == null) return;
-    if (!_noDestination && (_to == null || _from == _to)) return;
+    if (!_noDest && _to == null) return;
     setState(() {
       _requesting = true;
       _error = null;
     });
     try {
-      await ref
-          .read(taxiApiProvider)
-          .request(_from!, _noDestination ? null : _to);
+      await ref.read(taxiApiProvider).request(_from!, _noDest ? null : _to);
       ref.invalidate(myTripsProvider);
       if (!mounted) return;
-      setState(() => _estimate = null);
+      _spawnCars();
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(t.taxiRequested)));
     } catch (e) {
@@ -76,254 +121,357 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     }
   }
 
+  /// Buyurtmadan keyin xaritada yaqin "mashinalar" (vizual).
+  void _spawnCars() {
+    final base = _from != null ? LatLng(_from!.lat, _from!.lng) : _center;
+    final rnd = Random();
+    setState(() {
+      _cars = List.generate(4, (_) {
+        final dLat = (rnd.nextDouble() - 0.5) * 0.012;
+        final dLng = (rnd.nextDouble() - 0.5) * 0.012;
+        return LatLng(base.latitude + dLat, base.longitude + dLng);
+      });
+    });
+  }
+
   Future<void> _cancel(String id) async {
     final t = AppLocalizations.of(context)!;
     try {
       await ref.read(taxiApiProvider).cancel(id);
       ref.invalidate(myTripsProvider);
+      setState(() => _cars = const []);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isNetworkError(e) ? t.errorNetwork : t.errorGeneric)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(isNetworkError(e) ? t.errorNetwork : t.errorGeneric)));
     }
-  }
-
-  void _openChat(TaxiTrip tr) {
-    final t = AppLocalizations.of(context)!;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => TaxiChatScreen(
-          tripId: tr.id,
-          tripTitle: t.taxiTripNo(tr.publicNo.toString()),
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
+    final trips = ref.watch(myTripsProvider).valueOrNull ?? const [];
+    final active = trips
+        .where((tr) =>
+            tr.status == 'PENDING' ||
+            tr.status == 'ACCEPTED' ||
+            tr.status == 'IN_PROGRESS')
+        .toList();
+    final activeTrip = active.isNotEmpty ? active.first : null;
+
     return Scaffold(
       appBar: AppBar(title: Text(t.taxiTitle)),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(myTripsProvider);
-          ref.invalidate(placesProvider);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _placeDropdown(t.taxiFrom, Icons.my_location, _from, places,
-                (p) => setState(() {
-                      _from = p;
-                      _estimate = null;
-                    })),
-            if (!_noDestination) ...[
-              const SizedBox(height: 12),
-              _placeDropdown(t.taxiTo, Icons.location_on, _to, places,
-                  (p) => setState(() {
-                        _to = p;
-                        _estimate = null;
-                      })),
-            ],
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: Text(t.taxiNoDestination),
-              value: _noDestination,
-              onChanged: (v) => setState(() {
-                _noDestination = v;
-                _estimate = null;
-                _error = null;
-                if (v) _to = null;
-              }),
-            ),
-            if (_noDestination)
-              Card(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color:
-                              Theme.of(context).colorScheme.onSecondaryContainer),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(t.taxiMeteredHint,
-                            style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSecondaryContainer)),
-                      ),
-                    ],
-                  ),
+      body: Column(
+        children: [
+          Expanded(child: _buildMap()),
+          if (activeTrip != null)
+            _activePanel(t, activeTrip)
+          else
+            _bookingPanel(t),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMap() {
+    final scheme = Theme.of(context).colorScheme;
+    final markers = <Marker>[];
+    if (_myLoc != null) {
+      markers.add(Marker(
+        point: _myLoc!,
+        width: 22,
+        height: 22,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+          ),
+        ),
+      ));
+    }
+    if (_from != null) {
+      markers.add(_pin(LatLng(_from!.lat, _from!.lng), Colors.green));
+    }
+    if (_to != null && !_noDest) {
+      markers.add(_pin(LatLng(_to!.lat, _to!.lng), scheme.primary));
+    }
+    for (final c in _cars) {
+      markers.add(Marker(
+        point: c,
+        width: 34,
+        height: 34,
+        child: const Icon(Icons.local_taxi, color: Color(0xFFFFB300), size: 30),
+      ));
+    }
+
+    final line = (_from != null && _to != null && !_noDest)
+        ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
+        : null;
+
+    return FlutterMap(
+      mapController: _map,
+      options: MapOptions(
+        initialCenter: _center,
+        initialZoom: 14,
+        minZoom: 11,
+        maxZoom: 18,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.beshariq.customer_app',
+        ),
+        if (line != null)
+          PolylineLayer(polylines: [
+            Polyline(points: line, strokeWidth: 4, color: scheme.primary),
+          ]),
+        MarkerLayer(markers: markers),
+      ],
+    );
+  }
+
+  Marker _pin(LatLng p, Color color) => Marker(
+        point: p,
+        width: 40,
+        height: 40,
+        alignment: Alignment.topCenter,
+        child: Icon(Icons.location_pin, color: color, size: 40),
+      );
+
+  // ---------- Buyurtma paneli ----------
+  Widget _bookingPanel(AppLocalizations t) {
+    return _panel(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _addressRow(
+            icon: Icons.my_location,
+            color: Colors.green,
+            label: _from?.label ?? t.taxiSelectFromHint,
+            filled: _from != null,
+            onTap: () => _pick(isFrom: true),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _addressRow(
+                  icon: Icons.location_on,
+                  color: Theme.of(context).colorScheme.primary,
+                  label: _noDest
+                      ? t.taxiMeteredBadge
+                      : (_to?.label ?? t.taxiSelectToHint),
+                  filled: _noDest || _to != null,
+                  onTap: _noDest ? null : () => _pick(isFrom: false),
                 ),
               ),
-            const SizedBox(height: 16),
-            if (!_noDestination && _estimate != null) _estimateCard(t, _estimate!),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              const SizedBox(width: 8),
+              FilterChip(
+                label: Text(t.taxiMeteredBadge),
+                selected: _noDest,
+                onSelected: (v) {
+                  setState(() {
+                    _noDest = v;
+                    if (v) _to = null;
+                  });
+                  _recompute();
+                },
+              ),
             ],
-            const SizedBox(height: 12),
-            if (_noDestination || _estimate != null)
-              FilledButton.icon(
-                onPressed: _requesting ? null : _request,
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52)),
-                icon: _requesting ? const _Spin() : const Icon(Icons.local_taxi),
-                label: Text(t.taxiRequest),
-              )
-            else
-              FilledButton.tonal(
-                onPressed: _estimating ? null : _doEstimate,
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48)),
-                child: _estimating ? const _Spin() : Text(t.taxiEstimate),
-              ),
-            const SizedBox(height: 24),
-            Text(t.taxiMyTrips, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            _buildTrips(t),
+          ),
+          const SizedBox(height: 10),
+          _fareLine(t),
+          if (_error != null) ...[
+            const SizedBox(height: 6),
+            Text(_error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ],
-        ),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed:
+                (_requesting || _from == null || (!_noDest && _to == null))
+                    ? null
+                    : _request,
+            icon: _requesting
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.local_taxi),
+            label: Text(t.taxiRequest),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _placeDropdown(
-    String label,
-    IconData icon,
-    GeoPlace? value,
-    List<GeoPlace> places,
-    ValueChanged<GeoPlace?> onChanged,
-  ) {
-    return DropdownButtonFormField<GeoPlace>(
-      value: places.contains(value) ? value : null,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        for (final p in places)
-          DropdownMenuItem(value: p, child: Text(p.label)),
-      ],
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _estimateCard(AppLocalizations t, TaxiEstimate e) {
+  Widget _fareLine(AppLocalizations t) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    if (_estimate != null) {
+      return Align(
+        alignment: Alignment.centerLeft,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(t.taxiDistance,
-                    style: TextStyle(color: scheme.onPrimaryContainer)),
-                Text(t.taxiKm(e.distanceKm.toStringAsFixed(1)),
-                    style: TextStyle(
-                        color: scheme.onPrimaryContainer,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(t.taxiFare,
-                    style: TextStyle(color: scheme.onPrimaryContainer)),
-                Text(t.priceSom(groupThousands(e.fare)),
-                    style: TextStyle(
-                        color: scheme.onPrimaryContainer,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold)),
-              ],
-            ),
+            Icon(Icons.payments_outlined, size: 18, color: scheme.primary),
+            const SizedBox(width: 6),
+            Text(t.priceSom(groupThousands(_estimate!.fare)),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: scheme.primary)),
+            const SizedBox(width: 6),
+            Text('· ${t.taxiKm(_estimate!.distanceKm.toStringAsFixed(1))}',
+                style: TextStyle(color: scheme.outline)),
           ],
         ),
+      );
+    }
+    // Manzil yo'q — minimal narx
+    final tariff = ref.watch(taxiTariffProvider).valueOrNull;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          Icon(Icons.payments_outlined, size: 18, color: scheme.outline),
+          const SizedBox(width: 6),
+          Text(
+            tariff != null
+                ? t.taxiFareFrom(groupThousands(tariff.minFare))
+                : '…',
+            style: TextStyle(fontWeight: FontWeight.w600, color: scheme.outline),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTrips(AppLocalizations t) {
-    final async = ref.watch(myTripsProvider);
-    return async.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => AsyncErrorRetry(
-        error: e,
-        onRetry: () => ref.invalidate(myTripsProvider),
-      ),
-      data: (trips) {
-        if (trips.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(t.taxiNoTrips,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline)),
-          );
-        }
-        return Column(children: trips.map((tr) => _tripCard(t, tr)).toList());
-      },
-    );
-  }
-
-  Widget _tripCard(AppLocalizations t, TaxiTrip tr) {
-    final (label, color) = _statusInfo(t, tr.status);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+  // ---------- Faol safar paneli ----------
+  Widget _activePanel(AppLocalizations t, TaxiTrip trip) {
+    final scheme = Theme.of(context).colorScheme;
+    final (label, color) = _statusInfo(t, trip.status);
+    final pending = trip.status == 'PENDING';
+    return _panel(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(t.taxiTripNo(trip.publicNo.toString()),
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(label,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (pending)
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(t.taxiTripNo(tr.publicNo.toString()),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(label,
-                    style:
-                        TextStyle(color: color, fontWeight: FontWeight.w600)),
+                const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: Text(t.taxiSearchingCars,
+                        style: TextStyle(color: scheme.outline))),
               ],
+            )
+          else
+            Text(
+              trip.fare > 0
+                  ? t.priceSom(groupThousands(trip.fare))
+                  : t.taxiMeteredHint,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 4),
-            Text(tr.destinationText.isEmpty
-                ? '${tr.pickupText} → ${t.taxiMeteredBadge}'
-                : '${tr.pickupText} → ${tr.destinationText}'),
-            if (tr.fare > 0)
-              Text(t.priceSom(groupThousands(tr.fare)))
-            else
-              Text(t.taxiMeteredHint,
-                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
-            if (tr.hasChat || tr.isCancellable)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (tr.hasChat)
-                    TextButton.icon(
-                      onPressed: () => _openChat(tr),
-                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                      label: Text(t.chatTitle),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (trip.status == 'ACCEPTED' || trip.status == 'IN_PROGRESS')
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => TaxiChatScreen(
+                          tripId: trip.id,
+                          tripTitle: t.taxiTripNo(trip.publicNo.toString()),
+                        ),
+                      ),
                     ),
-                  if (tr.isCancellable)
-                    TextButton(
-                      onPressed: () => _cancel(tr.id),
-                      child: Text(t.taxiCancel),
-                    ),
-                ],
-              ),
+                    icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                    label: Text(t.chatTitle),
+                  ),
+                ),
+              if ((trip.status == 'PENDING' || trip.status == 'ACCEPTED')) ...[
+                if (trip.status == 'ACCEPTED' || trip.status == 'IN_PROGRESS')
+                  const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _cancel(trip.id),
+                    icon: Icon(Icons.close, size: 18, color: scheme.error),
+                    label: Text(t.taxiCancel,
+                        style: TextStyle(color: scheme.error)),
+                    style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                            color: scheme.error.withValues(alpha: 0.5))),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _panel({required Widget child}) {
+    return Material(
+      elevation: 12,
+      color: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(padding: const EdgeInsets.all(16), child: child),
+      ),
+    );
+  }
+
+  Widget _addressRow({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required bool filled,
+    VoidCallback? onTap,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: filled ? scheme.onSurface : scheme.outline,
+                    fontWeight: filled ? FontWeight.w600 : FontWeight.normal,
+                  )),
+            ),
+            if (onTap != null)
+              Icon(Icons.chevron_right, color: scheme.outline),
           ],
         ),
       ),
@@ -336,22 +484,8 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
         return (t.taxiStatusAccepted, Colors.blue);
       case 'IN_PROGRESS':
         return (t.taxiStatusInProgress, Colors.orange);
-      case 'COMPLETED':
-        return (t.taxiStatusCompleted, Colors.green);
-      case 'CANCELLED':
-        return (t.taxiStatusCancelled, Colors.red);
       default:
         return (t.taxiStatusPending, Colors.grey);
     }
   }
-}
-
-class _Spin extends StatelessWidget {
-  const _Spin();
-  @override
-  Widget build(BuildContext context) => const SizedBox(
-        height: 20,
-        width: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
 }

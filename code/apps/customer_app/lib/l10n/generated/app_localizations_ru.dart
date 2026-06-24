@@ -463,6 +463,35 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiMeteredBadge => 'Без адреса';
 
   @override
+  String get mapPickTitle => 'Выберите место';
+
+  @override
+  String get mapSearchHint => 'Поиск места…';
+
+  @override
+  String get mapConfirm => 'Выбрать';
+
+  @override
+  String get mapPickedPoint => 'Место на карте';
+
+  @override
+  String get taxiCurrentLocation => 'Текущее местоположение';
+
+  @override
+  String taxiFareFrom(String price) {
+    return 'от $price';
+  }
+
+  @override
+  String get taxiSearchingCars => 'Поиск ближайших водителей…';
+
+  @override
+  String get taxiSelectFromHint => 'Откуда?';
+
+  @override
+  String get taxiSelectToHint => 'Куда?';
+
+  @override
   String get chatTitle => 'Чат';
 
   @override

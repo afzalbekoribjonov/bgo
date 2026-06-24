@@ -31,6 +31,18 @@ export class TaxiService {
     private readonly notifications: NotificationClient,
   ) {}
 
+  /** Taksi tarifi (mijoz ilovasi minimal narxni ko'rsatishi uchun). */
+  async taxiTariff() {
+    const t = await this.tariff.getTariff();
+    return {
+      baseFare: t.taxiBaseFare,
+      perKm: t.taxiPerKm,
+      minFare: t.taxiMinFare,
+      waitPerMin: t.taxiWaitPerMin,
+      commissionPercent: t.taxiCommissionPercent,
+    };
+  }
+
   /** Narx hisoblash (yaratmasdan): masofa + haq. */
   async estimate(pickup: GeoPoint, destination: GeoPoint) {
     const t = await this.tariff.getTariff();

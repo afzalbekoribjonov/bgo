@@ -45,6 +45,12 @@ export class TaxiController {
     return { success: true, data: await this.taxi.listMine(user.sub) };
   }
 
+  /** Taksi tarifi (minimal narx ko'rsatish uchun). ':id' dan oldin turishi shart. */
+  @Get('tariff')
+  async tariff() {
+    return { success: true, data: await this.taxi.taxiTariff() };
+  }
+
   @Get(':id')
   async detail(
     @CurrentUser() user: AccessTokenPayload,
