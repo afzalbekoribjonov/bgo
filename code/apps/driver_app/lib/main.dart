@@ -17,6 +17,7 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+    await initPushNotifications();
   } catch (_) {}
   runApp(const ProviderScope(child: DriverApp()));
 }
