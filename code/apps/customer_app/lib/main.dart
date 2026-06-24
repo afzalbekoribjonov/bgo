@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth_gate.dart';
 import 'package:beshariq_core/beshariq_core.dart';
+import 'theme/app_theme.dart';
 
 /// Ilova fonda/yopiq bo'lganda kelgan push (tizim o'zi ko'rsatadi).
 @pragma('vm:entry-point')
@@ -33,10 +34,7 @@ class BeshariqApp extends ConsumerWidget {
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appName,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF1E88E5),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

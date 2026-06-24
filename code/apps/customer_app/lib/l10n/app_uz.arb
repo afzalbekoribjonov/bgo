@@ -38,6 +38,8 @@
   "accountTitle": "Hisob",
   "guestUser": "Mehmon",
   "logoutConfirm": "Hisobingizdan chiqmoqchimisiz?",
+  "personalInfo": "Shaxsiy ma'lumotlar",
+  "profilePhone": "Telefon raqami",
   "errorInvalidPhone": "Telefon raqami noto'g'ri (+998XXXXXXXXX)",
   "errorInvalidCode": "Kod noto'g'ri yoki muddati tugagan",
   "errorGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",
@@ -140,6 +142,7 @@
   "addressSetDefault": "Standart qilish",
   "addressDelete": "O'chirish",
   "addressNone": "Saqlangan manzil yo'q",
+  "addressDefaultBadge": "Standart",
   "addressNew": "Yangi manzil",
   "addressChoose": "Manzilni tanlang",
 

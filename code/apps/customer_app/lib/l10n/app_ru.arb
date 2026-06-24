@@ -32,6 +32,8 @@
   "accountTitle": "Аккаунт",
   "guestUser": "Гость",
   "logoutConfirm": "Выйти из аккаунта?",
+  "personalInfo": "Личные данные",
+  "profilePhone": "Номер телефона",
   "errorInvalidPhone": "Неверный номер телефона (+998XXXXXXXXX)",
   "errorInvalidCode": "Неверный код или истёк срок действия",
   "errorGeneric": "Произошла ошибка. Попробуйте снова.",
@@ -128,6 +130,7 @@
   "addressSetDefault": "Сделать основным",
   "addressDelete": "Удалить",
   "addressNone": "Нет сохранённых адресов",
+  "addressDefaultBadge": "По умолчанию",
   "addressNew": "Новый адрес",
   "addressChoose": "Выберите адрес",
 

@@ -32,6 +32,8 @@
   "accountTitle": "Ҳисоб",
   "guestUser": "Меҳмон",
   "logoutConfirm": "Ҳисобингиздан чиқмоқчимисиз?",
+  "personalInfo": "Шахсий маълумотлар",
+  "profilePhone": "Телефон рақами",
   "errorInvalidPhone": "Телефон рақами нотўғри (+998XXXXXXXXX)",
   "errorInvalidCode": "Код нотўғри ёки муддати тугаган",
   "errorGeneric": "Хатолик юз берди. Қайта уриниб кўринг.",
@@ -128,6 +130,7 @@
   "addressSetDefault": "Стандарт қилиш",
   "addressDelete": "Ўчириш",
   "addressNone": "Сақланган манзил йўқ",
+  "addressDefaultBadge": "Стандарт",
   "addressNew": "Янги манзил",
   "addressChoose": "Манзилни танланг",
 

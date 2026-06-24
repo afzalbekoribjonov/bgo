@@ -95,6 +95,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get logoutConfirm => 'Hisobingizdan chiqmoqchimisiz?';
 
   @override
+  String get personalInfo => 'Shaxsiy ma\'lumotlar';
+
+  @override
+  String get profilePhone => 'Telefon raqami';
+
+  @override
   String get errorInvalidPhone => 'Telefon raqami noto\'g\'ri (+998XXXXXXXXX)';
 
   @override
@@ -375,6 +381,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get addressNone => 'Saqlangan manzil yo\'q';
 
   @override
+  String get addressDefaultBadge => 'Standart';
+
+  @override
   String get addressNew => 'Yangi manzil';
 
   @override
@@ -622,6 +631,12 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get logoutConfirm => 'Ҳисобингиздан чиқмоқчимисиз?';
+
+  @override
+  String get personalInfo => 'Шахсий маълумотлар';
+
+  @override
+  String get profilePhone => 'Телефон рақами';
 
   @override
   String get errorInvalidPhone => 'Телефон рақами нотўғри (+998XXXXXXXXX)';
@@ -902,6 +917,9 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get addressNone => 'Сақланган манзил йўқ';
+
+  @override
+  String get addressDefaultBadge => 'Стандарт';
 
   @override
   String get addressNew => 'Янги манзил';
