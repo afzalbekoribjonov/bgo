@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import 'core/location_service.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/consent_screen.dart';
 import 'features/auth/login_flow.dart';
@@ -33,7 +34,11 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     // Kirilgach FCM tokenini bir marta ro'yxatga olamiz (best-effort).
     if (status == AuthStatus.authenticated && !_pushRegistered) {
       _pushRegistered = true;
-      Future.microtask(() => ref.read(pushServiceProvider).registerToken());
+      Future.microtask(() {
+        ref.read(pushServiceProvider).registerToken();
+        // Kirishda joylashuv (GPS) ruxsatini so'raymiz — taksi/dostavka uchun.
+        ref.read(locationServiceProvider).ensurePermission();
+      });
     } else if (status == AuthStatus.unauthenticated) {
       _pushRegistered = false;
     }

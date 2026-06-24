@@ -984,6 +984,60 @@ abstract class AppLocalizations {
   /// **'Manzilsiz'**
   String get taxiMeteredBadge;
 
+  /// No description provided for @mapPickTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Joyni tanlang'**
+  String get mapPickTitle;
+
+  /// No description provided for @mapSearchHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Joy qidirish…'**
+  String get mapSearchHint;
+
+  /// No description provided for @mapConfirm.
+  ///
+  /// In uz, this message translates to:
+  /// **'Tanlash'**
+  String get mapConfirm;
+
+  /// No description provided for @mapPickedPoint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Xaritadan tanlangan joy'**
+  String get mapPickedPoint;
+
+  /// No description provided for @taxiCurrentLocation.
+  ///
+  /// In uz, this message translates to:
+  /// **'Joriy joylashuv'**
+  String get taxiCurrentLocation;
+
+  /// No description provided for @taxiFareFrom.
+  ///
+  /// In uz, this message translates to:
+  /// **'{price} dan'**
+  String taxiFareFrom(String price);
+
+  /// No description provided for @taxiSearchingCars.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yaqin haydovchilar qidirilmoqda…'**
+  String get taxiSearchingCars;
+
+  /// No description provided for @taxiSelectFromHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qayerdan?'**
+  String get taxiSelectFromHint;
+
+  /// No description provided for @taxiSelectToHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qayerga?'**
+  String get taxiSelectToHint;
+
   /// No description provided for @chatTitle.
   ///
   /// In uz, this message translates to:

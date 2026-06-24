@@ -1,6 +1,21 @@
 // Taksi modellari — Order servisi (taxi) javobiga mos.
 // Nuqta tipi: GeoPlace (lib/core/places.dart) — taksi va dostavka uchun umumiy.
 
+class TaxiTariff {
+  final int baseFare;
+  final int perKm;
+  final int minFare;
+
+  const TaxiTariff(
+      {required this.baseFare, required this.perKm, required this.minFare});
+
+  factory TaxiTariff.fromJson(Map<String, dynamic> json) => TaxiTariff(
+        baseFare: (json['baseFare'] as num?)?.toInt() ?? 0,
+        perKm: (json['perKm'] as num?)?.toInt() ?? 0,
+        minFare: (json['minFare'] as num?)?.toInt() ?? 0,
+      );
+}
+
 class TaxiEstimate {
   final double distanceKm;
   final int fare;
