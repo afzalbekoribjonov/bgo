@@ -59,8 +59,9 @@ class MapRoad {
   }
 }
 
-/// Admin yo'llaridan flutter_map Polyline ro'yxati (casing + rang) — barcha
-/// xaritalarda bir xil ko'rinish uchun.
+/// Admin/OSM yo'llaridan flutter_map Polyline ro'yxati — barcha xaritalarda bir
+/// xil yashil ko'rinish. Casing yo'q: butun Beshariq yo'l to'ri (minglab chiziq)
+/// ham silliq chizilishi uchun har yo'lга bitta yo'l (path).
 List<Polyline> buildRoadPolylines(List<MapRoad> roads) => [
       for (final r in roads)
         if (r.points.length >= 2)
@@ -68,8 +69,6 @@ List<Polyline> buildRoadPolylines(List<MapRoad> roads) => [
             points: r.points,
             strokeWidth: r.width,
             color: r.color,
-            borderColor: r.border,
-            borderStrokeWidth: 2.5,
           ),
     ];
 

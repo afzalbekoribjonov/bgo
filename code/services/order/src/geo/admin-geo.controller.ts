@@ -75,4 +75,11 @@ export class AdminGeoController {
     await this.geo.deleteRoad(id);
     return { success: true };
   }
+
+  /** Beshariqning barcha yo'llarini OSM'dan import (yashil yo'l to'ri). */
+  @Post('import-osm-roads')
+  @HttpCode(200)
+  async importOsm() {
+    return { success: true, data: await this.geo.importOsmRoads() };
+  }
 }

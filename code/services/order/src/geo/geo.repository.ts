@@ -28,6 +28,9 @@ export abstract class GeoRepository {
   abstract createRoad(data: NewMapRoad): Promise<MapRoad>;
   abstract deleteRoad(id: string): Promise<void>;
   abstract roadCount(): Promise<number>;
+  /** OSM import — barcha yo'llarni o'chirish va ko'plab qo'shish. */
+  abstract deleteAllRoads(): Promise<void>;
+  abstract createManyRoads(data: NewMapRoad[]): Promise<number>;
 
   abstract areaCount(): Promise<number>;
 }

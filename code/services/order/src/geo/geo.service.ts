@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { pointInPolygon } from '../common/polygon';
 import {
   CreateAreaDto,
@@ -6,8 +11,20 @@ import {
   CreateRoadDto,
   UpdateAreaDto,
 } from './dto/geo.dto';
-import { MapRoad, ServiceAreaWithPlaces } from './entities';
+import {
+  MapRoad,
+  NewMapRoad,
+  RoadKind,
+  ServiceAreaWithPlaces,
+} from './entities';
 import { GeoRepository } from './geo.repository';
+
+/** Overpass API javobidagi yo'l (way) elementi. */
+interface OverpassWay {
+  type: string;
+  geometry?: Array<{ lat: number; lon: number }>;
+  tags?: { highway?: string; name?: string; ref?: string };
+}
 
 /**
  * Xizmat hududlari (tumanlar) + nomli joylar. Admin boshqaradi, kengaytiriladi.
@@ -82,6 +99,64 @@ export class GeoService {
 
   deleteRoad(id: string) {
     return this.repo.deleteRoad(id);
+  }
+
+  /**
+   * Beshariq tumanidagi BARCHA haydaladigan yo'llarni OpenStreetMap (Overpass)
+   * dan import qiladi — har bir ko'cha yashil chiziq sifatida saqlanadi.
+   * Mavjud yo'llar almashtiriladi. Admin keyin qo'shimcha tahrirlashi mumkin.
+   */
+  async importOsmRoads(): Promise<{ imported: number }> {
+    const areas = await this.repo.listAreas(false);
+    if (areas.length === 0) {
+      throw new BadRequestException('Avval xizmat hududi yarating');
+    }
+    const areaId = areas[0].id;
+    // Beshariq bbox: south,west,north,east
+    const bbox = '40.36,70.52,40.52,70.74';
+    // Haqiqiy ko'chalar (mahalla yo'llari kiradi); driveway/parking (service),
+    // noaniq (road) chiqarib tashlanadi — xarita yengilroq va aniqroq.
+    const types =
+      'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street';
+    const query =
+      `[out:json][timeout:90];way["highway"~"^(${types})$"](${bbox});out geom;`;
+
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+        'User-Agent': 'BeshariqSuperApp/1.0 (orifjonov0916@gmail.com)',
+      },
+      body: 'data=' + encodeURIComponent(query),
+    });
+    if (!res.ok) {
+      throw new BadRequestException(`Overpass xatosi: ${res.status}`);
+    }
+    const json = (await res.json()) as { elements?: OverpassWay[] };
+    const elements = json.elements ?? [];
+
+    const roads: NewMapRoad[] = [];
+    for (const el of elements) {
+      if (el.type !== 'way' || !Array.isArray(el.geometry)) continue;
+      const pts = el.geometry
+        .filter((g) => typeof g.lat === 'number' && typeof g.lon === 'number')
+        .map((g) => [g.lat, g.lon]);
+      if (pts.length < 2) continue;
+      const hw = el.tags?.highway ?? '';
+      const kind: RoadKind = ['motorway', 'trunk', 'primary'].includes(hw)
+        ? 'center'
+        : ['secondary', 'tertiary'].includes(hw)
+          ? 'main'
+          : 'street';
+      const name = el.tags?.name || el.tags?.ref || "Ko'cha";
+      roads.push({ areaId, name, kind, points: pts });
+    }
+
+    await this.repo.deleteAllRoads();
+    const imported = await this.repo.createManyRoads(roads);
+    this.logger.log(`OSM yo'llari import qilindi: ${imported}`);
+    return { imported };
   }
 
   private async requireArea(id: string) {

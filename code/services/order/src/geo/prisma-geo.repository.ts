@@ -130,6 +130,23 @@ export class PrismaGeoRepository extends GeoRepository {
     return this.prisma.mapRoad.count();
   }
 
+  async deleteAllRoads(): Promise<void> {
+    await this.prisma.mapRoad.deleteMany({});
+  }
+
+  async createManyRoads(data: NewMapRoad[]): Promise<number> {
+    if (data.length === 0) return 0;
+    const res = await this.prisma.mapRoad.createMany({
+      data: data.map((d) => ({
+        areaId: d.areaId,
+        name: d.name,
+        kind: d.kind,
+        points: d.points as unknown as Prisma.InputJsonValue,
+      })),
+    });
+    return res.count;
+  }
+
   private toRoad(r: Row): MapRoad {
     return {
       id: r.id as string,
