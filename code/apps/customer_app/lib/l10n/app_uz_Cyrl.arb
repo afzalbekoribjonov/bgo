@@ -162,6 +162,8 @@
   "mapSearchHint": "Жой қидириш…",
   "mapConfirm": "Танлаш",
   "mapPickedPoint": "Харитадан танланган жой",
+  "mapLocalPlace": "Бешариқ жойи",
+  "mapNoResults": "Ҳеч нарса топилмади",
   "taxiCurrentLocation": "Жорий жойлашув",
   "taxiFareFrom": "{price} дан",
   "@taxiFareFrom": { "placeholders": { "price": { "type": "String" } } },

@@ -162,6 +162,8 @@
   "mapSearchHint": "Поиск места…",
   "mapConfirm": "Выбрать",
   "mapPickedPoint": "Место на карте",
+  "mapLocalPlace": "Место в Бешарике",
+  "mapNoResults": "Ничего не найдено",
   "taxiCurrentLocation": "Текущее местоположение",
   "taxiFareFrom": "от {price}",
   "@taxiFareFrom": { "placeholders": { "price": { "type": "String" } } },

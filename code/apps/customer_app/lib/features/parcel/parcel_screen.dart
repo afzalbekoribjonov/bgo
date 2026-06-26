@@ -288,6 +288,7 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
 
   Widget _buildMap() {
     final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
+    final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
     final scheme = Theme.of(context).colorScheme;
     final markers = <Marker>[];
     if (_myLoc != null) {
@@ -331,6 +332,7 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
             ),
             if (roads.isNotEmpty)
               PolylineLayer(polylines: buildRoadPolylines(roads)),
+            MarkerLayer(markers: buildPlaceMarkers(places)),
             if (line != null)
               PolylineLayer(polylines: [
                 Polyline(

@@ -270,6 +270,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   Widget _buildMap() {
     final scheme = Theme.of(context).colorScheme;
     final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
+    final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
     final markers = <Marker>[];
     if (_myLoc != null) {
       markers.add(Marker(
@@ -341,9 +342,11 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.beshariq.customer_app',
             ),
-            // Beshariq-maxsus yo'llar (admin boshqaradi) — rangli qatlam
+            // Beshariq-maxsus yo'llar (admin boshqaradi) — yashil qatlam
             if (roads.isNotEmpty)
               PolylineLayer(polylines: buildRoadPolylines(roads)),
+            // Qishloq/joy nomlari (yorliqlar)
+            MarkerLayer(markers: buildPlaceMarkers(places)),
             if (line != null)
               PolylineLayer(polylines: [
                 Polyline(

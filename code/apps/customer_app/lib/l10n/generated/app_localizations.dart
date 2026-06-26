@@ -1014,6 +1014,18 @@ abstract class AppLocalizations {
   /// **'Xaritadan tanlangan joy'**
   String get mapPickedPoint;
 
+  /// No description provided for @mapLocalPlace.
+  ///
+  /// In uz, this message translates to:
+  /// **'Beshariq joyi'**
+  String get mapLocalPlace;
+
+  /// No description provided for @mapNoResults.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hech narsa topilmadi'**
+  String get mapNoResults;
+
   /// No description provided for @taxiCurrentLocation.
   ///
   /// In uz, this message translates to:

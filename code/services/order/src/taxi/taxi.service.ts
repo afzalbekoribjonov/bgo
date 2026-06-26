@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { haversineKm } from '../common/geo';
+import { roundFare } from '../common/money';
 import {
   buildVerticalReport,
   buildVerticalStats,
@@ -51,7 +52,7 @@ export class TaxiService {
     const t = await this.tariff.getTariff();
     const distanceKm = Math.round(haversineKm(pickup, destination) * 100) / 100;
     const raw = t.taxiBaseFare + Math.round(t.taxiPerKm * distanceKm);
-    const fare = Math.max(t.taxiMinFare, raw);
+    const fare = roundFare(Math.max(t.taxiMinFare, raw));
     const commission = Math.round((fare * t.taxiCommissionPercent) / 100);
     return {
       distanceKm,
@@ -322,7 +323,7 @@ export class TaxiService {
       baseFare = trip.fare; // FIXED — yaratishda belgilangan
     }
     const waitFee = Math.round(t.taxiWaitPerMin * waitMinutes);
-    const fare = baseFare + waitFee;
+    const fare = roundFare(baseFare + waitFee);
     const commission = Math.round((fare * t.taxiCommissionPercent) / 100);
 
     const updated = await this.repo.finalize(id, {

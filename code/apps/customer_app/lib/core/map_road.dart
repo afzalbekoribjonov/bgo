@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'places.dart';
+
 /// Beshariq tumani xarita chegarasi — kamera shu chegaradan chiqmaydi.
 final LatLngBounds beshariqBounds = LatLngBounds(
   const LatLng(40.36, 70.52),
@@ -23,31 +25,23 @@ class MapRoad {
     required this.points,
   });
 
+  /// Barcha yo'llar YASHIL — tur faqat soyani belgilaydi (ierarxiya uchun).
   Color get color {
     switch (kind) {
       case 'center':
-        return const Color(0xFFFF7043); // markaziy — qizg'ish
+        return const Color(0xFF1B5E20); // asosiy ko'cha — to'q yashil
       case 'main':
-        return const Color(0xFF2E7D32); // asosiy — to'q yashil
+        return const Color(0xFF2E7D32); // yirik ko'cha — yashil
       default:
-        return const Color(0xFF4CAF50); // ko'cha — yashil
+        return const Color(0xFF43A047); // mahalla ko'chasi — ochroq yashil
     }
   }
 
-  /// Yo'l "casing" (kontur) rangi — chiziq yo'lga o'xshab aniq ko'rinishi uchun.
-  Color get border {
-    switch (kind) {
-      case 'center':
-        return const Color(0xFFD84315);
-      case 'main':
-        return const Color(0xFF1B5E20);
-      default:
-        return const Color(0xFF1B5E20);
-    }
-  }
+  /// Yo'l "casing" (kontur) — bir xil to'q yashil, chiziq aniq ajralib tursin.
+  Color get border => const Color(0xFF0B3D14);
 
   /// Yo'l qalinligi — xaritada yaxshi ko'rinishi uchun yiriklashtirilgan.
-  double get width => kind == 'center' ? 9 : (kind == 'main' ? 7 : 5);
+  double get width => kind == 'center' ? 11 : (kind == 'main' ? 8.5 : 6.5);
 
   factory MapRoad.fromJson(Map<String, dynamic> json) {
     final pts = ((json['points'] as List?) ?? const [])
@@ -77,4 +71,56 @@ List<Polyline> buildRoadPolylines(List<MapRoad> roads) => [
             borderColor: r.border,
             borderStrokeWidth: 2.5,
           ),
+    ];
+
+/// Qishloq/joy nomlari uchun yorliqli markerlar — xaritada nomlar aniq ko'rinsin.
+/// IgnorePointer: yorliqlar xarita bosishini to'smaydi.
+List<Marker> buildPlaceMarkers(List<GeoPlace> places) => [
+      for (final p in places)
+        Marker(
+          point: LatLng(p.lat, p.lng),
+          width: 130,
+          height: 38,
+          alignment: Alignment.center,
+          child: IgnorePointer(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B5E20),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Flexible(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.88),
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 2),
+                      ],
+                    ),
+                    child: Text(
+                      p.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
     ];

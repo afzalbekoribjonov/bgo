@@ -180,6 +180,8 @@
   "mapSearchHint": "Joy qidirish…",
   "mapConfirm": "Tanlash",
   "mapPickedPoint": "Xaritadan tanlangan joy",
+  "mapLocalPlace": "Beshariq joyi",
+  "mapNoResults": "Hech narsa topilmadi",
   "taxiCurrentLocation": "Joriy joylashuv",
   "taxiFareFrom": "{price} dan",
   "@taxiFareFrom": { "placeholders": { "price": { "type": "String" } } },

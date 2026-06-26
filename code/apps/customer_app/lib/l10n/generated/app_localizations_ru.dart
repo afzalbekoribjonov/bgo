@@ -478,6 +478,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mapPickedPoint => 'Место на карте';
 
   @override
+  String get mapLocalPlace => 'Место в Бешарике';
+
+  @override
+  String get mapNoResults => 'Ничего не найдено';
+
+  @override
   String get taxiCurrentLocation => 'Текущее местоположение';
 
   @override
