@@ -492,6 +492,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taxiSelectToHint => 'Куда?';
 
   @override
+  String taxiDriverEta(String min) {
+    return 'Водитель прибудет через ~$min мин';
+  }
+
+  @override
+  String taxiArriveEta(String min) {
+    return 'До места ~$min мин';
+  }
+
+  @override
+  String taxiNearbyCars(String count) {
+    return '$count машин поблизости';
+  }
+
+  @override
   String get rateTitle => 'Оцените поездку';
 
   @override

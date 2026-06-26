@@ -81,6 +81,21 @@ class TaxiTrip {
   bool get hasChat => status == 'ACCEPTED' || status == 'IN_PROGRESS';
 }
 
+/// Haydovchining jonli joylashuvi (kuzatuv uchun).
+class DriverLoc {
+  final double lat;
+  final double lng;
+  final double? heading;
+
+  const DriverLoc({required this.lat, required this.lng, this.heading});
+
+  factory DriverLoc.fromJson(Map<String, dynamic> json) => DriverLoc(
+        lat: (json['lat'] as num).toDouble(),
+        lng: (json['lng'] as num).toDouble(),
+        heading: (json['heading'] as num?)?.toDouble(),
+      );
+}
+
 /// Taksi suhbat xabari. senderRole: 'customer' | 'driver'.
 class TaxiMessage {
   final String id;

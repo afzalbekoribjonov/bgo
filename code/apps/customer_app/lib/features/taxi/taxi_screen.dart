@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -35,12 +34,20 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   TaxiEstimate? _estimate;
   bool _requesting = false;
   String? _error;
-  List<LatLng> _cars = const [];
+  List<LatLng> _cars = const []; // real yaqin haydovchilar
   List<LatLng> _routeLine = const [];
   Timer? _ticker;
   int _tick = 0;
   DateTime? _orderedAt;
   String? _ratedHandledId;
+
+  // Jonli kuzatuv (biriktirilgan haydovchi)
+  String? _activeTripId;
+  String? _activeStatus;
+  LatLng? _driverLoc;
+  List<LatLng> _driverRoute = const [];
+  int? _etaMinutes;
+  bool _etaToDestination = false;
 
   @override
   void initState() {
@@ -60,18 +67,10 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   void _onTick() {
     if (!mounted) return;
     _tick++;
-    if (_cars.isNotEmpty) {
-      final rnd = Random();
-      setState(() {
-        _cars = _cars
-            .map((c) => LatLng(c.latitude + (rnd.nextDouble() - 0.5) * 0.0009,
-                c.longitude + (rnd.nextDouble() - 0.5) * 0.0009))
-            .toList();
-      });
-    } else {
-      setState(() {}); // taymerni yangilab turish
-    }
+    setState(() {}); // jonli taymer ko'rinishini yangilab turish
     if (_tick % 5 == 0) ref.invalidate(myTripsProvider);
+    if (_tick % 6 == 0) _refreshNearby(); // real yaqin mashinalar
+    if (_tick % 4 == 0) _refreshDriverLocation(); // biriktirilgan haydovchi
   }
 
   Future<void> _initLocation() async {
@@ -87,7 +86,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     });
     if (pos != null) {
       _map.move(pos, 15);
-      _spawnCars(); // atrofdagi mashinalar doim ko'rinib tursin
+      _refreshNearby(); // atrofdagi real mashinalar
     }
   }
 
@@ -152,7 +151,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
       ref.invalidate(myTripsProvider);
       if (!mounted) return;
       _orderedAt = DateTime.now();
-      _spawnCars();
+      _refreshNearby();
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(t.taxiRequested)));
     } catch (e) {
@@ -163,17 +162,60 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     }
   }
 
-  /// Buyurtmadan keyin xaritada yaqin "mashinalar" (vizual).
-  void _spawnCars() {
-    final base = _from != null ? LatLng(_from!.lat, _from!.lng) : _center;
-    final rnd = Random();
-    setState(() {
-      _cars = List.generate(4, (_) {
-        final dLat = (rnd.nextDouble() - 0.5) * 0.012;
-        final dLng = (rnd.nextDouble() - 0.5) * 0.012;
-        return LatLng(base.latitude + dLat, base.longitude + dLng);
+  /// Xaritadagi real "yaqin mashinalar" — online haydovchilar (backend).
+  Future<void> _refreshNearby() async {
+    final base = _from != null
+        ? LatLng(_from!.lat, _from!.lng)
+        : (_myLoc ?? LocationService.beshariqCenter);
+    try {
+      final cars = await ref
+          .read(taxiApiProvider)
+          .nearbyDrivers(base.latitude, base.longitude);
+      if (mounted) setState(() => _cars = cars);
+    } catch (_) {/* tarmoq — jim o'tkazamiz */}
+  }
+
+  /// Biriktirilgan haydovchining jonli joylashuvi + ETA (OSRM).
+  Future<void> _refreshDriverLocation() async {
+    final id = _activeTripId;
+    if (id == null) {
+      if (_driverLoc != null || _driverRoute.isNotEmpty || _etaMinutes != null) {
+        setState(() {
+          _driverLoc = null;
+          _driverRoute = const [];
+          _etaMinutes = null;
+        });
+      }
+      return;
+    }
+    try {
+      final loc = await ref.read(taxiApiProvider).driverLocation(id);
+      if (!mounted) return;
+      if (loc == null) {
+        setState(() {
+          _driverLoc = null;
+          _driverRoute = const [];
+          _etaMinutes = null;
+        });
+        return;
+      }
+      final driver = LatLng(loc.lat, loc.lng);
+      setState(() => _driverLoc = driver);
+      // IN_PROGRESS bo'lsa manzilga, aks holda olib ketish nuqtasiga ETA.
+      final toDest = _activeStatus == 'IN_PROGRESS' && _to != null;
+      final target = toDest
+          ? LatLng(_to!.lat, _to!.lng)
+          : (_from != null ? LatLng(_from!.lat, _from!.lng) : null);
+      if (target == null) return;
+      final dir =
+          await ref.read(routingServiceProvider).directions(driver, target);
+      if (!mounted || dir == null) return;
+      setState(() {
+        _driverRoute = dir.points;
+        _etaMinutes = dir.etaMinutes;
+        _etaToDestination = toDest;
       });
-    });
+    } catch (_) {/* tarmoq — jim o'tkazamiz */}
   }
 
   Future<void> _cancel(String id) async {
@@ -181,7 +223,11 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     try {
       await ref.read(taxiApiProvider).cancel(id);
       ref.invalidate(myTripsProvider);
-      setState(() => _cars = const []);
+      setState(() {
+        _driverLoc = null;
+        _driverRoute = const [];
+        _etaMinutes = null;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -200,6 +246,9 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
             tr.status == 'IN_PROGRESS')
         .toList();
     final activeTrip = active.isNotEmpty ? active.first : null;
+    // Jonli kuzatuv uchun (ticker o'qiydi).
+    _activeTripId = activeTrip?.id;
+    _activeStatus = activeTrip?.status;
 
     // Yakunlangan, hali baholanmagan safar — reyting oynasini ko'rsatamiz.
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRate(trips));
@@ -245,9 +294,26 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     for (final c in _cars) {
       markers.add(Marker(
         point: c,
-        width: 34,
-        height: 34,
-        child: const Icon(Icons.local_taxi, color: Color(0xFFFFB300), size: 30),
+        width: 30,
+        height: 30,
+        child: const Icon(Icons.local_taxi, color: Color(0xFFFFB300), size: 26),
+      ));
+    }
+    // Biriktirilgan haydovchi — yorqin marker (jonli kuzatuv).
+    if (_driverLoc != null) {
+      markers.add(Marker(
+        point: _driverLoc!,
+        width: 42,
+        height: 42,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFB8C00),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 5)],
+          ),
+          child: const Icon(Icons.local_taxi, color: Colors.white, size: 24),
+        ),
       ));
     }
 
@@ -277,17 +343,27 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
             ),
             // Beshariq-maxsus yo'llar (admin boshqaradi) — rangli qatlam
             if (roads.isNotEmpty)
-              PolylineLayer(polylines: [
-                for (final r in roads)
-                  Polyline(
-                      points: r.points, strokeWidth: r.width, color: r.color),
-              ]),
+              PolylineLayer(polylines: buildRoadPolylines(roads)),
             if (line != null)
               PolylineLayer(polylines: [
                 Polyline(
-                    points: line,
-                    strokeWidth: 5,
-                    color: const Color(0xFF2E7D32)),
+                  points: line,
+                  strokeWidth: 6,
+                  color: const Color(0xFF1E88E5),
+                  borderColor: Colors.white,
+                  borderStrokeWidth: 2,
+                ),
+              ]),
+            // Haydovchining jonli marshruti (sizgacha / manzilgacha) — to'q sariq
+            if (_driverRoute.length >= 2)
+              PolylineLayer(polylines: [
+                Polyline(
+                  points: _driverRoute,
+                  strokeWidth: 6,
+                  color: const Color(0xFFFB8C00),
+                  borderColor: Colors.white,
+                  borderStrokeWidth: 2,
+                ),
               ]),
             MarkerLayer(markers: markers),
           ],
@@ -363,6 +439,24 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
           ),
           const SizedBox(height: 10),
           _fareLine(t),
+          if (_cars.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_taxi,
+                      size: 14, color: Color(0xFFFFB300)),
+                  const SizedBox(width: 6),
+                  Text(t.taxiNearbyCars(_cars.length.toString()),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.outline)),
+                ],
+              ),
+            ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 6),
             Text(_error!,
@@ -473,6 +567,10 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
                   : t.taxiMeteredHint,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
+          if (!pending && _etaMinutes != null) ...[
+            const SizedBox(height: 10),
+            _etaChip(t),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [
@@ -507,6 +605,31 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
                 ),
               ],
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Haydovchi/manzil ETA chipi (jonli, OSRM bo'yicha).
+  Widget _etaChip(AppLocalizations t) {
+    final m = _etaMinutes!.toString();
+    final label = _etaToDestination ? t.taxiArriveEta(m) : t.taxiDriverEta(m);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFB8C00).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.directions_car, size: 18, color: Color(0xFFFB8C00)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(label,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, color: Color(0xFFE65100))),
           ),
         ],
       ),

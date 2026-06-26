@@ -49,6 +49,9 @@ dependencies:
   # Token (JWT) ni xavfsiz saqlash
   flutter_secure_storage: ^9.2.2
 
+  # GPS joylashuv (jonli kuzatuv — mijozga haydovchi joylashuvi)
+  geolocator: ^13.0.1
+
   # Yangi buyurtma ovozli signali
   audioplayers: ^6.1.0
 

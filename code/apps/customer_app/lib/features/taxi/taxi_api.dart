@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../core/places.dart';
@@ -46,6 +47,25 @@ class TaxiApi {
 
   Future<void> cancel(String id) async {
     await _dio.post('/taxi/$id/cancel');
+  }
+
+  /// Safarga biriktirilgan haydovchining jonli joylashuvi (null bo'lishi mumkin).
+  Future<DriverLoc?> driverLocation(String id) async {
+    final res = await _dio.get('/taxi/$id/driver');
+    final data = res.data['data'];
+    if (data == null) return null;
+    return DriverLoc.fromJson(data as Map<String, dynamic>);
+  }
+
+  /// Nuqta atrofidagi online haydovchilar (real "yaqin mashinalar").
+  Future<List<LatLng>> nearbyDrivers(double lat, double lng) async {
+    final res = await _dio.get('/taxi/nearby-drivers',
+        queryParameters: {'lat': lat, 'lng': lng});
+    final list = (res.data['data'] as List?) ?? const [];
+    return list
+        .map((e) => LatLng(
+            (e['lat'] as num).toDouble(), (e['lng'] as num).toDouble()))
+        .toList();
   }
 
   Future<void> rate(String id, int rating, {String? comment}) async {
