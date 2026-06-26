@@ -3,9 +3,12 @@ import { Prisma } from '../../prisma/generated/client';
 import { PolygonCoords } from '../common/polygon';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  MapRoad,
+  NewMapRoad,
   NewPlace,
   NewServiceArea,
   Place,
+  RoadKind,
   ServiceArea,
   ServiceAreaWithPlaces,
 } from './entities';
@@ -97,6 +100,44 @@ export class PrismaGeoRepository extends GeoRepository {
 
   async deletePlace(id: string): Promise<void> {
     await this.prisma.place.delete({ where: { id } });
+  }
+
+  async listRoads(activeOnly: boolean): Promise<MapRoad[]> {
+    const rows = await this.prisma.mapRoad.findMany({
+      where: activeOnly ? { area: { isActive: true } } : undefined,
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((r) => this.toRoad(r as Row));
+  }
+
+  async createRoad(data: NewMapRoad): Promise<MapRoad> {
+    const r = await this.prisma.mapRoad.create({
+      data: {
+        areaId: data.areaId,
+        name: data.name,
+        kind: data.kind,
+        points: data.points as unknown as Prisma.InputJsonValue,
+      },
+    });
+    return this.toRoad(r as Row);
+  }
+
+  async deleteRoad(id: string): Promise<void> {
+    await this.prisma.mapRoad.delete({ where: { id } });
+  }
+
+  roadCount(): Promise<number> {
+    return this.prisma.mapRoad.count();
+  }
+
+  private toRoad(r: Row): MapRoad {
+    return {
+      id: r.id as string,
+      areaId: r.areaId as string,
+      name: r.name as string,
+      kind: (r.kind as RoadKind) ?? 'street',
+      points: r.points as unknown as number[][],
+    };
   }
 
   areaCount(): Promise<number> {

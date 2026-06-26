@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/map_road.dart';
 import '../../core/places.dart';
 
 /// Xizmat hududlari + joylarni backend'dan oladi (admin boshqaradi).
@@ -27,6 +28,15 @@ class GeoApi {
     }
     return places.isEmpty ? beshariqPlaces : places;
   }
+
+  /// Admin chizgan yo'llar (Beshariq-maxsus xarita qatlami).
+  Future<List<MapRoad>> fetchRoads() async {
+    final res = await _dio.get('/geo/roads');
+    final list = (res.data['data'] as List?) ?? const [];
+    return list
+        .map((e) => MapRoad.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 }
 
 final geoApiProvider =
@@ -39,5 +49,14 @@ final placesProvider = FutureProvider<List<GeoPlace>>((ref) async {
     return await ref.read(geoApiProvider).fetchPlaces();
   } catch (_) {
     return beshariqPlaces;
+  }
+});
+
+/// Admin chizgan yo'llar (xato bo'lsa bo'sh).
+final roadsProvider = FutureProvider<List<MapRoad>>((ref) async {
+  try {
+    return await ref.read(geoApiProvider).fetchRoads();
+  } catch (_) {
+    return const [];
   }
 });

@@ -32,6 +32,7 @@ export class GeoModule implements OnModuleInit {
     const seedOn = String(this.config.get('SEED_ON_START') ?? 'true') === 'true';
     if (seedOn) {
       await this.geo.seedIfEmpty();
+      await this.geo.seedRoadsIfEmpty();
     }
   }
 }

@@ -1,7 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { pointInPolygon } from '../common/polygon';
-import { CreateAreaDto, CreatePlaceDto, UpdateAreaDto } from './dto/geo.dto';
-import { ServiceAreaWithPlaces } from './entities';
+import {
+  CreateAreaDto,
+  CreatePlaceDto,
+  CreateRoadDto,
+  UpdateAreaDto,
+} from './dto/geo.dto';
+import { MapRoad, ServiceAreaWithPlaces } from './entities';
 import { GeoRepository } from './geo.repository';
 
 /**
@@ -63,6 +68,22 @@ export class GeoService {
     return this.repo.deletePlace(id);
   }
 
+  // ---------- Yo'llar (Beshariq-maxsus xarita qatlami) ----------
+
+  /** Faol hududlardagi yo'llar (ilovalar — rangli overlay uchun). */
+  listRoads(): Promise<MapRoad[]> {
+    return this.repo.listRoads(true);
+  }
+
+  async addRoad(areaId: string, dto: CreateRoadDto) {
+    await this.requireArea(areaId);
+    return this.repo.createRoad({ areaId, ...dto });
+  }
+
+  deleteRoad(id: string) {
+    return this.repo.deleteRoad(id);
+  }
+
   private async requireArea(id: string) {
     const area = await this.repo.findArea(id);
     if (!area) throw new NotFoundException('Hudud topilmadi');
@@ -117,6 +138,65 @@ export class GeoService {
         sortOrder: order++,
       });
     }
+
     this.logger.log('Beshariq xizmat hududi + joylar yuklandi (seed)');
+    await this.seedRoadsIfEmpty();
+  }
+
+  /**
+   * Namunaviy yo'llar (taxminiy) — yo'llar bo'sh bo'lsa, birinchi hududga.
+   * Admin keyin aniq ko'chalarni qo'shadi/o'zgartiradi.
+   */
+  async seedRoadsIfEmpty(): Promise<void> {
+    if ((await this.repo.roadCount()) > 0) return;
+    const areas = await this.repo.listAreas(false);
+    if (areas.length === 0) return;
+    const areaId = areas[0].id;
+
+    const roads: Array<{ name: string; kind: string; points: number[][] }> = [
+      {
+        name: "Markaziy ko'cha",
+        kind: 'center',
+        points: [
+          [40.4185, 70.6042],
+          [40.4236, 70.6094],
+          [40.4291, 70.6158],
+        ],
+      },
+      {
+        name: "Navoiy ko'chasi",
+        kind: 'main',
+        points: [
+          [40.4236, 70.6094],
+          [40.4258, 70.6201],
+          [40.436, 70.627],
+        ],
+      },
+      {
+        name: "Bekat yo'li",
+        kind: 'street',
+        points: [
+          [40.4112, 70.5983],
+          [40.4185, 70.6042],
+        ],
+      },
+      {
+        name: "Sanoat yo'li",
+        kind: 'street',
+        points: [
+          [40.4236, 70.6094],
+          [40.405, 70.63],
+        ],
+      },
+    ];
+    for (const r of roads) {
+      await this.repo.createRoad({
+        areaId,
+        name: r.name,
+        kind: r.kind as never,
+        points: r.points,
+      });
+    }
+    this.logger.log("Namunaviy yo'llar yuklandi (seed)");
   }
 }

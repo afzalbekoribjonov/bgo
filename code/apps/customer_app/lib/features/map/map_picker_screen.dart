@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/location_service.dart';
+import '../../core/map_road.dart';
 import '../../core/places.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../geo/geo_api.dart';
@@ -77,6 +78,7 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
     final t = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
+    final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
     final results = _query.isEmpty
         ? const <GeoPlace>[]
         : places
@@ -93,8 +95,10 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
             options: MapOptions(
               initialCenter: _center,
               initialZoom: 15,
-              minZoom: 11,
+              minZoom: 12,
               maxZoom: 18,
+              cameraConstraint:
+                  CameraConstraint.contain(bounds: beshariqBounds),
               onPositionChanged: (camera, _) {
                 _center = camera.center;
               },
@@ -104,6 +108,14 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.beshariq.customer_app',
               ),
+              if (roads.isNotEmpty)
+                PolylineLayer(polylines: [
+                  for (final r in roads)
+                    Polyline(
+                        points: r.points,
+                        strokeWidth: r.width,
+                        color: r.color),
+                ]),
             ],
           ),
 

@@ -12,6 +12,12 @@ export class GeoController {
     return { success: true, data: await this.geo.listActiveAreas() };
   }
 
+  /** Faol hududlardagi yo'llar (Beshariq-maxsus xarita qatlami). */
+  @Get('roads')
+  async roads() {
+    return { success: true, data: await this.geo.listRoads() };
+  }
+
   /** Nuqta xizmat hududi ichidami: ?lat=..&lng=.. */
   @Get('check')
   async check(@Query('lat') lat: string, @Query('lng') lng: string) {

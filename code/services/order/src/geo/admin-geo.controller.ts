@@ -10,7 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
-import { CreateAreaDto, CreatePlaceDto, UpdateAreaDto } from './dto/geo.dto';
+import {
+  CreateAreaDto,
+  CreatePlaceDto,
+  CreateRoadDto,
+  UpdateAreaDto,
+} from './dto/geo.dto';
 import { GeoService } from './geo.service';
 
 /** Xizmat hududlari + joylar boshqaruvi — faqat admin. plan/12-maps-navigation.md */
@@ -51,6 +56,23 @@ export class AdminGeoController {
   @HttpCode(200)
   async deletePlace(@Param('id') id: string) {
     await this.geo.deletePlace(id);
+    return { success: true };
+  }
+
+  @Get('roads')
+  async roads() {
+    return { success: true, data: await this.geo.listRoads() };
+  }
+
+  @Post('areas/:id/roads')
+  async addRoad(@Param('id') id: string, @Body() dto: CreateRoadDto) {
+    return { success: true, data: await this.geo.addRoad(id, dto) };
+  }
+
+  @Delete('roads/:id')
+  @HttpCode(200)
+  async deleteRoad(@Param('id') id: string) {
+    await this.geo.deleteRoad(id);
     return { success: true };
   }
 }
