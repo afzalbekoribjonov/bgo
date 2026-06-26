@@ -12,9 +12,9 @@ export const ROAD_COLORS: Record<RoadKind, string> = {
 };
 
 export const ROAD_WIDTH: Record<RoadKind, number> = {
-  center: 6,
-  main: 5,
-  street: 3.5,
+  center: 8,
+  main: 6.5,
+  street: 4.5,
 };
 
 export const ROAD_KIND_LABELS: Record<RoadKind, string> = {

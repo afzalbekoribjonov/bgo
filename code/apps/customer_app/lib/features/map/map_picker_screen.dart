@@ -109,13 +109,7 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
                 userAgentPackageName: 'com.beshariq.customer_app',
               ),
               if (roads.isNotEmpty)
-                PolylineLayer(polylines: [
-                  for (final r in roads)
-                    Polyline(
-                        points: r.points,
-                        strokeWidth: r.width,
-                        color: r.color),
-                ]),
+                PolylineLayer(polylines: buildRoadPolylines(roads)),
             ],
           ),
 

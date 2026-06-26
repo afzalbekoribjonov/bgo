@@ -1038,6 +1038,24 @@ abstract class AppLocalizations {
   /// **'Qayerga?'**
   String get taxiSelectToHint;
 
+  /// No description provided for @taxiDriverEta.
+  ///
+  /// In uz, this message translates to:
+  /// **'Haydovchi ~{min} daqiqada yetadi'**
+  String taxiDriverEta(String min);
+
+  /// No description provided for @taxiArriveEta.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilgacha ~{min} daqiqa'**
+  String taxiArriveEta(String min);
+
+  /// No description provided for @taxiNearbyCars.
+  ///
+  /// In uz, this message translates to:
+  /// **'{count} ta mashina yaqinda'**
+  String taxiNearbyCars(String count);
+
   /// No description provided for @rateTitle.
   ///
   /// In uz, this message translates to:

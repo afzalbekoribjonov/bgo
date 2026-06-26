@@ -34,7 +34,20 @@ class MapRoad {
     }
   }
 
-  double get width => kind == 'center' ? 6 : (kind == 'main' ? 5 : 3.5);
+  /// Yo'l "casing" (kontur) rangi — chiziq yo'lga o'xshab aniq ko'rinishi uchun.
+  Color get border {
+    switch (kind) {
+      case 'center':
+        return const Color(0xFFD84315);
+      case 'main':
+        return const Color(0xFF1B5E20);
+      default:
+        return const Color(0xFF1B5E20);
+    }
+  }
+
+  /// Yo'l qalinligi — xaritada yaxshi ko'rinishi uchun yiriklashtirilgan.
+  double get width => kind == 'center' ? 9 : (kind == 'main' ? 7 : 5);
 
   factory MapRoad.fromJson(Map<String, dynamic> json) {
     final pts = ((json['points'] as List?) ?? const [])
@@ -51,3 +64,17 @@ class MapRoad {
     );
   }
 }
+
+/// Admin yo'llaridan flutter_map Polyline ro'yxati (casing + rang) — barcha
+/// xaritalarda bir xil ko'rinish uchun.
+List<Polyline> buildRoadPolylines(List<MapRoad> roads) => [
+      for (final r in roads)
+        if (r.points.length >= 2)
+          Polyline(
+            points: r.points,
+            strokeWidth: r.width,
+            color: r.color,
+            borderColor: r.border,
+            borderStrokeWidth: 2.5,
+          ),
+    ];

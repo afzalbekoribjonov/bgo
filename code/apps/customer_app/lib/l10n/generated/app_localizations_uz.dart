@@ -492,6 +492,21 @@ class AppLocalizationsUz extends AppLocalizations {
   String get taxiSelectToHint => 'Qayerga?';
 
   @override
+  String taxiDriverEta(String min) {
+    return 'Haydovchi ~$min daqiqada yetadi';
+  }
+
+  @override
+  String taxiArriveEta(String min) {
+    return 'Manzilgacha ~$min daqiqa';
+  }
+
+  @override
+  String taxiNearbyCars(String count) {
+    return '$count ta mashina yaqinda';
+  }
+
+  @override
   String get rateTitle => 'Safarni baholang';
 
   @override
@@ -1075,6 +1090,21 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get taxiSelectToHint => 'Қаерга?';
+
+  @override
+  String taxiDriverEta(String min) {
+    return 'Ҳайдовчи ~$min дақиқада етади';
+  }
+
+  @override
+  String taxiArriveEta(String min) {
+    return 'Манзилгача ~$min дақиқа';
+  }
+
+  @override
+  String taxiNearbyCars(String count) {
+    return '$count та машина яқинда';
+  }
 
   @override
   String get rateTitle => 'Сафарни баҳоланг';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import 'core/location_pinger.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/login_flow.dart';
 import 'features/delivery/delivery_board_screen.dart';
@@ -38,7 +39,8 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     return switch (status) {
       AuthStatus.unknown => const _Splash(),
       AuthStatus.unauthenticated => const LoginFlow(),
-      AuthStatus.authenticated => const DeliveryBoardScreen(),
+      AuthStatus.authenticated =>
+        const LocationPinger(child: DeliveryBoardScreen()),
     };
   }
 }
