@@ -88,3 +88,45 @@ tr:last-child td { border-bottom: none; }
 .muted { color: var(--muted); }
 .empty { text-align: center; color: var(--muted); padding: 40px; }
 .error { color: var(--red); padding: 12px 0; }
+
+.row { display: flex; gap: 8px; }
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+input, select {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  min-width: 140px;
+}
+input:focus, select:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 16px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.ghost { background: #fff; color: var(--text); border-color: var(--border); }
+.btn.red { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* Leaflet — chizish rejimida nishon (crosshair) */
+.road-map.drawing { cursor: crosshair; }
+.road-map.drawing .leaflet-grab,
+.road-map.drawing .leaflet-interactive { cursor: crosshair; }
+.leaflet-container { font: inherit; background: #e8eef2; }

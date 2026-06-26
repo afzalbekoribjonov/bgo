@@ -24,6 +24,7 @@ function Check($c, $m) { if ($c) { Write-Host "  PASS: $m" } else { Write-Host "
 
 Wait-Up $auth 'auth'; Wait-Up $ord 'order'
 $admin = Login '+998900000000'; $ah = Hdr $admin.accessToken
+$cust = Login '+998901111111'
 
 # 1) Seed Beshariq hududi + joylar (public)
 $areas = (Invoke-RestMethod "$ord/geo/areas").data
@@ -63,15 +64,34 @@ $areas2 = (Invoke-RestMethod "$ord/geo/areas").data
 $found = $areas2 | Where-Object { $_.id -eq $aid }
 Check (($found.places | Where-Object { $_.id -eq $place.id }) -ne $null) "Yangi joy public ro'yxatda"
 
-# 7) isActive=false -> public ro'yxatdan yo'qoladi
+# 6b) Admin: navigatsiya yo'llari (qo'shish / public+admin ro'yxat / himoya / o'chirish)
+$road = (Invoke-RestMethod "$ord/admin/geo/areas/$aid/roads" -Method Post -Headers $ah -Body (J @{
+  name = "Test ko'cha $(Get-Random)"; kind = 'main'; points = @(@(40.30, 70.50), @(40.305, 70.505), @(40.31, 70.51))
+}) -ContentType 'application/json').data
+Check ($null -ne $road.id) "Admin navigatsiya yo'li qo'shdi"
+Check (@($road.points).Count -eq 3) "Yo'l 3 nuqta bilan saqlandi"
+$pubRoads = (Invoke-RestMethod "$ord/geo/roads").data
+Check (($pubRoads | Where-Object { $_.id -eq $road.id }) -ne $null) "Faol hudud yo'li public ro'yxatda"
+$admRoads = (Invoke-RestMethod "$ord/admin/geo/roads" -Headers $ah).data
+Check (($admRoads | Where-Object { $_.id -eq $road.id }) -ne $null) "Yo'l admin ro'yxatida"
+Check (Status 403 { Invoke-RestMethod "$ord/admin/geo/areas/$aid/roads" -Method Post -Headers (Hdr $cust.accessToken) -Body (J @{ name='x'; kind='street'; points=@(@(40.3,70.5),@(40.31,70.51)) }) -ContentType 'application/json' | Out-Null }) "Mijoz yo'l qo'shish -> 403"
+Invoke-RestMethod "$ord/admin/geo/roads/$($road.id)" -Method Delete -Headers $ah | Out-Null
+$pubRoads2 = (Invoke-RestMethod "$ord/geo/roads").data
+Check (($pubRoads2 | Where-Object { $_.id -eq $road.id }) -eq $null) "Yo'l o'chirildi (public ro'yxatdan yo'qoldi)"
+
+# 7) isActive=false -> public ro'yxatdan yo'qoladi (hudud + uning yo'llari)
+$road2 = (Invoke-RestMethod "$ord/admin/geo/areas/$aid/roads" -Method Post -Headers $ah -Body (J @{
+  name = "Vaqtincha yo'l"; kind = 'street'; points = @(@(40.30, 70.50), @(40.31, 70.51))
+}) -ContentType 'application/json').data
 Invoke-RestMethod "$ord/admin/geo/areas/$aid" -Method Patch -Headers $ah -Body (J @{ isActive = $false }) -ContentType 'application/json' | Out-Null
 $areas3 = (Invoke-RestMethod "$ord/geo/areas").data
 Check (($areas3 | Where-Object { $_.id -eq $aid }) -eq $null) "Nofaol tuman public ro'yxatda yo'q"
+$pubRoads3 = (Invoke-RestMethod "$ord/geo/roads").data
+Check (($pubRoads3 | Where-Object { $_.id -eq $road2.id }) -eq $null) "Nofaol hudud yo'li public ro'yxatda yo'q"
 $adminAll = (Invoke-RestMethod "$ord/admin/geo/areas" -Headers $ah).data
 Check (($adminAll | Where-Object { $_.id -eq $aid }) -ne $null) "Nofaol tuman admin ro'yxatda bor"
 
 # 8) Himoya: mijoz tuman yarata olmaydi -> 403
-$cust = Login '+998901111111'
 Check (Status 403 { Invoke-RestMethod "$ord/admin/geo/areas" -Method Post -Headers (Hdr $cust.accessToken) -Body (J @{ name='x'; centerLat=40; centerLng=70; boundary=$poly }) -ContentType 'application/json' | Out-Null }) "Mijoz tuman yaratish -> 403"
 
 # 9) Tozalash
