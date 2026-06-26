@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { GeoPoint, haversineKm } from '../common/geo';
+import { roundFare } from '../common/money';
 import {
   buildVerticalReport,
   buildVerticalStats,
@@ -40,7 +41,7 @@ export class ParcelService {
       t.parcelMinFare,
       t.parcelBaseFare + Math.round(t.parcelPerKm * distanceKm),
     );
-    const fare = Math.round(base * SIZE_MULTIPLIER[size]);
+    const fare = roundFare(Math.round(base * SIZE_MULTIPLIER[size]));
     const commission = Math.round((fare * t.parcelCommissionPercent) / 100);
     return { distanceKm, size, fare, commission, driverEarning: fare - commission };
   }

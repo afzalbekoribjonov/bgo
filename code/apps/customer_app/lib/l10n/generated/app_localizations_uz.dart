@@ -478,6 +478,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get mapPickedPoint => 'Xaritadan tanlangan joy';
 
   @override
+  String get mapLocalPlace => 'Beshariq joyi';
+
+  @override
+  String get mapNoResults => 'Hech narsa topilmadi';
+
+  @override
   String get taxiCurrentLocation => 'Joriy joylashuv';
 
   @override
@@ -1079,6 +1085,12 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get mapPickedPoint => 'Харитадан танланган жой';
+
+  @override
+  String get mapLocalPlace => 'Бешариқ жойи';
+
+  @override
+  String get mapNoResults => 'Ҳеч нарса топилмади';
 
   @override
   String get taxiCurrentLocation => 'Жорий жойлашув';
