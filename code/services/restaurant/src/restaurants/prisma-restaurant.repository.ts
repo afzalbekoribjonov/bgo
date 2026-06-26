@@ -7,6 +7,7 @@ import {
   CreateCategoryData,
   CreateMenuItemData,
   CreateRestaurantData,
+  MenuItemWithRestaurant,
   RestaurantRepository,
   UpdateRestaurantData,
 } from './restaurant.repository';
@@ -179,6 +180,18 @@ export class PrismaRestaurantRepository extends RestaurantRepository {
   async listMenuItems(restaurantId: string): Promise<MenuItem[]> {
     const rows = await this.prisma.menuItem.findMany({ where: { restaurantId } });
     return rows.map((m) => this.toMenuItem(m as Row));
+  }
+
+  async listAvailableItemsWithRestaurant(): Promise<MenuItemWithRestaurant[]> {
+    const rows = await this.prisma.menuItem.findMany({
+      where: { isAvailable: true, restaurant: { status: 'ACTIVE' } },
+      include: { restaurant: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((m) => ({
+      ...this.toMenuItem(m as Row),
+      restaurant: this.toRestaurant((m as Row).restaurant as Row),
+    }));
   }
 
   async createMenuItem(data: CreateMenuItemData): Promise<MenuItem> {

@@ -21,6 +21,15 @@ export class CatalogController {
     return { success: true, data: await this.service.listForOwner(user.sub) };
   }
 
+  /** Bosh ekran taomlar lentasi (barcha oshxonalardan). ':id' dan OLDIN. */
+  @Get('dishes')
+  async dishes(@Headers('accept-language') lang?: string) {
+    return {
+      success: true,
+      data: await this.service.listPopularDishes(localeFromHeader(lang)),
+    };
+  }
+
   @Get(':id')
   async detail(@Param('id') id: string) {
     return { success: true, data: await this.service.getPublicRestaurant(id) };

@@ -55,10 +55,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? user!.fullName!.trim()
         : null;
     final restaurants = ref.watch(restaurantsProvider);
+    final dishes = ref.watch(dishesProvider);
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(restaurantsProvider),
+        onRefresh: () async {
+          ref.invalidate(restaurantsProvider);
+          ref.invalidate(dishesProvider);
+        },
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -69,11 +73,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _carouselSection(t),
             const SizedBox(height: 20),
             _popularSection(t, restaurants),
-            _allSection(t, restaurants),
+            _dishesSection(t, dishes),
             const SizedBox(height: 24),
           ],
         ),
       ),
+    );
+  }
+
+  // ---------- Mashhur taomlar (bosh ekran asosiy kontenti) ----------
+  Widget _dishesSection(AppLocalizations t, AsyncValue<List<Dish>> async) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(t.homeDishes),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: async.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => AsyncErrorRetry(
+              error: e,
+              onRetry: () => ref.invalidate(dishesProvider),
+            ),
+            data: (dishes) {
+              if (dishes.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(t.emptyRestaurants,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.outline)),
+                  ),
+                );
+              }
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.78,
+                ),
+                itemCount: dishes.length,
+                itemBuilder: (_, i) => DishCard(dish: dishes[i]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -318,46 +371,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
       orElse: () => const SizedBox.shrink(),
-    );
-  }
-
-  // ---------- Barcha oshxonalar (vertikal) ----------
-  Widget _allSection(
-      AppLocalizations t, AsyncValue<List<RestaurantSummary>> async) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(t.homeAllRestaurants),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: async.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (e, _) => AsyncErrorRetry(
-              error: e,
-              onRetry: () => ref.invalidate(restaurantsProvider),
-            ),
-            data: (list) {
-              if (list.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: Text(t.emptyRestaurants,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.outline)),
-                  ),
-                );
-              }
-              return Column(
-                children: [for (final r in list) RestaurantCard(restaurant: r)],
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 

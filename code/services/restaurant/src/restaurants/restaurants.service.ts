@@ -24,6 +24,32 @@ export class RestaurantsService {
     return this.toPublicRestaurant(restaurant);
   }
 
+  /**
+   * Bosh ekran uchun taomlar lentasi — barcha faol oshxonalardagi mavjud
+   * taomlar, oshxona reytingi bo'yicha tartiblangan (yuqori reyting birinchi).
+   * Mijoz lat/lng bo'yicha yaqinlikni o'zi qayta tartiblay oladi (restoran
+   * koordinatalari ham qaytariladi).
+   */
+  async listPopularDishes(locale: SupportedLocale, limit = 50) {
+    const items = await this.repo.listAvailableItemsWithRestaurant();
+    return items
+      .filter((it) => it.restaurant.isOpen)
+      .map((it) => ({
+        id: it.id,
+        name: pickLocale(it.name, locale),
+        description: it.description ? pickLocale(it.description, locale) : null,
+        price: it.price,
+        imageUrl: it.imageUrl ?? null,
+        restaurantId: it.restaurantId,
+        restaurantName: it.restaurant.name,
+        restaurantRating: it.restaurant.rating,
+        restaurantLat: it.restaurant.lat,
+        restaurantLng: it.restaurant.lng,
+      }))
+      .sort((a, b) => b.restaurantRating - a.restaurantRating)
+      .slice(0, limit);
+  }
+
   // ---------- Egalik (ownership) ----------
 
   /** Foydalanuvchiga tegishli oshxonalar (restaurant roli). */

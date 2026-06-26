@@ -21,6 +21,13 @@ class RestaurantApi {
     final res = await _dio.get('/restaurants/$restaurantId/menu');
     return RestaurantMenu.fromJson(res.data['data'] as Map<String, dynamic>);
   }
+
+  /// Bosh ekran uchun taomlar lentasi (barcha oshxonalardan).
+  Future<List<Dish>> listDishes() async {
+    final res = await _dio.get('/restaurants/dishes');
+    final list = (res.data['data'] as List?) ?? const [];
+    return list.map((e) => Dish.fromJson(e as Map<String, dynamic>)).toList();
+  }
 }
 
 final restaurantApiProvider =
@@ -36,4 +43,10 @@ final restaurantsProvider = FutureProvider<List<RestaurantSummary>>((ref) {
 final menuProvider = FutureProvider.family<RestaurantMenu, String>((ref, id) {
   ref.watch(localeProvider);
   return ref.read(restaurantApiProvider).getMenu(id);
+});
+
+/// Bosh ekran taomlar lentasi. Til o'zgarsa qayta yuklanadi.
+final dishesProvider = FutureProvider<List<Dish>>((ref) {
+  ref.watch(localeProvider);
+  return ref.read(restaurantApiProvider).listDishes();
 });
