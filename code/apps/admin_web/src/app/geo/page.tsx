@@ -1,15 +1,45 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addGeoPlace,
+  addGeoRoad,
   createGeoArea,
   deleteGeoArea,
   deleteGeoPlace,
+  deleteGeoRoad,
   getGeoAreas,
+  getGeoRoads,
   updateGeoArea,
 } from '@/lib/api';
-import type { ServiceArea } from '@/lib/types';
+import {
+  ROAD_COLORS,
+  ROAD_KIND_LABELS,
+  ROAD_KINDS,
+} from '@/lib/road-style';
+import type { MapRoad, RoadKind, ServiceArea } from '@/lib/types';
+
+// Leaflet faqat brauzerda ishlaydi — SSR'siz dinamik yuklanadi.
+const RoadMap = dynamic(() => import('@/components/road-map'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="card"
+      style={{
+        height: 540,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--muted)',
+      }}
+    >
+      Xarita yuklanmoqda…
+    </div>
+  ),
+});
+
+type LatLng = [number, number];
 
 /** To'rtburchak (bounding box) → GeoJSON poligon. */
 function bboxToPolygon(
@@ -31,6 +61,7 @@ function bboxToPolygon(
 
 export default function GeoPage() {
   const [areas, setAreas] = useState<ServiceArea[]>([]);
+  const [roads, setRoads] = useState<MapRoad[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -43,7 +74,9 @@ export default function GeoPage() {
 
   const load = useCallback(async () => {
     try {
-      setAreas(await getGeoAreas());
+      const [a, r] = await Promise.all([getGeoAreas(), getGeoRoads()]);
+      setAreas(a);
+      setRoads(r);
       setError(null);
     } catch (e) {
       setError((e as Error).message);
@@ -112,12 +145,24 @@ export default function GeoPage() {
 
   return (
     <div className="container">
-      <h1 className="h1">Xizmat hududlari</h1>
-      <p className="muted" style={{ marginBottom: 12 }}>
-        Tuman chegarasi (to‘rtburchak) va joylar (markerlar). Mijoz ilovasi shu
-        joylarni ko‘rsatadi. Aniq chegara keyin xarita orqali tahrirlanadi.
+      <h1 className="h1">Xizmat hududlari va navigatsiya</h1>
+      <p className="muted" style={{ marginBottom: 16 }}>
+        Beshariq xaritasiga har bir ko‘cha va yo‘lni chizing — haydovchilar shu
+        qatlam orqali adashmay manzilni topadi. Quyida hududlar va mo‘ljal
+        joylarni boshqarasiz.
       </p>
       {error && <p className="error">{error}</p>}
+
+      <RoadPanel
+        areas={areas}
+        roads={roads}
+        onChanged={load}
+        setError={setError}
+      />
+
+      <h2 className="h1" style={{ fontSize: 18, marginTop: 28 }}>
+        Hududlar va joylar
+      </h2>
 
       <div className="card" style={{ maxWidth: 760 }}>
         <strong>Yangi hudud (tuman)</strong>
@@ -160,6 +205,238 @@ export default function GeoPage() {
           onChanged={load}
         />
       ))}
+    </div>
+  );
+}
+
+/** Xarita ustida yo'l chizish + yo'llarni boshqarish paneli. */
+function RoadPanel({
+  areas,
+  roads,
+  onChanged,
+  setError,
+}: {
+  areas: ServiceArea[];
+  roads: MapRoad[];
+  onChanged: () => Promise<void>;
+  setError: (m: string | null) => void;
+}) {
+  const [draft, setDraft] = useState<LatLng[]>([]);
+  const [drawing, setDrawing] = useState(false);
+  const [roadName, setRoadName] = useState('');
+  const [roadKind, setRoadKind] = useState<RoadKind>('street');
+  const [areaId, setAreaId] = useState('');
+  const [selectedRoadId, setSelectedRoadId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Hudud tanlovini birinchi faol hududga sozlash.
+  useEffect(() => {
+    if (areaId && areas.some((a) => a.id === areaId)) return;
+    const first = areas.find((a) => a.isActive) ?? areas[0];
+    if (first) setAreaId(first.id);
+  }, [areas, areaId]);
+
+  const addPoint = useCallback((lat: number, lng: number) => {
+    setDraft((d) => [...d, [Number(lat.toFixed(6)), Number(lng.toFixed(6))]]);
+  }, []);
+
+  const undo = () => setDraft((d) => d.slice(0, -1));
+  const clearDraft = () => setDraft([]);
+
+  async function save() {
+    if (!areaId) {
+      setError('Avval hudud yarating (yo‘l hududga biriktiriladi)');
+      return;
+    }
+    if (draft.length < 2) {
+      setError('Yo‘l uchun kamida 2 ta nuqta belgilang');
+      return;
+    }
+    if (!roadName.trim()) {
+      setError('Yo‘l nomini kiriting');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await addGeoRoad(areaId, {
+        name: roadName.trim(),
+        kind: roadKind,
+        points: draft,
+      });
+      setDraft([]);
+      setRoadName('');
+      setDrawing(false);
+      await onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeRoad(r: MapRoad) {
+    if (!window.confirm(`"${r.name}" yo'lini o'chirasizmi?`)) return;
+    setError(null);
+    try {
+      await deleteGeoRoad(r.id);
+      if (selectedRoadId === r.id) setSelectedRoadId(null);
+      await onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  const grouped = useMemo(() => {
+    const g: Record<RoadKind, MapRoad[]> = { center: [], main: [], street: [] };
+    for (const r of roads) (g[r.kind] ?? g.street).push(r);
+    return g;
+  }, [roads]);
+
+  return (
+    <div className="card">
+      <div
+        className="row"
+        style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}
+      >
+        <strong>Yo‘l chizish (navigatsiya qatlami)</strong>
+        <span className="muted" style={{ fontSize: 13 }}>
+          {roads.length} ta yo‘l
+        </span>
+      </div>
+
+      {/* Asboblar paneli */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          alignItems: 'end',
+          marginTop: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <label>Hudud</label>
+          <select value={areaId} onChange={(e) => setAreaId(e.target.value)}>
+            {areas.length === 0 && <option value="">— hudud yo‘q —</option>}
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+                {a.isActive ? '' : ' (nofaol)'}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label>Yo‘l nomi</label>
+          <input
+            value={roadName}
+            onChange={(e) => setRoadName(e.target.value)}
+            placeholder="Masalan: Navoiy ko‘chasi"
+          />
+        </div>
+        <div>
+          <label>Turi</label>
+          <select value={roadKind} onChange={(e) => setRoadKind(e.target.value as RoadKind)}>
+            {ROAD_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {ROAD_KIND_LABELS[k]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          className={drawing ? 'btn red' : 'btn'}
+          onClick={() => setDrawing((v) => !v)}
+        >
+          {drawing ? 'Chizishni to‘xtatish' : 'Chizishni boshlash'}
+        </button>
+        <button className="btn ghost" onClick={undo} disabled={draft.length === 0}>
+          Oxirgi nuqta ✕
+        </button>
+        <button className="btn ghost" onClick={clearDraft} disabled={draft.length === 0}>
+          Tozalash
+        </button>
+        <button
+          className="btn"
+          onClick={save}
+          disabled={saving || draft.length < 2 || !roadName.trim() || !areaId}
+        >
+          {saving ? 'Saqlanmoqda…' : 'Yo‘lni saqlash'}
+        </button>
+      </div>
+
+      <p className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
+        {drawing ? (
+          <>
+            ✏️ Chizish yoniq — xaritani bosib yo‘l nuqtalarini ketma-ket qo‘shing.
+            Belgilangan nuqtalar: <strong>{draft.length}</strong>
+          </>
+        ) : (
+          <>“Chizishni boshlash” tugmasini bosing, so‘ng xaritada yo‘l bo‘ylab nuqtalar qo‘ying.</>
+        )}
+      </p>
+
+      <RoadMap
+        roads={roads}
+        areas={areas}
+        draft={draft}
+        draftKind={roadKind}
+        drawing={drawing}
+        selectedRoadId={selectedRoadId}
+        onAddPoint={addPoint}
+        onSelectRoad={setSelectedRoadId}
+      />
+
+      {/* Rang izohi */}
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
+        {ROAD_KINDS.map((k) => (
+          <span key={k} className="muted" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+            <span
+              style={{
+                width: 18,
+                height: 4,
+                borderRadius: 2,
+                background: ROAD_COLORS[k],
+                display: 'inline-block',
+              }}
+            />
+            {ROAD_KIND_LABELS[k]} ({grouped[k].length})
+          </span>
+        ))}
+      </div>
+
+      {/* Yo'llar ro'yxati (o'chirish) */}
+      {roads.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+          {roads.map((r) => (
+            <span
+              key={r.id}
+              className="badge"
+              style={{
+                background: ROAD_COLORS[r.kind] ?? ROAD_COLORS.street,
+                cursor: 'pointer',
+                opacity: selectedRoadId === r.id ? 1 : 0.85,
+                outline: selectedRoadId === r.id ? '2px solid #1a202c' : 'none',
+              }}
+              title="Tanlash uchun bosing · ✕ bilan o'chiring"
+              onClick={() => setSelectedRoadId(r.id)}
+            >
+              {r.name}{' '}
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeRoad(r);
+                }}
+                style={{ marginLeft: 4 }}
+              >
+                ✕
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

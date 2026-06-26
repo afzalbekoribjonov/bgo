@@ -3,7 +3,9 @@ import type {
   AdminRestaurant,
   CreateAreaInput,
   CreateRestaurantInput,
+  CreateRoadInput,
   GeoPlace,
+  MapRoad,
   OrdersQuery,
   PartnerApplication,
   PromoCode,
@@ -158,6 +160,17 @@ export const addGeoPlace = (
   });
 export const deleteGeoPlace = (id: string) =>
   api<unknown>(`/admin/geo/places/${id}`, { method: 'DELETE' });
+
+// ----- Geo yo'llar (Beshariq navigatsiya qatlami) -----
+export const getGeoRoads = () => api<MapRoad[]>('/admin/geo/roads');
+export const addGeoRoad = (areaId: string, body: CreateRoadInput) =>
+  api<MapRoad>(`/admin/geo/areas/${areaId}/roads`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const deleteGeoRoad = (id: string) =>
+  api<unknown>(`/admin/geo/roads/${id}`, { method: 'DELETE' });
 
 export function formatSom(value: number): string {
   return value.toLocaleString('ru-RU').replace(/ /g, ' ').replace(/,/g, ' ') + " so'm";

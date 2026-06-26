@@ -26,6 +26,22 @@ export interface CreateAreaInput {
   isActive?: boolean;
 }
 
+export type RoadKind = 'street' | 'main' | 'center';
+
+export interface MapRoad {
+  id: string;
+  areaId: string;
+  name: string;
+  kind: RoadKind;
+  points: number[][]; // [[lat, lng], ...]
+}
+
+export interface CreateRoadInput {
+  name: string;
+  kind: RoadKind;
+  points: number[][]; // [[lat, lng], ...]
+}
+
 export interface VerticalStat {
   count: number;
   revenue: number;
