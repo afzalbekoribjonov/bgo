@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
@@ -55,12 +56,35 @@ export class TaxiController {
     return { success: true, data: await this.taxi.taxiTariff() };
   }
 
+  /** Yaqin (online) haydovchilar — "yaqin mashinalar". ':id' dan oldin turishi shart. */
+  @Get('nearby-drivers')
+  async nearbyDrivers(@Query('lat') lat: string, @Query('lng') lng: string) {
+    const la = Number(lat);
+    const ln = Number(lng);
+    if (!Number.isFinite(la) || !Number.isFinite(ln)) {
+      throw new BadRequestException('lat va lng kerak');
+    }
+    return { success: true, data: await this.taxi.nearbyDrivers(la, ln) };
+  }
+
   @Get(':id')
   async detail(
     @CurrentUser() user: AccessTokenPayload,
     @Param('id') id: string,
   ) {
     return { success: true, data: await this.taxi.getOwned(user.sub, id) };
+  }
+
+  /** Biriktirilgan haydovchining jonli joylashuvi (null bo'lishi mumkin). */
+  @Get(':id/driver')
+  async driverLocation(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') id: string,
+  ) {
+    return {
+      success: true,
+      data: await this.taxi.driverLocationForTrip(user.sub, id),
+    };
   }
 
   @Post(':id/cancel')

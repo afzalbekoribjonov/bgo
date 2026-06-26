@@ -6,6 +6,7 @@ import { OrdersModule } from './orders/orders.module';
 import { ParcelModule } from './parcel/parcel.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TaxiModule } from './taxi/taxi.module';
+import { TrackingModule } from './tracking/tracking.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TaxiModule } from './taxi/taxi.module';
     TaxiModule,
     ParcelModule,
     GeoModule,
+    TrackingModule,
     HealthModule,
   ],
 })

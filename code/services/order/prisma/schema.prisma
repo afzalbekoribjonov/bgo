@@ -46,6 +46,21 @@ model MapRoad {
   @@map("map_roads")
 }
 
+/**
+ * Haydovchi/kuryerning eng oxirgi jonli joylashuvi (bitta qator har haydovchiga,
+ * upsert). Taksi/dostavka kuzatuvi + "yaqin mashinalar". plan/12-maps-navigation.md
+ */
+model DriverLocation {
+  driverId  String   @id
+  lat       Float
+  lng       Float
+  heading   Float? // harakat yo'nalishi (gradus), ixtiyoriy
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
+  @@map("driver_locations")
+}
+
 /** Hududdagi nomli joy (xaritada marker). */
 model Place {
   id        String      @id @default(uuid())
