@@ -414,6 +414,12 @@ abstract class AppLocalizations {
   /// **'Barcha oshxonalar'**
   String get homeAllRestaurants;
 
+  /// No description provided for @homeDishes.
+  ///
+  /// In uz, this message translates to:
+  /// **'Mashhur taomlar'**
+  String get homeDishes;
+
   /// No description provided for @homeSeeAll.
   ///
   /// In uz, this message translates to:

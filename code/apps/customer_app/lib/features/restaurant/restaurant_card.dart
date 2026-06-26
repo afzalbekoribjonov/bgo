@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'restaurant_menu_screen.dart';
 import 'restaurant_models.dart';
@@ -10,13 +11,21 @@ Color restaurantAccent(String name) {
   return HSLColor.fromAHSL(1, hue, 0.5, 0.5).toColor();
 }
 
+/// Taom nomidan barqaror "ishtaha ochuvchi" rang (rasm yo'qligida).
+Color dishAccent(String name) {
+  final hue = (name.hashCode % 360).abs().toDouble();
+  return HSLColor.fromAHSL(1, hue, 0.55, 0.46).toColor();
+}
+
 void openRestaurant(BuildContext context, RestaurantSummary r) {
+  openRestaurantById(context, r.id, r.name);
+}
+
+/// id + nom orqali oshxona menyusiga o'tish (taom kartasidan ham ishlatiladi).
+void openRestaurantById(BuildContext context, String id, String name) {
   Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (_) => RestaurantMenuScreen(
-        restaurantId: r.id,
-        restaurantName: r.name,
-      ),
+      builder: (_) => RestaurantMenuScreen(restaurantId: id, restaurantName: name),
     ),
   );
 }
@@ -144,6 +153,127 @@ class RestaurantCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Taom kartasi (bosh ekran 2-ustunli grid) — bosilsa o'sha oshxona menyusi.
+class DishCard extends StatelessWidget {
+  final Dish dish;
+  const DishCard({super.key, required this.dish});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final accent = dishAccent(dish.name);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 1.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () =>
+            openRestaurantById(context, dish.restaurantId, dish.restaurantName),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Rasm yoki gradient banner + reyting
+            Stack(
+              children: [
+                SizedBox(
+                  height: 104,
+                  width: double.infinity,
+                  child: _dishImage(accent),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: _ratingPill(context, dish.restaurantRating),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(dish.name,
+                      style: const TextStyle(
+                          fontSize: 14.5, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(Icons.storefront_outlined,
+                          size: 13, color: scheme.outline),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(dish.restaurantName,
+                            style:
+                                TextStyle(color: scheme.outline, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          AppLocalizations.of(context)!
+                              .priceSom(groupThousands(dish.price)),
+                          style: TextStyle(
+                              color: scheme.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: scheme.primary,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: const Icon(Icons.add,
+                            size: 16, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dishImage(Color accent) {
+    final fallback = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [accent, accent.withValues(alpha: 0.6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.lunch_dining, size: 40, color: Colors.white70),
+      ),
+    );
+    final url = dish.imageUrl;
+    if (url == null || url.isEmpty) return fallback;
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback,
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : fallback,
     );
   }
 }

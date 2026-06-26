@@ -172,6 +172,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeAllRestaurants => 'Все рестораны';
 
   @override
+  String get homeDishes => 'Популярные блюда';
+
+  @override
   String get homeSeeAll => 'Все';
 
   @override

@@ -29,6 +29,48 @@ class RestaurantSummary {
   }
 }
 
+/// Bosh ekran taomlar lentasi elementi — taom + tegishli oshxona.
+class Dish {
+  final String id;
+  final String name;
+  final String? description;
+  final int price;
+  final String? imageUrl;
+  final String restaurantId;
+  final String restaurantName;
+  final double restaurantRating;
+  final double restaurantLat;
+  final double restaurantLng;
+
+  const Dish({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.restaurantId,
+    required this.restaurantName,
+    required this.restaurantRating,
+    required this.restaurantLat,
+    required this.restaurantLng,
+    this.description,
+    this.imageUrl,
+  });
+
+  factory Dish.fromJson(Map<String, dynamic> json) {
+    return Dish(
+      id: json['id'] as String,
+      name: (json['name'] as String?) ?? '',
+      description: json['description'] as String?,
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      imageUrl: json['imageUrl'] as String?,
+      restaurantId: (json['restaurantId'] as String?) ?? '',
+      restaurantName: (json['restaurantName'] as String?) ?? '',
+      restaurantRating: ((json['restaurantRating'] as num?) ?? 0).toDouble(),
+      restaurantLat: ((json['restaurantLat'] as num?) ?? 0).toDouble(),
+      restaurantLng: ((json['restaurantLng'] as num?) ?? 0).toDouble(),
+    );
+  }
+}
+
 class MenuItemView {
   final String id;
   final String name;

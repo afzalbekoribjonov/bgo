@@ -38,6 +38,11 @@ export interface CreateMenuItemData {
   isAvailable?: boolean;
 }
 
+/** Taom + tegishli oshxona (bosh ekran "taomlar" lentasi uchun). */
+export interface MenuItemWithRestaurant extends MenuItem {
+  restaurant: Restaurant;
+}
+
 /**
  * Katalog repository interfeysi — saqlash texnologiyasidan mustaqil.
  * Hozir: in-memory (dev). Keyin: Prisma/PostgreSQL (plan/03-databases.md).
@@ -66,6 +71,8 @@ export abstract class RestaurantRepository {
   abstract deleteCategory(restaurantId: string, id: string): Promise<void>;
 
   abstract listMenuItems(restaurantId: string): Promise<MenuItem[]>;
+  /** Barcha faol oshxonalardagi mavjud taomlar (oshxona bilan birga). */
+  abstract listAvailableItemsWithRestaurant(): Promise<MenuItemWithRestaurant[]>;
   abstract createMenuItem(data: CreateMenuItemData): Promise<MenuItem>;
   abstract updateMenuItem(
     restaurantId: string,

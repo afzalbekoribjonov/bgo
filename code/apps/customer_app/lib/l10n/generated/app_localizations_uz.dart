@@ -172,6 +172,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get homeAllRestaurants => 'Barcha oshxonalar';
 
   @override
+  String get homeDishes => 'Mashhur taomlar';
+
+  @override
   String get homeSeeAll => 'Hammasi';
 
   @override
@@ -770,6 +773,9 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get homeAllRestaurants => 'Барча ошхоналар';
+
+  @override
+  String get homeDishes => 'Машҳур таомлар';
 
   @override
   String get homeSeeAll => 'Ҳаммаси';
