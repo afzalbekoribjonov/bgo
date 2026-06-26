@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/location_service.dart';
+import '../../core/map_road.dart';
 import '../../core/places.dart';
+import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../geo/geo_api.dart';
+import '../map/map_picker_screen.dart';
 import 'parcel_api.dart';
 import 'parcel_models.dart';
 
-/// Dostavka (pochta) ekrani. plan/05-customer-app.md
-/// Xarita ulanmaguncha: Beshariq preset nuqtalari.
+/// Dostavka (pochta) — xaritali oqim. plan/05-customer-app.md, plan/12-maps-navigation.md
 class ParcelScreen extends ConsumerStatefulWidget {
   const ParcelScreen({super.key});
 
@@ -19,6 +24,8 @@ class ParcelScreen extends ConsumerStatefulWidget {
 }
 
 class _ParcelScreenState extends ConsumerState<ParcelScreen> {
+  final MapController _map = MapController();
+  LatLng? _myLoc;
   GeoPlace? _from;
   GeoPlace? _to;
   ParcelSize _size = ParcelSize.small;
@@ -26,16 +33,76 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
   final _phoneCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   ParcelEstimate? _estimate;
-  bool _estimating = false;
   bool _sending = false;
   String? _error;
+  List<LatLng> _routeLine = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _noteCtrl.dispose();
+    _map.dispose();
     super.dispose();
+  }
+
+  Future<void> _initLocation() async {
+    final t = AppLocalizations.of(context)!;
+    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    if (!mounted) return;
+    setState(() {
+      _myLoc = pos;
+      if (pos != null && _from == null) {
+        _from = GeoPlace(t.taxiCurrentLocation, pos.latitude, pos.longitude);
+      }
+    });
+    if (pos != null) _map.move(pos, 15);
+  }
+
+  LatLng get _center =>
+      _myLoc ??
+      (_from != null
+          ? LatLng(_from!.lat, _from!.lng)
+          : LocationService.beshariqCenter);
+
+  Future<void> _pick({required bool isFrom}) async {
+    final initial = isFrom
+        ? (_from != null ? LatLng(_from!.lat, _from!.lng) : _myLoc)
+        : (_to != null ? LatLng(_to!.lat, _to!.lng) : _myLoc);
+    final result = await Navigator.of(context).push<GeoPlace>(
+      MaterialPageRoute(
+        builder: (_) => MapPickerScreen(initial: initial ?? _center),
+      ),
+    );
+    if (result == null) return;
+    setState(() {
+      if (isFrom) {
+        _from = result;
+      } else {
+        _to = result;
+      }
+      _estimate = null;
+    });
+    await _recompute();
+  }
+
+  Future<void> _recompute() async {
+    if (_from == null || _to == null) {
+      setState(() => _routeLine = const []);
+      return;
+    }
+    await _doEstimate();
+    final pts = await ref.read(routingServiceProvider).route(
+          LatLng(_from!.lat, _from!.lng),
+          LatLng(_to!.lat, _to!.lng),
+        );
+    if (mounted) setState(() => _routeLine = pts);
   }
 
   Future<void> _doEstimate() async {
@@ -46,18 +113,15 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
       return;
     }
     setState(() {
-      _estimating = true;
       _error = null;
       _estimate = null;
     });
     try {
       final e = await ref.read(parcelApiProvider).estimate(_from!, _to!, _size);
-      setState(() => _estimate = e);
+      if (mounted) setState(() => _estimate = e);
     } catch (e) {
       setState(() =>
           _error = isNetworkError(e) ? t.errorNetwork : t.errorGeneric);
-    } finally {
-      if (mounted) setState(() => _estimating = false);
     }
   }
 
@@ -85,6 +149,8 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
       if (!mounted) return;
       setState(() {
         _estimate = null;
+        _routeLine = const [];
+        _to = null;
         _nameCtrl.clear();
         _phoneCtrl.clear();
         _noteCtrl.clear();
@@ -115,122 +181,232 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
     return Scaffold(
       appBar: AppBar(title: Text(t.parcelTitle)),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(myParcelsProvider);
-          ref.invalidate(placesProvider);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _placeDropdown(t.taxiFrom, Icons.my_location, _from, places,
-                (p) => setState(() {
-                      _from = p;
+      body: Column(
+        children: [
+          SizedBox(height: 250, child: _buildMap()),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _addressRow(
+                  icon: Icons.my_location,
+                  color: Colors.green,
+                  label: _from?.label ?? t.taxiSelectFromHint,
+                  filled: _from != null,
+                  onTap: () => _pick(isFrom: true),
+                ),
+                const SizedBox(height: 8),
+                _addressRow(
+                  icon: Icons.location_on,
+                  color: Theme.of(context).colorScheme.primary,
+                  label: _to?.label ?? t.taxiSelectToHint,
+                  filled: _to != null,
+                  onTap: () => _pick(isFrom: false),
+                ),
+                const SizedBox(height: 16),
+                Text(t.parcelSize, style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 8),
+                SegmentedButton<ParcelSize>(
+                  segments: [
+                    ButtonSegment(value: ParcelSize.small, label: Text(t.parcelSizeSmall), icon: const Icon(Icons.inventory_2_outlined)),
+                    ButtonSegment(value: ParcelSize.medium, label: Text(t.parcelSizeMedium), icon: const Icon(Icons.inventory_2)),
+                    ButtonSegment(value: ParcelSize.large, label: Text(t.parcelSizeLarge), icon: const Icon(Icons.local_shipping_outlined)),
+                  ],
+                  selected: {_size},
+                  onSelectionChanged: (s) {
+                    setState(() {
+                      _size = s.first;
                       _estimate = null;
-                    })),
-            const SizedBox(height: 12),
-            _placeDropdown(t.taxiTo, Icons.location_on, _to, places,
-                (p) => setState(() {
-                  _to = p;
-                  _estimate = null;
-                })),
-            const SizedBox(height: 16),
-            Text(t.parcelSize, style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
-            SegmentedButton<ParcelSize>(
-              segments: [
-                ButtonSegment(value: ParcelSize.small, label: Text(t.parcelSizeSmall)),
-                ButtonSegment(value: ParcelSize.medium, label: Text(t.parcelSizeMedium)),
-                ButtonSegment(value: ParcelSize.large, label: Text(t.parcelSizeLarge)),
+                    });
+                    _doEstimate();
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: t.parcelRecipientName,
+                    prefixIcon: const Icon(Icons.person_outline),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: t.parcelRecipientPhone,
+                    prefixIcon: const Icon(Icons.phone_outlined),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _noteCtrl,
+                  decoration: InputDecoration(
+                    labelText: t.parcelNote,
+                    prefixIcon: const Icon(Icons.notes_outlined),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_estimate != null) _estimateCard(t, _estimate!),
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(_error!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                ],
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: (_sending ||
+                          _from == null ||
+                          _to == null ||
+                          _from == _to)
+                      ? null
+                      : _send,
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52)),
+                  icon: _sending
+                      ? const _Spin()
+                      : const Icon(Icons.local_shipping),
+                  label: Text(t.parcelSend),
+                ),
+                const SizedBox(height: 24),
+                Text(t.parcelMyParcels,
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _buildParcels(t),
               ],
-              selected: {_size},
-              onSelectionChanged: (s) => setState(() {
-                _size = s.first;
-                _estimate = null;
-              }),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameCtrl,
-              decoration: InputDecoration(
-                labelText: t.parcelRecipientName,
-                prefixIcon: const Icon(Icons.person_outline),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _phoneCtrl,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: t.parcelRecipientPhone,
-                prefixIcon: const Icon(Icons.phone_outlined),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _noteCtrl,
-              decoration: InputDecoration(
-                labelText: t.parcelNote,
-                prefixIcon: const Icon(Icons.notes_outlined),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_estimate != null) _estimateCard(t, _estimate!),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ],
-            const SizedBox(height: 12),
-            if (_estimate == null)
-              FilledButton.tonal(
-                onPressed: _estimating ? null : _doEstimate,
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                child: _estimating ? const _Spin() : Text(t.taxiEstimate),
-              )
-            else
-              FilledButton.icon(
-                onPressed: _sending ? null : _send,
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-                icon: _sending ? const _Spin() : const Icon(Icons.local_shipping),
-                label: Text(t.parcelSend),
-              ),
-            const SizedBox(height: 24),
-            Text(t.parcelMyParcels, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            _buildParcels(t),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _placeDropdown(
-    String label,
-    IconData icon,
-    GeoPlace? value,
-    List<GeoPlace> places,
-    ValueChanged<GeoPlace?> onChanged,
-  ) {
-    return DropdownButtonFormField<GeoPlace>(
-      value: places.contains(value) ? value : null,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        for (final p in places)
-          DropdownMenuItem(value: p, child: Text(p.label)),
+  Widget _buildMap() {
+    final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
+    final scheme = Theme.of(context).colorScheme;
+    final markers = <Marker>[];
+    if (_myLoc != null) {
+      markers.add(Marker(
+        point: _myLoc!,
+        width: 22,
+        height: 22,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+          ),
+        ),
+      ));
+    }
+    if (_from != null) markers.add(_pin(LatLng(_from!.lat, _from!.lng), Colors.green));
+    if (_to != null) markers.add(_pin(LatLng(_to!.lat, _to!.lng), scheme.primary));
+
+    final line = _routeLine.isNotEmpty
+        ? _routeLine
+        : ((_from != null && _to != null)
+            ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
+            : null);
+
+    return Stack(
+      children: [
+        FlutterMap(
+          mapController: _map,
+          options: MapOptions(
+            initialCenter: _center,
+            initialZoom: 14,
+            minZoom: 12,
+            maxZoom: 18,
+            cameraConstraint: CameraConstraint.contain(bounds: beshariqBounds),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.beshariq.customer_app',
+            ),
+            if (roads.isNotEmpty)
+              PolylineLayer(polylines: buildRoadPolylines(roads)),
+            if (line != null)
+              PolylineLayer(polylines: [
+                Polyline(
+                  points: line,
+                  strokeWidth: 6,
+                  color: const Color(0xFF1E88E5),
+                  borderColor: Colors.white,
+                  borderStrokeWidth: 2,
+                ),
+              ]),
+            MarkerLayer(markers: markers),
+          ],
+        ),
+        Positioned(
+          right: 12,
+          bottom: 12,
+          child: FloatingActionButton.small(
+            heroTag: 'parcelMyLoc',
+            onPressed: _recenter,
+            child: const Icon(Icons.my_location),
+          ),
+        ),
       ],
-      onChanged: onChanged,
+    );
+  }
+
+  Future<void> _recenter() async {
+    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    if (!mounted || pos == null) return;
+    _map.move(pos, 16);
+    setState(() => _myLoc = pos);
+  }
+
+  Marker _pin(LatLng p, Color color) => Marker(
+        point: p,
+        width: 40,
+        height: 40,
+        alignment: Alignment.topCenter,
+        child: Icon(Icons.location_pin, color: color, size: 40),
+      );
+
+  Widget _addressRow({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required bool filled,
+    VoidCallback? onTap,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: filled ? scheme.onSurface : scheme.outline,
+                    fontWeight: filled ? FontWeight.w600 : FontWeight.normal,
+                  )),
+            ),
+            Icon(Icons.chevron_right, color: scheme.outline),
+          ],
+        ),
+      ),
     );
   }
 
