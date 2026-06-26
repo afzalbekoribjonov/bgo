@@ -164,8 +164,6 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
               ),
               if (roads.isNotEmpty)
                 PolylineLayer(polylines: buildRoadPolylines(roads)),
-              // Qishloq/joy nomlari (yorliqlar)
-              MarkerLayer(markers: buildPlaceMarkers(places)),
             ],
           ),
 
