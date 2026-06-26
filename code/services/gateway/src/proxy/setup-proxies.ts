@@ -23,6 +23,7 @@ const ROUTES: RouteDef[] = [
   { prefix: '/api/v1/orders', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/kitchen', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/courier', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
+  { prefix: '/api/v1/driver', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/taxi', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/parcel', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/geo', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },

@@ -13,6 +13,8 @@ import {
 } from '../common/reporting';
 import { NotificationClient } from '../notification-client/notification.client';
 import { TariffService } from '../tariff/tariff.service';
+import { DriverLocation, NearbyDriver } from '../tracking/entities';
+import { DriverLocationService } from '../tracking/driver-location.service';
 import { CompleteTaxiDto, RequestTaxiDto } from './dto/request-taxi.dto';
 import { ChatRole, GeoPoint, TaxiMessage, TaxiTrip } from './entities';
 import { TaxiMessageRepository } from './taxi-message.repository';
@@ -29,6 +31,7 @@ export class TaxiService {
     private readonly messages: TaxiMessageRepository,
     private readonly tariff: TariffService,
     private readonly notifications: NotificationClient,
+    private readonly driverLocations: DriverLocationService,
   ) {}
 
   /** Taksi tarifi (mijoz ilovasi minimal narxni ko'rsatishi uchun). */
@@ -96,6 +99,26 @@ export class TaxiService {
       throw new ForbiddenException('Bu safar sizga tegishli emas');
     }
     return trip;
+  }
+
+  // ---------- Jonli kuzatuv (mijoz ko'rishi uchun) ----------
+
+  /**
+   * Mijozning safariga biriktirilgan haydovchining jonli joylashuvi.
+   * Haydovchi biriktirilmagan yoki hali joylashuv yubormagan bo'lsa — null.
+   */
+  async driverLocationForTrip(
+    customerId: string,
+    id: string,
+  ): Promise<DriverLocation | null> {
+    const trip = await this.getOwned(customerId, id);
+    if (!trip.driverId) return null;
+    return this.driverLocations.get(trip.driverId);
+  }
+
+  /** Berilgan nuqta atrofidagi online haydovchilar (anonim) — "yaqin mashinalar". */
+  nearbyDrivers(lat: number, lng: number): Promise<NearbyDriver[]> {
+    return this.driverLocations.nearby(lat, lng);
   }
 
   // ---------- Suhbat (mijoz↔haydovchi) ----------
