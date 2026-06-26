@@ -8,9 +8,11 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../core/location_service.dart';
+import '../../core/map_road.dart';
 import '../../core/places.dart';
 import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../geo/geo_api.dart';
 import '../map/map_picker_screen.dart';
 import 'taxi_api.dart';
 import 'taxi_chat_screen.dart';
@@ -218,6 +220,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
 
   Widget _buildMap() {
     final scheme = Theme.of(context).colorScheme;
+    final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
     final markers = <Marker>[];
     if (_myLoc != null) {
       markers.add(Marker(
@@ -262,14 +265,23 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
           options: MapOptions(
             initialCenter: _center,
             initialZoom: 14,
-            minZoom: 11,
+            minZoom: 12,
             maxZoom: 18,
+            cameraConstraint:
+                CameraConstraint.contain(bounds: beshariqBounds),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.beshariq.customer_app',
             ),
+            // Beshariq-maxsus yo'llar (admin boshqaradi) — rangli qatlam
+            if (roads.isNotEmpty)
+              PolylineLayer(polylines: [
+                for (final r in roads)
+                  Polyline(
+                      points: r.points, strokeWidth: r.width, color: r.color),
+              ]),
             if (line != null)
               PolylineLayer(polylines: [
                 Polyline(

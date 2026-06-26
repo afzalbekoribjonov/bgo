@@ -27,8 +27,23 @@ model ServiceArea {
   updatedAt DateTime @updatedAt
 
   places Place[]
+  roads  MapRoad[]
 
   @@map("service_areas")
+}
+
+/** Admin chizadigan yo'l/ko'cha (Beshariq-maxsus xarita qatlami). plan/12-maps-navigation.md */
+model MapRoad {
+  id        String      @id @default(uuid())
+  areaId    String
+  area      ServiceArea @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  name      String // "Markaziy ko'cha", "Navoiy ko'chasi"
+  kind      String      @default("street") // street | main | center
+  points    Json // [[lat,lng], ...] — yo'l chizig'i nuqtalari
+  createdAt DateTime    @default(now())
+
+  @@index([areaId])
+  @@map("map_roads")
 }
 
 /** Hududdagi nomli joy (xaritada marker). */

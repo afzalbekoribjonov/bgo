@@ -1,6 +1,8 @@
 import {
+  ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -83,4 +85,19 @@ export class CreatePlaceDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+}
+
+export class CreateRoadDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  name!: string;
+
+  @IsIn(['street', 'main', 'center'])
+  kind!: 'street' | 'main' | 'center';
+
+  /** Yo'l chizig'i nuqtalari: [[lat,lng], ...] (kamida 2 ta). */
+  @IsArray()
+  @ArrayMinSize(2)
+  points!: number[][];
 }
