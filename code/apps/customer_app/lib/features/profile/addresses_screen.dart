@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/places.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
+import '../map/map_picker_screen.dart';
 import 'profile_api.dart';
 import 'profile_models.dart';
 
@@ -182,24 +184,34 @@ class AddAddressSheet extends ConsumerStatefulWidget {
 
 class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
   final _labelCtrl = TextEditingController();
-  final _textCtrl = TextEditingController();
+  GeoPlace? _picked;
   bool _saving = false;
 
   @override
   void dispose() {
     _labelCtrl.dispose();
-    _textCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickOnMap() async {
+    final result = await Navigator.of(context).push<GeoPlace>(
+      MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+    );
+    if (result != null) setState(() => _picked = result);
   }
 
   Future<void> _save() async {
     final t = AppLocalizations.of(context)!;
     final label = _labelCtrl.text.trim();
-    final text = _textCtrl.text.trim();
-    if (label.isEmpty || text.length < 3) return;
+    if (label.isEmpty || _picked == null) return;
     setState(() => _saving = true);
     try {
-      await ref.read(profileApiProvider).addAddress(label: label, text: text);
+      await ref.read(profileApiProvider).addAddress(
+            label: label,
+            text: _picked!.label,
+            lat: _picked!.lat,
+            lng: _picked!.lng,
+          );
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -213,6 +225,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -227,7 +240,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outlineVariant,
+              color: scheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -240,24 +253,64 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
           const SizedBox(height: 16),
           TextField(
             controller: _labelCtrl,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               labelText: t.addressLabelField,
+              hintText: 'Uy, Ish, ...',
               prefixIcon: const Icon(Icons.label_outline),
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _textCtrl,
-            minLines: 1,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: t.addressTextField,
-              prefixIcon: const Icon(Icons.location_on_outlined),
+          // Manzil — XARITADAN tanlanadi (nom bilan emas).
+          InkWell(
+            onTap: _pickOnMap,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _picked != null
+                      ? Colors.green
+                      : scheme.outlineVariant,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _picked != null ? Icons.check_circle : Icons.map_outlined,
+                    color: _picked != null ? Colors.green : scheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _picked?.label ?? t.addressPickOnMap,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: _picked != null
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                        color: _picked != null
+                            ? scheme.onSurface
+                            : scheme.outline,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: scheme.outline),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
           FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed: (_saving ||
+                    _labelCtrl.text.trim().isEmpty ||
+                    _picked == null)
+                ? null
+                : _save,
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             child: _saving
                 ? const SizedBox(
                     height: 18,

@@ -138,6 +138,7 @@
   "addressesTitle": "Manzillarim",
   "addressAdd": "Manzil qo'shish",
   "addressLabelField": "Nomi (Uy, Ish...)",
+  "addressPickOnMap": "Manzilni xaritadan tanlang",
   "addressTextField": "To'liq manzil",
   "addressDefault": "Standart",
   "addressSetDefault": "Standart qilish",

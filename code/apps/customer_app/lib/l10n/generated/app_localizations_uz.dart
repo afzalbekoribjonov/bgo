@@ -369,6 +369,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get addressLabelField => 'Nomi (Uy, Ish...)';
 
   @override
+  String get addressPickOnMap => 'Manzilni xaritadan tanlang';
+
+  @override
   String get addressTextField => 'To\'liq manzil';
 
   @override
@@ -982,6 +985,9 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get addressLabelField => 'Номи (Уй, Иш...)';
+
+  @override
+  String get addressPickOnMap => 'Манзилни харитадан танланг';
 
   @override
   String get addressTextField => 'Тўлиқ манзил';

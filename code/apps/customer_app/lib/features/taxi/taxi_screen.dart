@@ -13,6 +13,8 @@ import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../geo/geo_api.dart';
 import '../map/map_picker_screen.dart';
+import '../profile/profile_api.dart';
+import '../profile/profile_models.dart';
 import 'taxi_api.dart';
 import 'taxi_chat_screen.dart';
 import 'taxi_models.dart';
@@ -442,6 +444,7 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
               ),
             ],
           ),
+          _savedAddressChips(t),
           const SizedBox(height: 10),
           _fareLine(t),
           if (_cars.isNotEmpty) ...[
@@ -484,6 +487,60 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
         ],
       ),
     );
+  }
+
+  /// Saqlangan manzillar — taksi uchun qulay chiplar (xaritaga xalaqit bermaydi).
+  /// Tanlanganda joriy joylashuvdan o'sha manzilgacha narx avtomatik hisoblanadi.
+  Widget _savedAddressChips(AppLocalizations t) {
+    if (_noDest) return const SizedBox.shrink();
+    final saved = ref.watch(addressesProvider).valueOrNull ?? const <Address>[];
+    final withCoords =
+        saved.where((a) => a.lat != null && a.lng != null).toList();
+    if (withCoords.isEmpty) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: SizedBox(
+        height: 34,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: withCoords.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
+          itemBuilder: (_, i) {
+            final a = withCoords[i];
+            final selected = _to != null &&
+                (_to!.lat - a.lat!).abs() < 1e-6 &&
+                (_to!.lng - a.lng!).abs() < 1e-6;
+            return ActionChip(
+              avatar: Icon(
+                a.isDefault ? Icons.home : Icons.bookmark_border,
+                size: 16,
+                color: selected ? scheme.onPrimary : scheme.primary,
+              ),
+              label: Text(a.label),
+              labelStyle: TextStyle(
+                color: selected ? scheme.onPrimary : scheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+              backgroundColor:
+                  selected ? scheme.primary : scheme.surfaceContainerHighest,
+              side: BorderSide(
+                  color: selected ? scheme.primary : scheme.outlineVariant),
+              onPressed: () => _selectSavedAddress(a),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _selectSavedAddress(Address a) {
+    if (a.lat == null || a.lng == null) return;
+    setState(() {
+      _noDest = false;
+      _to = GeoPlace(a.label, a.lat!, a.lng!);
+    });
+    _recompute(); // joriy GPS (_from) -> saqlangan manzilgacha narx avtomatik
   }
 
   Widget _fareLine(AppLocalizations t) {

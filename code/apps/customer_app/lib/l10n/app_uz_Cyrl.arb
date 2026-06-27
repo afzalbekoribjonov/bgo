@@ -126,6 +126,7 @@
   "addressesTitle": "Манзилларим",
   "addressAdd": "Манзил қўшиш",
   "addressLabelField": "Номи (Уй, Иш...)",
+  "addressPickOnMap": "Манзилни харитадан танланг",
   "addressTextField": "Тўлиқ манзил",
   "addressDefault": "Стандарт",
   "addressSetDefault": "Стандарт қилиш",

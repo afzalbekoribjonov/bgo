@@ -22,11 +22,15 @@ class ProfileApi {
   Future<Address> addAddress({
     required String label,
     required String text,
+    double? lat,
+    double? lng,
     bool isDefault = false,
   }) async {
     final res = await _dio.post('/profile/addresses', data: {
       'label': label,
       'text': text,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
       if (isDefault) 'isDefault': true,
     });
     return Address.fromJson(res.data['data'] as Map<String, dynamic>);

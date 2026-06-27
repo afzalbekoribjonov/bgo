@@ -369,6 +369,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addressLabelField => 'Название (Дом, Работа...)';
 
   @override
+  String get addressPickOnMap => 'Выберите адрес на карте';
+
+  @override
   String get addressTextField => 'Полный адрес';
 
   @override

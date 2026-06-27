@@ -804,6 +804,12 @@ abstract class AppLocalizations {
   /// **'Nomi (Uy, Ish...)'**
   String get addressLabelField;
 
+  /// No description provided for @addressPickOnMap.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilni xaritadan tanlang'**
+  String get addressPickOnMap;
+
   /// No description provided for @addressTextField.
   ///
   /// In uz, this message translates to:

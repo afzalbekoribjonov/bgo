@@ -126,6 +126,7 @@
   "addressesTitle": "Мои адреса",
   "addressAdd": "Добавить адрес",
   "addressLabelField": "Название (Дом, Работа...)",
+  "addressPickOnMap": "Выберите адрес на карте",
   "addressTextField": "Полный адрес",
   "addressDefault": "По умолчанию",
   "addressSetDefault": "Сделать основным",
