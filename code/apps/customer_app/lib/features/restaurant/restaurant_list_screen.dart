@@ -61,8 +61,12 @@ class _RestaurantListScreenState extends ConsumerState<RestaurantListScreen> {
         ),
         data: (all) {
           final list = _apply(all);
+          final dishesAsync = ref.watch(dishesProvider);
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(restaurantsProvider),
+            onRefresh: () async {
+              ref.invalidate(restaurantsProvider);
+              ref.invalidate(dishesProvider);
+            },
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
               children: [
@@ -71,19 +75,64 @@ class _RestaurantListScreenState extends ConsumerState<RestaurantListScreen> {
                 _promoBanner(t),
                 const SizedBox(height: 16),
                 _filterChips(t),
-                const SizedBox(height: 12),
-                Text(t.foodSectionRestaurants,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                // Oshxonalar — bitta gorizontal qator
+                _sectionTitle(t.foodSectionRestaurants),
                 const SizedBox(height: 8),
                 if (all.isEmpty)
                   _emptyHint(t.emptyRestaurants)
                 else if (list.isEmpty)
                   _emptyHint(t.foodNothingFound)
                 else
-                  ...list.map((r) => RestaurantCard(restaurant: r)),
+                  SizedBox(
+                    height: 172,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (_, i) =>
+                          RestaurantMiniCard(restaurant: list[i]),
+                    ),
+                  ),
+                const SizedBox(height: 18),
+                // Taomlar — grid (bosh ekrandagi kabi)
+                _sectionTitle(t.homeDishes),
+                const SizedBox(height: 8),
+                dishesAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => AsyncErrorRetry(
+                    error: e,
+                    onRetry: () => ref.invalidate(dishesProvider),
+                  ),
+                  data: (allDishes) {
+                    final q = _query.trim().toLowerCase();
+                    final dishes = q.isEmpty
+                        ? allDishes
+                        : allDishes
+                            .where((d) =>
+                                d.name.toLowerCase().contains(q) ||
+                                d.restaurantName.toLowerCase().contains(q))
+                            .toList();
+                    if (dishes.isEmpty) return _emptyHint(t.foodNothingFound);
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.78,
+                      ),
+                      itemCount: dishes.length,
+                      itemBuilder: (_, i) => DishCard(dish: dishes[i]),
+                    );
+                  },
+                ),
               ],
             ),
           );
@@ -144,7 +193,16 @@ class _RestaurantListScreenState extends ConsumerState<RestaurantListScreen> {
     );
   }
 
+  Widget _sectionTitle(String text) => Text(
+        text,
+        style: Theme.of(context)
+            .textTheme
+            .titleMedium
+            ?.copyWith(fontWeight: FontWeight.bold),
+      );
+
   Widget _filterChips(AppLocalizations t) {
+    final scheme = Theme.of(context).colorScheme;
     final items = [
       (_FoodFilter.all, t.foodFilterAll),
       (_FoodFilter.open, t.foodFilterOpen),
@@ -158,9 +216,19 @@ class _RestaurantListScreenState extends ConsumerState<RestaurantListScreen> {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final (value, label) = items[i];
+          final selected = _filter == value;
           return ChoiceChip(
             label: Text(label),
-            selected: _filter == value,
+            selected: selected,
+            showCheckmark: false,
+            labelStyle: TextStyle(
+              color: selected ? Colors.white : scheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+            backgroundColor: scheme.surfaceContainerHighest,
+            selectedColor: scheme.primary,
+            side: BorderSide(
+                color: selected ? scheme.primary : scheme.outlineVariant),
             onSelected: (_) => setState(() => _filter = value),
           );
         },

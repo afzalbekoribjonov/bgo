@@ -80,7 +80,7 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
         : (_to != null ? LatLng(_to!.lat, _to!.lng) : _myLoc);
     final result = await Navigator.of(context).push<GeoPlace>(
       MaterialPageRoute(
-        builder: (_) => MapPickerScreen(initial: initial ?? _center),
+        builder: (_) => MapPickerScreen(initial: initial),
       ),
     );
     if (result == null) return;

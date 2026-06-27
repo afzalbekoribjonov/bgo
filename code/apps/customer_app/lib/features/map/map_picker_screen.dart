@@ -38,6 +38,10 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
   void initState() {
     super.initState();
     _center = widget.initial ?? LocationService.beshariqCenter;
+    // Aniq nuqta berilmagan bo'lsa — avtomatik joriy joylashuvga boramiz.
+    if (widget.initial == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _goToMyLocation());
+    }
   }
 
   @override
@@ -264,10 +268,10 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
             ),
           ),
 
-          // GPS tugmasi
+          // GPS tugmasi — pastki tasdiqlash kartasiga tegmasligi uchun yuqorida
           Positioned(
             right: 16,
-            bottom: 110,
+            bottom: 170,
             child: FloatingActionButton.small(
               heroTag: 'myloc',
               onPressed: _locating ? null : _goToMyLocation,
