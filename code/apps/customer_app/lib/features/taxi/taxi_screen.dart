@@ -11,6 +11,7 @@ import '../../core/location_service.dart';
 import '../../core/places.dart';
 import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../geo/geo_api.dart';
 import '../map/map_picker_screen.dart';
 import 'taxi_api.dart';
 import 'taxi_chat_screen.dart';
@@ -51,6 +52,8 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   @override
   void initState() {
     super.initState();
+    // Admin belgilagan joylarni qayta yuklash (yangi qo'shilganlar ko'rinsin).
+    Future.microtask(() => ref.invalidate(placesProvider));
     _initLocation();
     // Har soniya: mashinalar harakati + 5 soniyada safar holatini yangilash.
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());

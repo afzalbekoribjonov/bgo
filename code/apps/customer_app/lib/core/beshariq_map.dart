@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../features/geo/geo_api.dart';
 import 'map_road.dart';
+import 'places.dart';
 
-/// Beshariq xaritasi — admin paneldagidek toza OpenStreetMap (yo'llar + joy
-/// nomlari plitkaning o'zida, to'g'ri joyda). Ustiga faqat nuqta belgilari va
-/// marshrut qo'shiladi. Navigatsiya uchun tanish, qulay ko'rinish.
-class BeshariqMap extends StatelessWidget {
+/// Beshariq xaritasi — admin paneldagidek toza OpenStreetMap. Admin belgilagan
+/// joylar (oshxona/parkovka/shifoxona...) rangli belgilar bilan ko'rsatiladi.
+/// Ustiga nuqta belgilari va marshrut qo'shiladi.
+class BeshariqMap extends ConsumerWidget {
   final MapController controller;
   final LatLng initialCenter;
   final double initialZoom;
@@ -28,7 +31,8 @@ class BeshariqMap extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final places = ref.watch(placesProvider).valueOrNull ?? const <GeoPlace>[];
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
@@ -45,8 +49,58 @@ class BeshariqMap extends StatelessWidget {
           userAgentPackageName: 'com.beshariq.customer_app',
           maxZoom: 19,
         ),
+        // Admin belgilagan joylar (oshxona/parkovka/shifoxona...) — rangli belgi
+        if (places.isNotEmpty)
+          MarkerLayer(markers: [for (final p in places) _placeMarker(p)]),
         ...overlays,
       ],
+    );
+  }
+
+  /// Admin joyi — kategoriya rangidagi belgi + nom (kichik).
+  Marker _placeMarker(GeoPlace p) {
+    final st = placeStyle(p.category);
+    return Marker(
+      point: LatLng(p.lat, p.lng),
+      width: 130,
+      height: 46,
+      alignment: Alignment.center,
+      child: IgnorePointer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: st.color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 3)],
+              ),
+              child: Icon(st.icon, size: 13, color: Colors.white),
+            ),
+            const SizedBox(height: 1),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                p.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF263238),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

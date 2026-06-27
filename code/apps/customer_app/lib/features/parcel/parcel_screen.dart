@@ -10,6 +10,7 @@ import '../../core/places.dart';
 import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
+import '../geo/geo_api.dart';
 import '../map/map_picker_screen.dart';
 import 'parcel_api.dart';
 import 'parcel_models.dart';
@@ -39,6 +40,7 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() => ref.invalidate(placesProvider));
     _initLocation();
   }
 

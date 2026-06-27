@@ -23,6 +23,7 @@ class GeoApi {
           m['label'] as String,
           (m['lat'] as num).toDouble(),
           (m['lng'] as num).toDouble(),
+          m['category'] as String?,
         ));
       }
     }
