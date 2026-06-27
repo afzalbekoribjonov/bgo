@@ -321,12 +321,25 @@ export class OrdersService {
   // ---------- Kuryer (courier) ----------
   // TODO(driver auth): driverId JWT (driver roli) sub'idan olinadi.
 
-  listAvailableForDelivery() {
-    return this.repo.findAvailableForDelivery();
+  async listAvailableForDelivery() {
+    return this.withRestaurant(await this.repo.findAvailableForDelivery());
   }
 
-  listDriverOrders(driverId: string) {
-    return this.repo.findByDriver(driverId);
+  async listDriverOrders(driverId: string) {
+    return this.withRestaurant(await this.repo.findByDriver(driverId));
+  }
+
+  /**
+   * Buyurtmalarni oshxona joylashuvi bilan boyitadi (kuryer navigatsiyasi —
+   * olib ketish nuqtasi). Bitta katalog so'rovi; xato bo'lsa restaurant=null.
+   */
+  private async withRestaurant(orders: Order[]) {
+    if (orders.length === 0) return [];
+    const directory = await this.restaurant.getRestaurantDirectory();
+    return orders.map((o) => ({
+      ...o,
+      restaurant: directory.get(o.restaurantId) ?? null,
+    }));
   }
 
   /** Haydovchi daromadi — yetkazilgan buyurtmalar bo'yicha. */

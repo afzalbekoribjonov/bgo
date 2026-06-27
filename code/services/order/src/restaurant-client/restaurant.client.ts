@@ -12,6 +12,15 @@ export interface CatalogItem {
   isAvailable: boolean;
 }
 
+/** Oshxona joylashuvi (kuryer navigatsiyasi uchun — olib ketish nuqtasi). */
+export interface RestaurantSummary {
+  id: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
 /**
  * Restaurant servisidan menyuni oladi — narx/nom SERVER tomonda aniqlanadi
  * (mijoz yuborgan narxga ishonilmaydi). plan/10-auth-security.md
@@ -60,6 +69,43 @@ export class RestaurantClient {
           isAvailable: item.isAvailable,
         });
       }
+    }
+    return map;
+  }
+
+  /**
+   * Barcha faol oshxonalar joylashuvi (id -> {name, address, lat, lng}).
+   * Kuryer buyurtmalarini "olib ketish nuqtasi" bilan boyitish uchun — bitta
+   * so'rov (N+1 emas). Xato bo'lsa bo'sh map (navigatsiya degradatsiya qiladi).
+   */
+  async getRestaurantDirectory(): Promise<Map<string, RestaurantSummary>> {
+    const url = `${this.baseUrl}/api/v1/restaurants`;
+    const map = new Map<string, RestaurantSummary>();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return map;
+      const body = (await response.json()) as {
+        data: Array<{
+          id: string;
+          name: string;
+          address: string;
+          lat: number;
+          lng: number;
+        }>;
+      };
+      for (const r of body.data ?? []) {
+        map.set(r.id, {
+          id: r.id,
+          name: r.name,
+          address: r.address,
+          lat: r.lat,
+          lng: r.lng,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Oshxona katalogini olishda xato (navigatsiya bo'sh): ${(err as Error).message}`,
+      );
     }
     return map;
   }

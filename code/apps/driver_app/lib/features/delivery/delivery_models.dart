@@ -9,6 +9,15 @@ class DeliveryOrder {
   final String addressText;
   final int itemsCount;
 
+  /// Mijoz manzili koordinatasi (GPS checkout bo'lsa) — yetkazish nuqtasi.
+  final double? addressLat;
+  final double? addressLng;
+
+  /// Oshxona (olib ketish nuqtasi) — backend boyitadi (restaurant obyekti).
+  final String? restaurantName;
+  final double? restaurantLat;
+  final double? restaurantLng;
+
   const DeliveryOrder({
     required this.id,
     required this.publicNo,
@@ -17,18 +26,30 @@ class DeliveryOrder {
     required this.status,
     required this.addressText,
     required this.itemsCount,
+    this.addressLat,
+    this.addressLng,
+    this.restaurantName,
+    this.restaurantLat,
+    this.restaurantLng,
   });
 
   factory DeliveryOrder.fromJson(Map<String, dynamic> json) {
     final items = (json['items'] as List?) ?? const [];
+    final address = json['address'] as Map<String, dynamic>?;
+    final restaurant = json['restaurant'] as Map<String, dynamic>?;
     return DeliveryOrder(
       id: json['id'] as String,
       publicNo: (json['publicNo'] as num).toInt(),
       total: (json['total'] as num?)?.toInt() ?? 0,
       courierEarning: (json['courierEarning'] as num?)?.toInt() ?? 0,
       status: (json['status'] as String?) ?? '',
-      addressText: (json['address']?['text'] as String?) ?? '',
+      addressText: (address?['text'] as String?) ?? '',
       itemsCount: items.length,
+      addressLat: (address?['lat'] as num?)?.toDouble(),
+      addressLng: (address?['lng'] as num?)?.toDouble(),
+      restaurantName: restaurant?['name'] as String?,
+      restaurantLat: (restaurant?['lat'] as num?)?.toDouble(),
+      restaurantLng: (restaurant?['lng'] as num?)?.toDouble(),
     );
   }
 }

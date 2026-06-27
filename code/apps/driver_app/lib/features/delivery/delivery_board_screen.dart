@@ -422,6 +422,26 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
     ));
   }
 
+  /// Ovqat yetkazish navigatsiyasi — ASSIGNED: oshxonaga (olib ketish),
+  /// PICKED_UP: mijozga (manzil). Mijoz koordinatasi bo'lmasa faqat oshxona.
+  void _openFoodNav(AppLocalizations t, DeliveryOrder o) {
+    final pickup = (o.restaurantLat != null && o.restaurantLng != null)
+        ? LatLng(o.restaurantLat!, o.restaurantLng!)
+        : null;
+    final dest = (o.addressLat != null && o.addressLng != null)
+        ? LatLng(o.addressLat!, o.addressLng!)
+        : null;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => DriverNavScreen(
+        title: 'Navigatsiya',
+        routeText: '${o.restaurantName ?? 'Oshxona'} → ${o.addressText}',
+        pickup: pickup,
+        destination: dest,
+        toDestination: o.status == 'PICKED_UP' && dest != null,
+      ),
+    ));
+  }
+
   void _openParcelNav(ParcelDelivery p) {
     final pickup = (p.pickupLat != null && p.pickupLng != null)
         ? LatLng(p.pickupLat!, p.pickupLng!)
@@ -892,10 +912,22 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
               ],
             ),
             const SizedBox(height: 4),
+            if (o.restaurantName != null)
+              Text('Olib ketish: ${o.restaurantName}'),
             Text('${t.deliverTo}: ${o.addressText}'),
             Text(t.priceSom(groupThousands(o.total))),
             _earningChip(t, o),
             const SizedBox(height: 8),
+            if (o.restaurantLat != null) ...[
+              OutlinedButton.icon(
+                onPressed: () => _openFoodNav(t, o),
+                icon: const Icon(Icons.navigation, size: 18),
+                label: const Text('Navigatsiya (xarita)'),
+                style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40)),
+              ),
+              const SizedBox(height: 8),
+            ],
             FilledButton(
               onPressed: busy
                   ? null
