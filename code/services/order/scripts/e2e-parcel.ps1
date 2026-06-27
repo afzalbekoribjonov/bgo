@@ -42,18 +42,23 @@ $cust = Login '+998901111111'; $ch = Hdr $cust.accessToken
 $pickup = @{ text = 'Beshariq markaz'; lat = 40.4236; lng = 70.6094 }
 $dest   = @{ text = 'Chekka mahalla';  lat = 40.5000; lng = 70.7000 }
 
+# Narx 500 so'mga yaxlitlanadi (roundFare) — server bilan bir xil.
+function RoundFare($v) { return [math]::Round([double]$v / 500) * 500 }
+
 # 1) Narx (SMALL) — masofadan
 $estS = (Invoke-RestMethod "$ord/parcel/estimate" -Method Post -Headers $ch -Body (J @{ pickup = $pickup; destination = $dest; size = 'SMALL' }) -ContentType 'application/json').data
 Write-Host "Estimate SMALL: $(J $estS)"
 Check ($estS.distanceKm -gt 10 -and $estS.distanceKm -lt 13) "Masofa ~11-12 km"
-$small = $estS.fare
-Check ($estS.commission -eq [math]::Round($small * 0.15)) "SMALL komissiya 15%"
+$base = [math]::Max(6000, 4000 + [math]::Round(1500 * $estS.distanceKm))
+Check ($estS.fare -eq (RoundFare ([math]::Round($base * 1.0)))) "SMALL narx 500ga yaxlit (=$($estS.fare))"
+Check ($estS.commission -eq [math]::Round($estS.fare * 0.15)) "SMALL komissiya 15%"
+Check (($estS.fare % 500) -eq 0) "SMALL narx 500ga karrali"
 
-# 2) O'lcham koeffitsienti: MEDIUM ×1.3, LARGE ×1.6
+# 2) O'lcham koeffitsienti: MEDIUM ×1.3, LARGE ×1.6 (keyin 500ga yaxlit)
 $estM = (Invoke-RestMethod "$ord/parcel/estimate" -Method Post -Headers $ch -Body (J @{ pickup = $pickup; destination = $dest; size = 'MEDIUM' }) -ContentType 'application/json').data
 $estL = (Invoke-RestMethod "$ord/parcel/estimate" -Method Post -Headers $ch -Body (J @{ pickup = $pickup; destination = $dest; size = 'LARGE' }) -ContentType 'application/json').data
-Check ($estM.fare -eq [math]::Round($small * 1.3)) "MEDIUM = SMALL ×1.3 (M=$($estM.fare))"
-Check ($estL.fare -eq [math]::Round($small * 1.6)) "LARGE = SMALL ×1.6 (L=$($estL.fare))"
+Check ($estM.fare -eq (RoundFare ([math]::Round($base * 1.3)))) "MEDIUM = base ×1.3 yaxlit (M=$($estM.fare))"
+Check ($estL.fare -eq (RoundFare ([math]::Round($base * 1.6)))) "LARGE = base ×1.6 yaxlit (L=$($estL.fare))"
 
 # 3) Minimal haq — yaqin nuqta
 $near = @{ text = 'Yaqin'; lat = 40.4236; lng = 70.6095 }

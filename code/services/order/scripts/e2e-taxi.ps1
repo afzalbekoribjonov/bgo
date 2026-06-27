@@ -46,10 +46,13 @@ $dest   = @{ text = 'Chekka mahalla';  lat = 40.5000; lng = 70.7000 }
 # 1) Narx baholash (haversine)
 $est = (Invoke-RestMethod "$ord/taxi/estimate" -Method Post -Headers $ch -Body (J @{ pickup = $pickup; destination = $dest }) -ContentType 'application/json').data
 Write-Host "Estimate: $(J $est)"
-$expectedFare = 5000 + [math]::Round(2000 * $est.distanceKm)
-if ($expectedFare -lt 8000) { $expectedFare = 8000 }
+# Narx 500 so'mga yaxlitlanadi (roundFare) — server bilan bir xil.
+$raw = 5000 + [math]::Round(2000 * $est.distanceKm)
+$expectedFare = [math]::Max(8000, $raw)
+$expectedFare = [math]::Round([double]$expectedFare / 500) * 500
 Check ($est.distanceKm -gt 10 -and $est.distanceKm -lt 13) "Masofa ~11-12 km (joriy: $($est.distanceKm))"
-Check ($est.fare -eq $expectedFare) "Narx formulasi to'g'ri (fare=$($est.fare), kutilgan=$expectedFare)"
+Check ($est.fare -eq $expectedFare) "Narx (500ga yaxlit) to'g'ri (fare=$($est.fare), kutilgan=$expectedFare)"
+Check (($est.fare % 500) -eq 0) "Narx 500ga karrali"
 Check ($est.commission -eq [math]::Round($est.fare * 0.15)) "Komissiya 15%"
 Check ($est.driverEarning -eq ($est.fare - $est.commission)) "Haydovchi ulushi = fare - komissiya"
 
