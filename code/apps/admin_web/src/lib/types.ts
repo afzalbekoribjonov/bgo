@@ -129,9 +129,31 @@ export interface UpdateRestaurantInput {
   name?: string;
   address?: string;
   phone?: string;
+  lat?: number;
+  lng?: number;
   isOpen?: boolean;
   commissionPercent?: number;
   status?: 'ACTIVE' | 'PENDING' | 'BLOCKED';
+}
+
+export interface MenuItemView {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  isAvailable: boolean;
+}
+
+export interface MenuCategoryView {
+  id: string;
+  name: string;
+  items: MenuItemView[];
+}
+
+export interface RestaurantMenuView {
+  restaurant: { id: string; name: string };
+  categories: MenuCategoryView[];
 }
 
 export type ReportPeriod = 'today' | 'week' | 'month';

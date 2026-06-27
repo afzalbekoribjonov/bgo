@@ -12,6 +12,7 @@ import type {
   Report,
   ReportPeriod,
   Restaurant,
+  RestaurantMenuView,
   ServiceArea,
   Stats,
   Tariff,
@@ -59,6 +60,8 @@ export const getOrders = (query: OrdersQuery = {}) => {
 export const getRestaurants = () => api<Restaurant[]>('/restaurants');
 export const getManageRestaurants = () =>
   api<AdminRestaurant[]>('/restaurants/manage/all');
+export const getRestaurantMenu = (id: string) =>
+  api<RestaurantMenuView>(`/restaurants/${id}/menu`);
 export const createRestaurant = (body: CreateRestaurantInput) =>
   api<AdminRestaurant>('/restaurants', {
     method: 'POST',

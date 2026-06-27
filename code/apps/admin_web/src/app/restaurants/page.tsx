@@ -1,13 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  assignRestaurantOwner,
-  createRestaurant,
-  formatDate,
-  getManageRestaurants,
-  updateRestaurant,
-} from '@/lib/api';
+import { createRestaurant, getManageRestaurants } from '@/lib/api';
 import type { AdminRestaurant } from '@/lib/types';
 
 const STATUS: Record<
@@ -23,13 +18,13 @@ export default function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState<AdminRestaurant[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | AdminRestaurant['status']>('all');
+  const [statusFilter, setStatusFilter] =
+    useState<'all' | AdminRestaurant['status']>('all');
   const [showCreate, setShowCreate] = useState(false);
 
-  // Yangi oshxona formasi
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
@@ -53,7 +48,7 @@ export default function RestaurantsPage() {
 
   async function add() {
     if (!name.trim() || !address.trim() || !phone.trim()) return;
-    setBusy('new');
+    setBusy(true);
     try {
       await createRestaurant({
         name: name.trim(),
@@ -70,39 +65,7 @@ export default function RestaurantsPage() {
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(null);
-    }
-  }
-
-  async function patch(
-    id: string,
-    body: Parameters<typeof updateRestaurant>[1],
-  ) {
-    setBusy(id);
-    try {
-      await updateRestaurant(id, body);
-      await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function assignOwner(r: AdminRestaurant) {
-    const ownerUserId = window.prompt(
-      `"${r.name}" egasining foydalanuvchi ID'si:`,
-      r.ownerUserId ?? '',
-    );
-    if (!ownerUserId) return;
-    setBusy(r.id);
-    try {
-      await assignRestaurantOwner(r.id, ownerUserId.trim());
-      await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
@@ -121,13 +84,7 @@ export default function RestaurantsPage() {
   const stats = useMemo(() => {
     const active = restaurants.filter((r) => r.status === 'ACTIVE').length;
     const open = restaurants.filter((r) => r.isOpen).length;
-    const avgComm = restaurants.length
-      ? Math.round(
-          restaurants.reduce((s, r) => s + r.commissionPercent, 0) /
-            restaurants.length,
-        )
-      : 0;
-    return { total: restaurants.length, active, open, avgComm };
+    return { total: restaurants.length, active, open };
   }, [restaurants]);
 
   return (
@@ -149,12 +106,15 @@ export default function RestaurantsPage() {
         </button>
       </div>
 
-      {error && <p className="error" style={{ marginTop: 12 }}>{error}</p>}
+      {error && (
+        <p className="error" style={{ marginTop: 12 }}>
+          {error}
+        </p>
+      )}
 
-      {/* Statistika */}
       <div className="stats" style={{ marginTop: 16 }}>
         <div className="stat">
-          <div className="muted">Jami oshxona</div>
+          <div className="muted">Jami</div>
           <strong style={{ fontSize: 24 }}>{stats.total}</strong>
         </div>
         <div className="stat">
@@ -169,13 +129,8 @@ export default function RestaurantsPage() {
             {stats.open}
           </strong>
         </div>
-        <div className="stat">
-          <div className="muted">O‘rtacha komissiya</div>
-          <strong style={{ fontSize: 24 }}>{stats.avgComm}%</strong>
-        </div>
       </div>
 
-      {/* Yangi oshxona formasi */}
       {showCreate && (
         <div className="card" style={{ marginBottom: 16 }}>
           <strong>Yangi oshxona qo‘shish</strong>
@@ -208,21 +163,20 @@ export default function RestaurantsPage() {
                 onChange={(e) => setCommission(e.target.value.replace(/[^0-9]/g, ''))}
               />
             </div>
-            <button className="btn" disabled={busy === 'new'} onClick={add}>
+            <button className="btn" disabled={busy} onClick={add}>
               Qo&apos;shish
             </button>
           </div>
         </div>
       )}
 
-      {/* Qidiruv + filtr */}
       <div
         style={{
           display: 'flex',
           gap: 8,
           flexWrap: 'wrap',
           alignItems: 'end',
-          marginBottom: 16,
+          marginBottom: 12,
         }}
       >
         <div style={{ flex: 1, minWidth: 220 }}>
@@ -237,9 +191,7 @@ export default function RestaurantsPage() {
           <label>Holat</label>
           <select
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as typeof statusFilter)
-            }
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
           >
             <option value="all">Barchasi</option>
             <option value="ACTIVE">Faol</option>
@@ -254,142 +206,58 @@ export default function RestaurantsPage() {
         <p className="empty">Oshxona topilmadi</p>
       )}
 
-      {/* Oshxona kartalari */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: 16,
-        }}
-      >
-        {filtered.map((r) => (
-          <RestaurantCard
-            key={r.id}
-            r={r}
-            busy={busy === r.id}
-            onPatch={(b) => patch(r.id, b)}
-            onAssign={() => assignOwner(r)}
-          />
-        ))}
+      {/* Oddiy ro'yxat — bosilsa detal sahifa ochiladi */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {filtered.map((r) => {
+          const st = STATUS[r.status];
+          return (
+            <Link
+              key={r.id}
+              href={`/restaurants/${r.id}`}
+              className="card"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                textDecoration: 'none',
+                color: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ fontSize: 16 }}>{r.name}</strong>
+                <div
+                  className="muted"
+                  style={{
+                    fontSize: 13,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  📍 {r.address} · 📞 {r.phone}
+                </div>
+              </div>
+              <span className="muted" style={{ fontSize: 13 }}>
+                ⭐ {r.rating.toFixed(1)}
+              </span>
+              <span className="muted" style={{ fontSize: 13 }}>
+                {r.commissionPercent}%
+              </span>
+              <span style={{ fontSize: 16 }} title={r.isOpen ? 'Ochiq' : 'Yopiq'}>
+                {r.isOpen ? '🟢' : '🔴'}
+              </span>
+              <span
+                className="badge"
+                style={{ background: st.color, whiteSpace: 'nowrap' }}
+              >
+                {st.label}
+              </span>
+              <span style={{ color: 'var(--muted)' }}>›</span>
+            </Link>
+          );
+        })}
       </div>
-    </div>
-  );
-}
-
-function RestaurantCard({
-  r,
-  busy,
-  onPatch,
-  onAssign,
-}: {
-  r: AdminRestaurant;
-  busy: boolean;
-  onPatch: (body: Parameters<typeof updateRestaurant>[1]) => void;
-  onAssign: () => void;
-}) {
-  const st = STATUS[r.status];
-  return (
-    <div
-      className="card"
-      style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-    >
-      {/* Sarlavha */}
-      <div
-        style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <strong style={{ fontSize: 17 }}>{r.name}</strong>
-          <div className="muted" style={{ fontSize: 12 }}>
-            {formatDate(r.createdAt)} dan beri
-          </div>
-        </div>
-        <span
-          className="badge"
-          style={{ background: st.color, alignSelf: 'flex-start' }}
-        >
-          {st.label}
-        </span>
-      </div>
-
-      {/* Ma'lumotlar */}
-      <div style={{ display: 'grid', gap: 4, fontSize: 14 }}>
-        <Row icon="📍" text={r.address} />
-        <Row icon="📞" text={r.phone} />
-        <Row icon="⭐" text={`${r.rating.toFixed(1)} reyting`} />
-        <Row icon="💰" text={`Komissiya: ${r.commissionPercent}%`} />
-        <Row
-          icon="👤"
-          text={
-            r.ownerUserId
-              ? `Ega: ${r.ownerUserId.slice(0, 8)}…`
-              : 'Ega biriktirilmagan'
-          }
-          muted={!r.ownerUserId}
-        />
-      </div>
-
-      {/* Amallar */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          borderTop: '1px solid var(--border)',
-          paddingTop: 10,
-          marginTop: 'auto',
-        }}
-      >
-        <button
-          className={`btn ${r.isOpen ? 'green' : 'red'}`}
-          disabled={busy}
-          onClick={() => onPatch({ isOpen: !r.isOpen })}
-          title="Ochiq/Yopiq holatini almashtirish"
-        >
-          {r.isOpen ? '🟢 Ochiq' : '🔴 Yopiq'}
-        </button>
-        <select
-          value={r.status}
-          disabled={busy}
-          onChange={(e) =>
-            onPatch({ status: e.target.value as AdminRestaurant['status'] })
-          }
-        >
-          {(['ACTIVE', 'PENDING', 'BLOCKED'] as const).map((s) => (
-            <option key={s} value={s}>
-              {STATUS[s].label}
-            </option>
-          ))}
-        </select>
-        <button className="btn ghost" disabled={busy} onClick={onAssign}>
-          Egasini biriktirish
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Row({
-  icon,
-  text,
-  muted,
-}: {
-  icon: string;
-  text: string;
-  muted?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 6,
-        color: muted ? 'var(--muted)' : 'var(--text)',
-      }}
-    >
-      <span style={{ width: 18 }}>{icon}</span>
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {text}
-      </span>
     </div>
   );
 }
