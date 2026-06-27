@@ -393,6 +393,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get addressChoose => 'Manzilni tanlang';
 
   @override
+  String get checkoutDeliverHere => 'Hozirgi joylashuvimga yetkazish';
+
+  @override
+  String get checkoutGpsSelected => 'GPS joylashuv tanlandi — kuryer shu yerga keladi';
+
+  @override
   String get taxiTitle => 'Taksi';
 
   @override
@@ -1000,6 +1006,12 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get addressChoose => 'Манзилни танланг';
+
+  @override
+  String get checkoutDeliverHere => 'Ҳозирги жойлашувимга етказиш';
+
+  @override
+  String get checkoutGpsSelected => 'GPS жойлашув танланди — курьер шу ерга келади';
 
   @override
   String get taxiTitle => 'Такси';

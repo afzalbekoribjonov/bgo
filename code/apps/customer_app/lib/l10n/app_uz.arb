@@ -146,6 +146,8 @@
   "addressDefaultBadge": "Standart",
   "addressNew": "Yangi manzil",
   "addressChoose": "Manzilni tanlang",
+  "checkoutDeliverHere": "Hozirgi joylashuvimga yetkazish",
+  "checkoutGpsSelected": "GPS joylashuv tanlandi — kuryer shu yerga keladi",
 
   "taxiTitle": "Taksi",
   "taxiFrom": "Qayerdan",

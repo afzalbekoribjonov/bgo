@@ -134,6 +134,8 @@
   "addressDefaultBadge": "Стандарт",
   "addressNew": "Янги манзил",
   "addressChoose": "Манзилни танланг",
+  "checkoutDeliverHere": "Ҳозирги жойлашувимга етказиш",
+  "checkoutGpsSelected": "GPS жойлашув танланди — курьер шу ерга келади",
 
   "taxiTitle": "Такси",
   "taxiFrom": "Қаердан",

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/location_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../cart/cart_controller.dart';
 import '../order/order_api.dart';
@@ -22,7 +23,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _promoCtrl = TextEditingController();
   bool _loading = false;
   bool _prefilled = false;
+  bool _locating = false;
+  double? _lat;
+  double? _lng;
   String? _error;
+
+  /// "Hozirgi joylashuvimga yetkazish" — GPS olib, manzilni to'ldiradi.
+  Future<void> _useMyLocation() async {
+    final t = AppLocalizations.of(context)!;
+    setState(() => _locating = true);
+    final svc = ref.read(locationServiceProvider);
+    await svc.ensurePermission();
+    final pos = await svc.currentLatLng();
+    if (!mounted) return;
+    setState(() {
+      _locating = false;
+      if (pos != null) {
+        _lat = pos.latitude;
+        _lng = pos.longitude;
+        _addressCtrl.text = t.taxiCurrentLocation;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -48,6 +70,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             restaurantId: cart.restaurantId!,
             lines: cart.lines,
             addressText: address,
+            lat: _lat,
+            lng: _lng,
             promoCode: _promoCtrl.text.trim(),
           );
       ref.read(cartProvider.notifier).clear();
@@ -91,6 +115,35 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Joriy GPS joylashuviga yetkazish (eng oson yo'l)
+            FilledButton.tonalIcon(
+              onPressed: _locating ? null : _useMyLocation,
+              icon: _locating
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.my_location),
+              label: Text(t.checkoutDeliverHere),
+              style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50)),
+            ),
+            if (_lat != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.check_circle,
+                      color: Colors.green, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(t.checkoutGpsSelected,
+                        style: const TextStyle(
+                            color: Colors.green, fontSize: 12.5)),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
             ...addresses.maybeWhen<List<Widget>>(
               data: (list) => list.isEmpty
                   ? const <Widget>[]
@@ -122,6 +175,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               controller: _addressCtrl,
               minLines: 1,
               maxLines: 3,
+              // Qo'lda tahrirlansa GPS koordinatasini bekor qilamiz.
+              onChanged: (_) {
+                if (_lat != null) {
+                  setState(() {
+                    _lat = null;
+                    _lng = null;
+                  });
+                }
+              },
               decoration: InputDecoration(
                 labelText: t.addressLabel,
                 hintText: t.addressHint,

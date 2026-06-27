@@ -14,13 +14,19 @@ class OrderApi {
     required String restaurantId,
     required List<CartLine> lines,
     required String addressText,
+    double? lat,
+    double? lng,
     String? promoCode,
   }) async {
     final res = await _dio.post('/orders', data: {
       'type': 'FOOD',
       'restaurantId': restaurantId,
       'paymentType': 'CASH',
-      'address': {'text': addressText},
+      'address': {
+        'text': addressText,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+      },
       'items': [
         for (final l in lines) {'menuItemId': l.menuItemId, 'qty': l.qty},
       ],

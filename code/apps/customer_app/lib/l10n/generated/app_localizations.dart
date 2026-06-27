@@ -852,6 +852,18 @@ abstract class AppLocalizations {
   /// **'Manzilni tanlang'**
   String get addressChoose;
 
+  /// No description provided for @checkoutDeliverHere.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozirgi joylashuvimga yetkazish'**
+  String get checkoutDeliverHere;
+
+  /// No description provided for @checkoutGpsSelected.
+  ///
+  /// In uz, this message translates to:
+  /// **'GPS joylashuv tanlandi — kuryer shu yerga keladi'**
+  String get checkoutGpsSelected;
+
   /// No description provided for @taxiTitle.
   ///
   /// In uz, this message translates to:

@@ -393,6 +393,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addressChoose => 'Выберите адрес';
 
   @override
+  String get checkoutDeliverHere => 'Доставить на моё местоположение';
+
+  @override
+  String get checkoutGpsSelected => 'GPS-местоположение выбрано — курьер приедет сюда';
+
+  @override
   String get taxiTitle => 'Такси';
 
   @override

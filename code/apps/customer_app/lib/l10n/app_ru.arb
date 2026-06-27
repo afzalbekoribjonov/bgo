@@ -134,6 +134,8 @@
   "addressDefaultBadge": "По умолчанию",
   "addressNew": "Новый адрес",
   "addressChoose": "Выберите адрес",
+  "checkoutDeliverHere": "Доставить на моё местоположение",
+  "checkoutGpsSelected": "GPS-местоположение выбрано — курьер приедет сюда",
 
   "taxiTitle": "Такси",
   "taxiFrom": "Откуда",
