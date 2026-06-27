@@ -52,6 +52,10 @@ dependencies:
   # GPS joylashuv (jonli kuzatuv — mijozga haydovchi joylashuvi)
   geolocator: ^13.0.1
 
+  # Xarita + navigatsiya (haydovchi mijoz/manzilni topishi uchun)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
   # Yangi buyurtma ovozli signali
   audioplayers: ^6.1.0
 

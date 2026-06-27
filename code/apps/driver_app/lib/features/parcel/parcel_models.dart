@@ -12,6 +12,7 @@ class ParcelDelivery {
   final String destinationText;
   final String recipientName;
   final String recipientPhone;
+  final double? pickupLat, pickupLng, destLat, destLng;
 
   const ParcelDelivery({
     required this.id,
@@ -25,6 +26,10 @@ class ParcelDelivery {
     required this.destinationText,
     required this.recipientName,
     required this.recipientPhone,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
   });
 
   factory ParcelDelivery.fromJson(Map<String, dynamic> json) {
@@ -40,6 +45,10 @@ class ParcelDelivery {
       destinationText: (json['destination']?['text'] as String?) ?? '',
       recipientName: (json['recipientName'] as String?) ?? '',
       recipientPhone: (json['recipientPhone'] as String?) ?? '',
+      pickupLat: (json['pickup']?['lat'] as num?)?.toDouble(),
+      pickupLng: (json['pickup']?['lng'] as num?)?.toDouble(),
+      destLat: (json['destination']?['lat'] as num?)?.toDouble(),
+      destLng: (json['destination']?['lng'] as num?)?.toDouble(),
     );
   }
 }
