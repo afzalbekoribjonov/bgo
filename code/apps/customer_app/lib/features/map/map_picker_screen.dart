@@ -5,9 +5,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/beshariq_map.dart';
 import '../../core/geocoding_service.dart';
 import '../../core/location_service.dart';
-import '../../core/map_road.dart';
 import '../../core/places.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../geo/geo_api.dart';
@@ -124,7 +124,6 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
     final t = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final places = ref.watch(placesProvider).valueOrNull ?? beshariqPlaces;
-    final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
     // Mahalliy (admin) joylar — qidiruv matniga mos keladiganlari.
     final localResults = _query.trim().isEmpty
         ? const <GeoPlace>[]
@@ -140,31 +139,17 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
       appBar: AppBar(title: Text(widget.titleOverride ?? t.mapPickTitle)),
       body: Stack(
         children: [
-          FlutterMap(
-            mapController: _map,
-            options: MapOptions(
-              initialCenter: _center,
-              initialZoom: 15,
-              minZoom: 12,
-              maxZoom: 18,
-              cameraConstraint:
-                  CameraConstraint.contain(bounds: beshariqBounds),
-              onPositionChanged: (camera, hasGesture) {
-                _center = camera.center;
-                // Foydalanuvchi xaritani surса, tanlangan nomni bekor qilamiz.
-                if (hasGesture && _pickedLabel != null) {
-                  setState(() => _pickedLabel = null);
-                }
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.beshariq.customer_app',
-              ),
-              if (roads.isNotEmpty)
-                PolylineLayer(polylines: buildRoadPolylines(roads)),
-            ],
+          BeshariqMap(
+            controller: _map,
+            initialCenter: _center,
+            initialZoom: 15,
+            onPositionChanged: (camera, hasGesture) {
+              _center = camera.center;
+              // Foydalanuvchi xaritani surса, tanlangan nomni bekor qilamiz.
+              if (hasGesture && _pickedLabel != null) {
+                setState(() => _pickedLabel = null);
+              }
+            },
           ),
 
           // Markaz pin (uchi markazga to'g'ri kelishi uchun yuqoriga siljitilgan)

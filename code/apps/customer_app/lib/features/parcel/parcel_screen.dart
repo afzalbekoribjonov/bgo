@@ -4,13 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/beshariq_map.dart';
 import '../../core/location_service.dart';
-import '../../core/map_road.dart';
 import '../../core/places.dart';
 import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
-import '../geo/geo_api.dart';
 import '../map/map_picker_screen.dart';
 import 'parcel_api.dart';
 import 'parcel_models.dart';
@@ -287,62 +286,36 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
   }
 
   Widget _buildMap() {
-    final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
-    final scheme = Theme.of(context).colorScheme;
-    final markers = <Marker>[];
-    if (_myLoc != null) {
-      markers.add(Marker(
-        point: _myLoc!,
-        width: 22,
-        height: 22,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-          ),
-        ),
-      ));
-    }
-    if (_from != null) markers.add(_pin(LatLng(_from!.lat, _from!.lng), Colors.green));
-    if (_to != null) markers.add(_pin(LatLng(_to!.lat, _to!.lng), scheme.primary));
-
+    final overlays = <Widget>[];
     final line = _routeLine.isNotEmpty
         ? _routeLine
         : ((_from != null && _to != null)
             ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
             : null);
+    if (line != null) {
+      overlays.add(PolylineLayer(polylines: [
+        Polyline(
+          points: line,
+          strokeWidth: 6,
+          color: const Color(0xFF1E88E5),
+          borderColor: Colors.white,
+          borderStrokeWidth: 2,
+        ),
+      ]));
+    }
+    final markers = <Marker>[];
+    // Jo'natuvchi (yashil doira) va qabul qiluvchi (qizil pin) — aniq farqli.
+    if (_from != null) markers.add(pickupMarker(LatLng(_from!.lat, _from!.lng)));
+    if (_to != null) markers.add(destMarker(LatLng(_to!.lat, _to!.lng)));
+    overlays.add(MarkerLayer(markers: markers));
 
     return Stack(
       children: [
-        FlutterMap(
-          mapController: _map,
-          options: MapOptions(
-            initialCenter: _center,
-            initialZoom: 14,
-            minZoom: 12,
-            maxZoom: 18,
-            cameraConstraint: CameraConstraint.contain(bounds: beshariqBounds),
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.beshariq.customer_app',
-            ),
-            if (roads.isNotEmpty)
-              PolylineLayer(polylines: buildRoadPolylines(roads)),
-            if (line != null)
-              PolylineLayer(polylines: [
-                Polyline(
-                  points: line,
-                  strokeWidth: 6,
-                  color: const Color(0xFF1E88E5),
-                  borderColor: Colors.white,
-                  borderStrokeWidth: 2,
-                ),
-              ]),
-            MarkerLayer(markers: markers),
-          ],
+        BeshariqMap(
+          controller: _map,
+          initialCenter: _center,
+          initialZoom: 15,
+          overlays: overlays,
         ),
         Positioned(
           right: 12,
@@ -363,14 +336,6 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
     _map.move(pos, 16);
     setState(() => _myLoc = pos);
   }
-
-  Marker _pin(LatLng p, Color color) => Marker(
-        point: p,
-        width: 40,
-        height: 40,
-        alignment: Alignment.topCenter,
-        child: Icon(Icons.location_pin, color: color, size: 40),
-      );
 
   Widget _addressRow({
     required IconData icon,

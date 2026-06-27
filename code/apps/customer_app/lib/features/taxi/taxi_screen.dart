@@ -6,12 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/beshariq_map.dart';
 import '../../core/location_service.dart';
-import '../../core/map_road.dart';
 import '../../core/places.dart';
 import '../../core/routing_service.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../geo/geo_api.dart';
 import '../map/map_picker_screen.dart';
 import 'taxi_api.dart';
 import 'taxi_chat_screen.dart';
@@ -268,105 +267,79 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
   }
 
   Widget _buildMap() {
-    final scheme = Theme.of(context).colorScheme;
-    final roads = ref.watch(roadsProvider).valueOrNull ?? const [];
-    final markers = <Marker>[];
-    if (_myLoc != null) {
-      markers.add(Marker(
-        point: _myLoc!,
-        width: 22,
-        height: 22,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-          ),
-        ),
-      ));
-    }
-    if (_from != null) {
-      markers.add(_pin(LatLng(_from!.lat, _from!.lng), Colors.green));
-    }
-    if (_to != null && !_noDest) {
-      markers.add(_pin(LatLng(_to!.lat, _to!.lng), scheme.primary));
-    }
-    for (final c in _cars) {
-      markers.add(Marker(
-        point: c,
-        width: 30,
-        height: 30,
-        child: const Icon(Icons.local_taxi, color: Color(0xFFFFB300), size: 26),
-      ));
-    }
-    // Biriktirilgan haydovchi — yorqin marker (jonli kuzatuv).
-    if (_driverLoc != null) {
-      markers.add(Marker(
-        point: _driverLoc!,
-        width: 42,
-        height: 42,
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFFB8C00),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 5)],
-          ),
-          child: const Icon(Icons.local_taxi, color: Colors.white, size: 24),
-        ),
-      ));
-    }
+    final overlays = <Widget>[];
 
-    // Marshrut: yo'l geometriyasi bo'lsa (OSRM), aks holda to'g'ri chiziq zaxira.
+    // Marshrut: booking (ko'k) — yo'l geometriyasi yoki to'g'ri chiziq zaxira.
     final line = _routeLine.isNotEmpty
         ? _routeLine
         : ((_from != null && _to != null && !_noDest)
             ? [LatLng(_from!.lat, _from!.lng), LatLng(_to!.lat, _to!.lng)]
             : null);
+    if (line != null) {
+      overlays.add(PolylineLayer(polylines: [
+        Polyline(
+          points: line,
+          strokeWidth: 6,
+          color: const Color(0xFF1E88E5),
+          borderColor: Colors.white,
+          borderStrokeWidth: 2,
+        ),
+      ]));
+    }
+    // Haydovchining jonli marshruti — to'q sariq.
+    if (_driverRoute.length >= 2) {
+      overlays.add(PolylineLayer(polylines: [
+        Polyline(
+          points: _driverRoute,
+          strokeWidth: 6,
+          color: const Color(0xFFFB8C00),
+          borderColor: Colors.white,
+          borderStrokeWidth: 2,
+        ),
+      ]));
+    }
+
+    final markers = <Marker>[];
+    // Haydovchi qidirilayotganda boshlang'ich nuqtada radar pulsi.
+    if (_activeStatus == 'PENDING' && _from != null) {
+      markers.add(searchPulseMarker(LatLng(_from!.lat, _from!.lng)));
+    }
+    // Yaqin mashinalar.
+    for (final c in _cars) {
+      markers.add(Marker(
+        point: c,
+        width: 34,
+        height: 34,
+        child: _carBadge(const Color(0xFFFFB300)),
+      ));
+    }
+    // Joriy GPS ("siz turgan joy") — faqat pickupdan farq qilsa (ortiqcha emas).
+    if (_myLoc != null && _farFromPickup(_myLoc!)) {
+      markers.add(myLocationMarker(_myLoc!));
+    }
+    // Boshlang'ich (yashil doira) va yakuniy (qizil pin) — aniq farqli.
+    if (_from != null) markers.add(pickupMarker(LatLng(_from!.lat, _from!.lng)));
+    if (_to != null && !_noDest) {
+      markers.add(destMarker(LatLng(_to!.lat, _to!.lng)));
+    }
+    // Biriktirilgan haydovchi.
+    if (_driverLoc != null) {
+      markers.add(Marker(
+        point: _driverLoc!,
+        width: 44,
+        height: 44,
+        child: _carBadge(const Color(0xFFFB8C00), big: true),
+      ));
+    }
+    overlays.add(MarkerLayer(markers: markers));
 
     return Stack(
       children: [
-        FlutterMap(
-          mapController: _map,
-          options: MapOptions(
-            initialCenter: _center,
-            initialZoom: 14,
-            minZoom: 12,
-            maxZoom: 18,
-            cameraConstraint:
-                CameraConstraint.contain(bounds: beshariqBounds),
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.beshariq.customer_app',
-            ),
-            // Beshariq-maxsus yo'llar (admin boshqaradi) — yashil qatlam
-            if (roads.isNotEmpty)
-              PolylineLayer(polylines: buildRoadPolylines(roads)),
-            if (line != null)
-              PolylineLayer(polylines: [
-                Polyline(
-                  points: line,
-                  strokeWidth: 6,
-                  color: const Color(0xFF1E88E5),
-                  borderColor: Colors.white,
-                  borderStrokeWidth: 2,
-                ),
-              ]),
-            // Haydovchining jonli marshruti (sizgacha / manzilgacha) — to'q sariq
-            if (_driverRoute.length >= 2)
-              PolylineLayer(polylines: [
-                Polyline(
-                  points: _driverRoute,
-                  strokeWidth: 6,
-                  color: const Color(0xFFFB8C00),
-                  borderColor: Colors.white,
-                  borderStrokeWidth: 2,
-                ),
-              ]),
-            MarkerLayer(markers: markers),
-          ],
+        BeshariqMap(
+          controller: _map,
+          initialCenter: _center,
+          initialZoom: 15,
+          overlays: overlays,
         ),
         Positioned(
           right: 16,
@@ -381,20 +354,29 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
     );
   }
 
+  /// GPS nuqtasi tanlangan boshlang'ich nuqtadan sezilarli uzoqmi (~40m).
+  bool _farFromPickup(LatLng p) {
+    if (_from == null) return true;
+    return (p.latitude - _from!.lat).abs() > 0.0004 ||
+        (p.longitude - _from!.lng).abs() > 0.0004;
+  }
+
+  Widget _carBadge(Color color, {bool big = false}) => Container(
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: big ? 3 : 2.5),
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
+        ),
+        child: Icon(Icons.local_taxi, color: Colors.white, size: big ? 24 : 20),
+      );
+
   Future<void> _recenter() async {
     final pos = await ref.read(locationServiceProvider).currentLatLng();
     if (!mounted || pos == null) return;
     _map.move(pos, 16);
     setState(() => _myLoc = pos);
   }
-
-  Marker _pin(LatLng p, Color color) => Marker(
-        point: p,
-        width: 40,
-        height: 40,
-        alignment: Alignment.topCenter,
-        child: Icon(Icons.location_pin, color: color, size: 40),
-      );
 
   // ---------- Buyurtma paneli ----------
   Widget _bookingPanel(AppLocalizations t) {
@@ -425,8 +407,25 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
               ),
               const SizedBox(width: 8),
               FilterChip(
-                label: Text(t.taxiMeteredBadge),
+                label: Text(
+                  t.taxiMeteredBadge,
+                  style: TextStyle(
+                    color: _noDest
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 selected: _noDest,
+                showCheckmark: false,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                selectedColor: Theme.of(context).colorScheme.primary,
+                side: BorderSide(
+                  color: _noDest
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
+                ),
                 onSelected: (v) {
                   setState(() {
                     _noDest = v;
