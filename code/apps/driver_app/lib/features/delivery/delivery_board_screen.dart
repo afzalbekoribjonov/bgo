@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../core/alert_sound.dart';
 import 'package:beshariq_core/beshariq_core.dart';
@@ -9,6 +10,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../../widgets/language_button.dart';
 import '../auth/auth_controller.dart';
+import '../nav/driver_nav_screen.dart';
 import '../parcel/parcel_api.dart';
 import '../parcel/parcel_models.dart';
 import '../taxi/taxi_api.dart';
@@ -342,6 +344,16 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
               ],
             ),
             const SizedBox(height: 8),
+            if (tr.pickupLat != null) ...[
+              OutlinedButton.icon(
+                onPressed: () => _openTaxiNav(tr),
+                icon: const Icon(Icons.navigation, size: 18),
+                label: const Text('Navigatsiya (xarita)'),
+                style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40)),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 OutlinedButton.icon(
@@ -388,6 +400,45 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
         ),
       ),
     );
+  }
+
+  void _openTaxiNav(TaxiTrip tr) {
+    final pickup = (tr.pickupLat != null && tr.pickupLng != null)
+        ? LatLng(tr.pickupLat!, tr.pickupLng!)
+        : null;
+    final dest = (tr.destLat != null && tr.destLng != null)
+        ? LatLng(tr.destLat!, tr.destLng!)
+        : null;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => DriverNavScreen(
+        title: 'Navigatsiya',
+        routeText: tr.destinationText.isNotEmpty
+            ? '${tr.pickupText} → ${tr.destinationText}'
+            : tr.pickupText,
+        pickup: pickup,
+        destination: dest,
+        toDestination: tr.status == 'IN_PROGRESS' && dest != null,
+      ),
+    ));
+  }
+
+  void _openParcelNav(ParcelDelivery p) {
+    final pickup = (p.pickupLat != null && p.pickupLng != null)
+        ? LatLng(p.pickupLat!, p.pickupLng!)
+        : null;
+    final dest = (p.destLat != null && p.destLng != null)
+        ? LatLng(p.destLat!, p.destLng!)
+        : null;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => DriverNavScreen(
+        title: 'Navigatsiya',
+        routeText: '${p.pickupText} → ${p.destinationText}',
+        pickup: pickup,
+        destination: dest,
+        toDestination: p.status == 'PICKED_UP' && dest != null,
+        phone: p.recipientPhone,
+      ),
+    ));
   }
 
   /// Yakunlash dialogi — metered safarga masofa, hammasiga kutish daqiqasi.
@@ -609,6 +660,16 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
               ],
             ),
             const SizedBox(height: 8),
+            if (p.pickupLat != null) ...[
+              OutlinedButton.icon(
+                onPressed: () => _openParcelNav(p),
+                icon: const Icon(Icons.navigation, size: 18),
+                label: const Text('Navigatsiya (xarita)'),
+                style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40)),
+              ),
+              const SizedBox(height: 8),
+            ],
             FilledButton(
               onPressed: busy
                   ? null
