@@ -74,17 +74,20 @@ class _TaxiScreenState extends ConsumerState<TaxiScreen> {
 
   Future<void> _initLocation() async {
     final t = AppLocalizations.of(context)!;
-    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    final svc = ref.read(locationServiceProvider);
+    // Majburiy GPS — ruxsat/xizmatni so'raymiz, so'ng joylashuvni olamiz.
+    await svc.ensurePermission();
+    final pos = await svc.currentLatLng();
     if (!mounted) return;
     setState(() {
       _myLoc = pos;
       // Joriy joylashuvni "Qayerdan" sifatida avtomatik o'rnatamiz.
-      if (pos != null && _from == null) {
+      if (pos != null) {
         _from = GeoPlace(t.taxiCurrentLocation, pos.latitude, pos.longitude);
       }
     });
     if (pos != null) {
-      _map.move(pos, 15);
+      _map.move(pos, 16);
       _refreshNearby(); // atrofdagi real mashinalar
     }
   }

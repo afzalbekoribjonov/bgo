@@ -53,15 +53,17 @@ class _ParcelScreenState extends ConsumerState<ParcelScreen> {
 
   Future<void> _initLocation() async {
     final t = AppLocalizations.of(context)!;
-    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    final svc = ref.read(locationServiceProvider);
+    await svc.ensurePermission();
+    final pos = await svc.currentLatLng();
     if (!mounted) return;
     setState(() {
       _myLoc = pos;
-      if (pos != null && _from == null) {
+      if (pos != null) {
         _from = GeoPlace(t.taxiCurrentLocation, pos.latitude, pos.longitude);
       }
     });
-    if (pos != null) _map.move(pos, 15);
+    if (pos != null) _map.move(pos, 16);
   }
 
   LatLng get _center =>

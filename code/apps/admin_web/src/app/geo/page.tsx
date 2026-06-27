@@ -11,6 +11,7 @@ import {
   deleteGeoRoad,
   getGeoAreas,
   getGeoRoads,
+  importOsmRoads,
   updateGeoArea,
 } from '@/lib/api';
 import {
@@ -18,6 +19,7 @@ import {
   ROAD_KIND_LABELS,
   ROAD_KINDS,
 } from '@/lib/road-style';
+import { PLACE_CATEGORIES, placeCategory } from '@/lib/place-style';
 import type { MapRoad, RoadKind, ServiceArea } from '@/lib/types';
 
 // Leaflet faqat brauzerda ishlaydi — SSR'siz dinamik yuklanadi.
@@ -153,7 +155,7 @@ export default function GeoPage() {
       </p>
       {error && <p className="error">{error}</p>}
 
-      <RoadPanel
+      <MapEditor
         areas={areas}
         roads={roads}
         onChanged={load}
@@ -209,8 +211,8 @@ export default function GeoPage() {
   );
 }
 
-/** Xarita ustida yo'l chizish + yo'llarni boshqarish paneli. */
-function RoadPanel({
+/** Xarita muharriri — yo'l chizish + joy (oshxona/parkovka/...) belgilash. */
+function MapEditor({
   areas,
   roads,
   onChanged,
@@ -221,13 +223,21 @@ function RoadPanel({
   onChanged: () => Promise<void>;
   setError: (m: string | null) => void;
 }) {
+  const [mode, setMode] = useState<'road' | 'place'>('road');
+  const [areaId, setAreaId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  // Yo'l
   const [draft, setDraft] = useState<LatLng[]>([]);
   const [drawing, setDrawing] = useState(false);
   const [roadName, setRoadName] = useState('');
   const [roadKind, setRoadKind] = useState<RoadKind>('street');
-  const [areaId, setAreaId] = useState('');
   const [selectedRoadId, setSelectedRoadId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  // Joy
+  const [placeDraft, setPlaceDraft] = useState<LatLng | null>(null);
+  const [placeLabel, setPlaceLabel] = useState('');
+  const [placeCat, setPlaceCat] = useState('restaurant');
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   // Hudud tanlovini birinchi faol hududga sozlash.
   useEffect(() => {
@@ -236,14 +246,19 @@ function RoadPanel({
     if (first) setAreaId(first.id);
   }, [areas, areaId]);
 
-  const addPoint = useCallback((lat: number, lng: number) => {
-    setDraft((d) => [...d, [Number(lat.toFixed(6)), Number(lng.toFixed(6))]]);
-  }, []);
+  const allPlaces = useMemo(() => areas.flatMap((a) => a.places), [areas]);
+  const clickEnabled = mode === 'place' ? true : drawing;
+
+  function onMapClick(lat: number, lng: number) {
+    const pt: LatLng = [Number(lat.toFixed(6)), Number(lng.toFixed(6))];
+    if (mode === 'road') setDraft((d) => [...d, pt]);
+    else setPlaceDraft(pt);
+  }
 
   const undo = () => setDraft((d) => d.slice(0, -1));
   const clearDraft = () => setDraft([]);
 
-  async function save() {
+  async function saveRoad() {
     if (!areaId) {
       setError('Avval hudud yarating (yo‘l hududga biriktiriladi)');
       return;
@@ -275,6 +290,38 @@ function RoadPanel({
     }
   }
 
+  async function savePlace() {
+    if (!areaId) {
+      setError('Avval hudud yarating');
+      return;
+    }
+    if (!placeDraft) {
+      setError('Xaritani bosib joy nuqtasini belgilang');
+      return;
+    }
+    if (!placeLabel.trim()) {
+      setError('Joy nomini kiriting');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await addGeoPlace(areaId, {
+        label: placeLabel.trim(),
+        lat: placeDraft[0],
+        lng: placeDraft[1],
+        category: placeCat,
+      });
+      setPlaceDraft(null);
+      setPlaceLabel('');
+      await onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function removeRoad(r: MapRoad) {
     if (!window.confirm(`"${r.name}" yo'lini o'chirasizmi?`)) return;
     setError(null);
@@ -284,6 +331,38 @@ function RoadPanel({
       await onChanged();
     } catch (e) {
       setError((e as Error).message);
+    }
+  }
+
+  async function removePlace(id: string) {
+    if (!window.confirm("Joyni o'chirasizmi?")) return;
+    setError(null);
+    try {
+      await deleteGeoPlace(id);
+      if (selectedPlaceId === id) setSelectedPlaceId(null);
+      await onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  async function runImportOsm() {
+    if (
+      !window.confirm(
+        "OSM'dan barcha yo'llar import qilinadi (mavjud yo'llar almashtiriladi). Davom etasizmi?",
+      )
+    )
+      return;
+    setImporting(true);
+    setError(null);
+    try {
+      const res = await importOsmRoads();
+      await onChanged();
+      window.alert(`${res.imported} ta yo'l import qilindi`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -299,13 +378,33 @@ function RoadPanel({
         className="row"
         style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}
       >
-        <strong>Yo‘l chizish (navigatsiya qatlami)</strong>
+        <strong>Xarita muharriri — yo‘llar va joylar</strong>
         <span className="muted" style={{ fontSize: 13 }}>
-          {roads.length} ta yo‘l
+          {roads.length} yo‘l · {allPlaces.length} joy
         </span>
       </div>
 
-      {/* Asboblar paneli */}
+      {/* Rejim tanlash */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <button
+          className={mode === 'road' ? 'btn' : 'btn ghost'}
+          onClick={() => setMode('road')}
+        >
+          🛣️ Yo‘l chizish
+        </button>
+        <button
+          className={mode === 'place' ? 'btn' : 'btn ghost'}
+          onClick={() => setMode('place')}
+        >
+          📍 Joy belgilash
+        </button>
+        <div style={{ flex: 1 }} />
+        <button className="btn ghost" onClick={runImportOsm} disabled={importing}>
+          {importing ? 'Import qilinmoqda…' : '⤓ OSM yo‘llarini import'}
+        </button>
+      </div>
+
+      {/* Asboblar — hudud + rejimga xos */}
       <div
         style={{
           display: 'flex',
@@ -313,7 +412,7 @@ function RoadPanel({
           gap: 8,
           alignItems: 'end',
           marginTop: 12,
-          marginBottom: 12,
+          marginBottom: 6,
         }}
       >
         <div>
@@ -328,53 +427,102 @@ function RoadPanel({
             ))}
           </select>
         </div>
-        <div>
-          <label>Yo‘l nomi</label>
-          <input
-            value={roadName}
-            onChange={(e) => setRoadName(e.target.value)}
-            placeholder="Masalan: Navoiy ko‘chasi"
-          />
-        </div>
-        <div>
-          <label>Turi</label>
-          <select value={roadKind} onChange={(e) => setRoadKind(e.target.value as RoadKind)}>
-            {ROAD_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {ROAD_KIND_LABELS[k]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          className={drawing ? 'btn red' : 'btn'}
-          onClick={() => setDrawing((v) => !v)}
-        >
-          {drawing ? 'Chizishni to‘xtatish' : 'Chizishni boshlash'}
-        </button>
-        <button className="btn ghost" onClick={undo} disabled={draft.length === 0}>
-          Oxirgi nuqta ✕
-        </button>
-        <button className="btn ghost" onClick={clearDraft} disabled={draft.length === 0}>
-          Tozalash
-        </button>
-        <button
-          className="btn"
-          onClick={save}
-          disabled={saving || draft.length < 2 || !roadName.trim() || !areaId}
-        >
-          {saving ? 'Saqlanmoqda…' : 'Yo‘lni saqlash'}
-        </button>
-      </div>
 
-      <p className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
-        {drawing ? (
+        {mode === 'road' ? (
           <>
-            ✏️ Chizish yoniq — xaritani bosib yo‘l nuqtalarini ketma-ket qo‘shing.
-            Belgilangan nuqtalar: <strong>{draft.length}</strong>
+            <div>
+              <label>Yo‘l nomi</label>
+              <input
+                value={roadName}
+                onChange={(e) => setRoadName(e.target.value)}
+                placeholder="Navoiy ko‘chasi"
+              />
+            </div>
+            <div>
+              <label>Turi</label>
+              <select value={roadKind} onChange={(e) => setRoadKind(e.target.value as RoadKind)}>
+                {ROAD_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {ROAD_KIND_LABELS[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              className={drawing ? 'btn red' : 'btn'}
+              onClick={() => setDrawing((v) => !v)}
+            >
+              {drawing ? 'Chizishni to‘xtatish' : 'Chizishni boshlash'}
+            </button>
+            <button className="btn ghost" onClick={undo} disabled={draft.length === 0}>
+              Oxirgi nuqta ✕
+            </button>
+            <button className="btn ghost" onClick={clearDraft} disabled={draft.length === 0}>
+              Tozalash
+            </button>
+            <button
+              className="btn"
+              onClick={saveRoad}
+              disabled={saving || draft.length < 2 || !roadName.trim() || !areaId}
+            >
+              {saving ? 'Saqlanmoqda…' : 'Yo‘lni saqlash'}
+            </button>
           </>
         ) : (
-          <>“Chizishni boshlash” tugmasini bosing, so‘ng xaritada yo‘l bo‘ylab nuqtalar qo‘ying.</>
+          <>
+            <div>
+              <label>Joy nomi</label>
+              <input
+                value={placeLabel}
+                onChange={(e) => setPlaceLabel(e.target.value)}
+                placeholder="Markaziy shifoxona"
+              />
+            </div>
+            <div>
+              <label>Turi</label>
+              <select value={placeCat} onChange={(e) => setPlaceCat(e.target.value)}>
+                {PLACE_CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.emoji} {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              className="btn ghost"
+              onClick={() => setPlaceDraft(null)}
+              disabled={!placeDraft}
+            >
+              Bekor
+            </button>
+            <button
+              className="btn"
+              onClick={savePlace}
+              disabled={saving || !placeDraft || !placeLabel.trim() || !areaId}
+            >
+              {saving ? 'Saqlanmoqda…' : 'Joyni saqlash'}
+            </button>
+          </>
+        )}
+      </div>
+
+      <p className="muted" style={{ fontSize: 13, margin: '6px 0 10px' }}>
+        {mode === 'road' ? (
+          drawing ? (
+            <>
+              ✏️ Chizish yoniq — xaritani bosib yo‘l nuqtalarini ketma-ket qo‘shing.
+              Nuqtalar: <strong>{draft.length}</strong>
+            </>
+          ) : (
+            <>“Chizishni boshlash”ni bosing, so‘ng xarita bo‘ylab nuqtalar qo‘ying.</>
+          )
+        ) : placeDraft ? (
+          <>📍 Joy nuqtasi belgilandi — nom va turini tanlab “Joyni saqlash”ni bosing.</>
+        ) : (
+          <>
+            Xaritani kerakli manzilga bosing — oshxona, parkovka, shifoxona kabi
+            joyni belgilang. (Bosgan joyingizda nuqta paydo bo‘ladi.)
+          </>
         )}
       </p>
 
@@ -383,10 +531,13 @@ function RoadPanel({
         areas={areas}
         draft={draft}
         draftKind={roadKind}
-        drawing={drawing}
+        clickEnabled={clickEnabled}
         selectedRoadId={selectedRoadId}
-        onAddPoint={addPoint}
+        selectedPlaceId={selectedPlaceId}
+        placeDraft={placeDraft}
+        onMapClick={onMapClick}
         onSelectRoad={setSelectedRoadId}
+        onSelectPlace={setSelectedPlaceId}
       />
 
       {/* Rang izohi */}
@@ -435,6 +586,39 @@ function RoadPanel({
               </span>
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Joylar ro'yxati (turi bo'yicha rangli, ✕ bilan o'chirish) */}
+      {allPlaces.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+          {allPlaces.map((p) => {
+            const cat = placeCategory(p.category);
+            return (
+              <span
+                key={p.id}
+                className="badge"
+                style={{
+                  background: cat.color,
+                  cursor: 'pointer',
+                  outline: selectedPlaceId === p.id ? '2px solid #1a202c' : 'none',
+                }}
+                title="Tanlash · ✕ bilan o'chirish"
+                onClick={() => setSelectedPlaceId(p.id)}
+              >
+                {cat.emoji} {p.label}{' '}
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removePlace(p.id);
+                  }}
+                  style={{ marginLeft: 4 }}
+                >
+                  ✕
+                </span>
+              </span>
+            );
+          })}
         </div>
       )}
     </div>

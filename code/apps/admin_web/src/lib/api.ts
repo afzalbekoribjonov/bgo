@@ -171,6 +171,8 @@ export const addGeoRoad = (areaId: string, body: CreateRoadInput) =>
   });
 export const deleteGeoRoad = (id: string) =>
   api<unknown>(`/admin/geo/roads/${id}`, { method: 'DELETE' });
+export const importOsmRoads = () =>
+  api<{ imported: number }>('/admin/geo/import-osm-roads', { method: 'POST' });
 
 export function formatSom(value: number): string {
   return value.toLocaleString('ru-RU').replace(/ /g, ' ').replace(/,/g, ' ') + " so'm";
