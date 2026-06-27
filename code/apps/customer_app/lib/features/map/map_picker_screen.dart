@@ -86,13 +86,19 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
   }
 
   Future<void> _goToMyLocation() async {
+    final t = AppLocalizations.of(context)!;
     setState(() => _locating = true);
-    final pos = await ref.read(locationServiceProvider).currentLatLng();
+    final svc = ref.read(locationServiceProvider);
+    await svc.ensurePermission();
+    final pos = await svc.currentLatLng();
     if (!mounted) return;
     setState(() => _locating = false);
     if (pos != null) {
       _map.move(pos, 16);
-      setState(() => _center = pos);
+      setState(() {
+        _center = pos;
+        _pickedLabel = t.taxiCurrentLocation; // joriy joylashuv tanlandi
+      });
     }
   }
 

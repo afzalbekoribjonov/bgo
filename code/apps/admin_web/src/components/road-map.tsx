@@ -16,21 +16,22 @@ import {
   ROAD_COLORS,
   ROAD_WIDTH,
 } from '@/lib/road-style';
+import { placeCategory } from '@/lib/place-style';
 import type { MapRoad, RoadKind, ServiceArea } from '@/lib/types';
 
 type LatLng = [number, number];
 
-/** Xarita bosilishini ushlaydi — chizish rejimida nuqta qo'shadi. */
+/** Xarita bosilishini ushlaydi — chizish/joy rejimida nuqta beradi. */
 function ClickCatcher({
   enabled,
-  onAdd,
+  onClick,
 }: {
   enabled: boolean;
-  onAdd: (lat: number, lng: number) => void;
+  onClick: (lat: number, lng: number) => void;
 }) {
   useMapEvents({
     click(e) {
-      if (enabled) onAdd(e.latlng.lat, e.latlng.lng);
+      if (enabled) onClick(e.latlng.lat, e.latlng.lng);
     },
   });
   return null;
@@ -41,10 +42,13 @@ export interface RoadMapProps {
   areas: ServiceArea[];
   draft: LatLng[];
   draftKind: RoadKind;
-  drawing: boolean;
+  clickEnabled: boolean;
   selectedRoadId: string | null;
-  onAddPoint: (lat: number, lng: number) => void;
+  selectedPlaceId: string | null;
+  placeDraft: LatLng | null;
+  onMapClick: (lat: number, lng: number) => void;
   onSelectRoad: (id: string) => void;
+  onSelectPlace: (id: string) => void;
 }
 
 export default function RoadMap({
@@ -52,12 +56,16 @@ export default function RoadMap({
   areas,
   draft,
   draftKind,
-  drawing,
+  clickEnabled,
   selectedRoadId,
-  onAddPoint,
+  selectedPlaceId,
+  placeDraft,
+  onMapClick,
   onSelectRoad,
+  onSelectPlace,
 }: RoadMapProps) {
   const draftColor = ROAD_COLORS[draftKind];
+  const places = areas.flatMap((a) => a.places);
 
   return (
     <MapContainer
@@ -66,8 +74,8 @@ export default function RoadMap({
       minZoom={12}
       maxBounds={BESHARIQ_BOUNDS}
       maxBoundsViscosity={1}
-      className={drawing ? 'road-map drawing' : 'road-map'}
-      style={{ height: 540, width: '100%', borderRadius: 12 }}
+      className={clickEnabled ? 'road-map drawing' : 'road-map'}
+      style={{ height: 560, width: '100%', borderRadius: 12 }}
     >
       <TileLayer
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -75,7 +83,7 @@ export default function RoadMap({
         maxZoom={19}
       />
 
-      {/* Hudud chegaralari (kontekst uchun) */}
+      {/* Hudud chegaralari */}
       {areas.map((a) =>
         a.boundary.map((ring, i) => (
           <Polygon
@@ -90,25 +98,6 @@ export default function RoadMap({
           />
         )),
       )}
-
-      {/* Joylar (mo'ljallar) */}
-      {areas
-        .flatMap((a) => a.places)
-        .map((p) => (
-          <CircleMarker
-            key={p.id}
-            center={[p.lat, p.lng]}
-            radius={4}
-            pathOptions={{
-              color: '#0d47a1',
-              fillColor: '#42a5f5',
-              fillOpacity: 1,
-              weight: 1,
-            }}
-          >
-            <Tooltip direction="top">{p.label}</Tooltip>
-          </CircleMarker>
-        ))}
 
       {/* Mavjud yo'llar */}
       {roads.map((r) => {
@@ -128,6 +117,49 @@ export default function RoadMap({
           </Polyline>
         );
       })}
+
+      {/* Joylar (turi bo'yicha rangli) */}
+      {places.map((p) => {
+        const cat = placeCategory(p.category);
+        const selected = p.id === selectedPlaceId;
+        return (
+          <CircleMarker
+            key={p.id}
+            center={[p.lat, p.lng]}
+            radius={selected ? 9 : 6}
+            pathOptions={{
+              color: selected ? '#1a202c' : '#ffffff',
+              fillColor: cat.color,
+              fillOpacity: 1,
+              weight: selected ? 3 : 1.5,
+            }}
+            eventHandlers={{ click: () => onSelectPlace(p.id) }}
+          >
+            <Tooltip direction="top">
+              {cat.emoji} {p.label}
+            </Tooltip>
+          </CircleMarker>
+        );
+      })}
+
+      {/* Yangi joy (qoralama) */}
+      {placeDraft && (
+        <CircleMarker
+          center={placeDraft}
+          radius={10}
+          pathOptions={{
+            color: '#1a202c',
+            fillColor: '#fff',
+            fillOpacity: 0.9,
+            weight: 3,
+            dashArray: '4 4',
+          }}
+        >
+          <Tooltip permanent direction="top">
+            Yangi joy — saqlang
+          </Tooltip>
+        </CircleMarker>
+      )}
 
       {/* Chizilayotgan yo'l (qoralama) */}
       {draft.length >= 2 && (
@@ -154,7 +186,7 @@ export default function RoadMap({
         </CircleMarker>
       ))}
 
-      <ClickCatcher enabled={drawing} onAdd={onAddPoint} />
+      <ClickCatcher enabled={clickEnabled} onClick={onMapClick} />
     </MapContainer>
   );
 }
