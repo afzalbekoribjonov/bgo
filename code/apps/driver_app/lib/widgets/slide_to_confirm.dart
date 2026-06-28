@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// Surib tasdiqlash tugmasi — surilganda ichini to'ldirib tasdiqlaydi.
-/// reverse=false: chapdan o'ngga (liniyaga chiqish);
-/// reverse=true: o'ngdan chapga (ishni yakunlash). plan/06-driver-app.md
+/// Surib tasdiqlash — surilganda ichi tillo rangga to'ladi.
+/// reverse=false: chapdan o'ngga; reverse=true: o'ngdan chapga. plan/06-driver-app.md
 class SlideToConfirm extends StatefulWidget {
   final String label;
   final IconData icon;
   final Color fillColor;
-  final Color thumbColor;
   final VoidCallback onConfirmed;
   final double height;
   final bool reverse;
@@ -19,8 +17,7 @@ class SlideToConfirm extends StatefulWidget {
     required this.icon,
     required this.fillColor,
     required this.onConfirmed,
-    this.thumbColor = Colors.white,
-    this.height = 71,
+    this.height = 66,
     this.reverse = false,
     this.glow = false,
   });
@@ -30,27 +27,30 @@ class SlideToConfirm extends StatefulWidget {
 }
 
 class _SlideToConfirmState extends State<SlideToConfirm> {
-  double _p = 0; // 0..1 progress
+  double _p = 0;
   bool _done = false;
   bool _dragging = false;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    const pad = 6.0;
+    const pad = 5.0;
     final thumb = widget.height - pad * 2;
+    final reverse = widget.reverse;
     return LayoutBuilder(
       builder: (ctx, c) {
         final maxDx = c.maxWidth - thumb - pad * 2;
-        final thumbLeft = (widget.reverse ? (1 - _p) : _p) * maxDx;
-        final fillW = (widget.reverse ? (maxDx - thumbLeft) : thumbLeft) + thumb;
+        final thumbLeft = (reverse ? (1 - _p) : _p) * maxDx;
+        // To'lib boruvchi gold qism: surgich tomonidan to'ldiriladi.
+        final fillW = (reverse ? (maxDx - thumbLeft) : thumbLeft) + thumb;
+        final dur = Duration(milliseconds: _dragging ? 0 : 240);
         return GestureDetector(
           onHorizontalDragStart: (_) {
             if (!_done) setState(() => _dragging = true);
           },
           onHorizontalDragUpdate: (d) {
             if (_done || maxDx <= 0) return;
-            final delta = (widget.reverse ? -d.delta.dx : d.delta.dx) / maxDx;
+            final delta = (reverse ? -d.delta.dx : d.delta.dx) / maxDx;
             setState(() => _p = (_p + delta).clamp(0.0, 1.0));
           },
           onHorizontalDragEnd: (_) {
@@ -71,62 +71,90 @@ class _SlideToConfirmState extends State<SlideToConfirm> {
             decoration: BoxDecoration(
               color: scheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(widget.height / 2),
-              border: Border.all(color: scheme.outlineVariant),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // To'lib boruvchi qism
+                // Yo'nalish ko'rsatuvchi chevronlar (xira)
+                Positioned(
+                  left: reverse ? 20 : null,
+                  right: reverse ? null : 20,
+                  child: Opacity(
+                    opacity: (0.5 - _p).clamp(0.0, 0.5),
+                    child: Icon(
+                      reverse ? Icons.keyboard_double_arrow_left
+                              : Icons.keyboard_double_arrow_right,
+                      color: scheme.outline,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                // To'lib boruvchi tillo qism
                 Align(
                   alignment:
-                      widget.reverse ? Alignment.centerRight : Alignment.centerLeft,
+                      reverse ? Alignment.centerRight : Alignment.centerLeft,
                   child: AnimatedContainer(
-                    duration: Duration(milliseconds: _dragging ? 0 : 220),
+                    duration: dur,
+                    curve: Curves.easeOut,
                     width: fillW.clamp(thumb, c.maxWidth),
                     height: thumb,
                     decoration: BoxDecoration(
-                      color: widget.fillColor.withValues(alpha: 0.2 + 0.55 * _p),
+                      gradient: LinearGradient(
+                        colors: [
+                          widget.fillColor,
+                          Color.lerp(widget.fillColor, Colors.black, 0.12)!,
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(thumb / 2),
                     ),
                   ),
                 ),
                 // Yozuv
-                Opacity(
-                  opacity: (1 - _p).clamp(0.25, 1.0),
-                  child: Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
-                    ),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                    color: Color.lerp(scheme.onSurface, Colors.white, _p),
                   ),
                 ),
-                // Surgich
+                // Surgich (oq, gold ikonка)
                 AnimatedPositioned(
-                  duration: Duration(milliseconds: _dragging ? 0 : 220),
+                  duration: dur,
                   curve: Curves.easeOut,
                   left: thumbLeft,
                   child: Container(
                     width: thumb,
                     height: thumb,
                     decoration: BoxDecoration(
-                      color: widget.fillColor,
+                      color: Colors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         if (widget.glow)
                           BoxShadow(
-                            color: widget.fillColor.withValues(alpha: 0.6),
-                            blurRadius: 14,
+                            color: widget.fillColor.withValues(alpha: 0.7),
+                            blurRadius: 16,
                             spreadRadius: 1,
                           ),
-                        const BoxShadow(color: Colors.black26, blurRadius: 4),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
                     ),
                     child: Icon(
-                      _done ? Icons.check : widget.icon,
-                      color: widget.thumbColor,
-                      size: 26,
+                      _done ? Icons.check_rounded : widget.icon,
+                      color: widget.fillColor,
+                      size: 28,
                     ),
                   ),
                 ),
