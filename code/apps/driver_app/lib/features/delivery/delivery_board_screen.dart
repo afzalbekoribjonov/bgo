@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/alert_sound.dart';
+import '../auth/auth_api.dart';
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
@@ -35,6 +37,8 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
   @override
   void initState() {
     super.initState();
+    // Server holatini tiklash (ilova qayta ochilganda onlayn bo'lsa — onlayn).
+    _initOnline();
     // Onlayn bo'lsa, mavjud buyurtmalarni davriy yangilab turamiz (yangi
     // buyurtma kelganini bilish + ovozli signal uchun).
     _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
@@ -43,6 +47,31 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
       ref.invalidate(availableTaxiProvider);
       ref.invalidate(availableParcelsProvider);
     });
+  }
+
+  Future<void> _initOnline() async {
+    try {
+      final online = await ref.read(authApiProvider).fetchOnline();
+      if (mounted) ref.read(onlineProvider.notifier).state = online;
+    } catch (_) {
+      // tarmoq yo'q — oflayn deb qoldiramiz
+    }
+  }
+
+  /// Liniyaga chiqish / Ishni yakunlash — serverga ham yoziladi.
+  Future<void> _setOnline(bool value) async {
+    ref.read(onlineProvider.notifier).state = value;
+    if (!value) ref.read(alertSoundProvider).stop();
+    try {
+      await ref.read(authApiProvider).setOnline(value);
+    } catch (e) {
+      if (mounted) {
+        final t = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isNetworkError(e) ? t.errorNetwork : t.errorGeneric)),
+        );
+      }
+    }
   }
 
   @override
@@ -69,6 +98,9 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
     }
     if (available > _lastAvailable) {
       _silenced = false; // yangi buyurtma keldi — qayta jaranglaydi
+      // Vibratsiya signali (ovoz bilan birga).
+      HapticFeedback.heavyImpact();
+      Future.delayed(const Duration(milliseconds: 350), HapticFeedback.heavyImpact);
     }
     _lastAvailable = available;
     if (_silenced) {
@@ -118,14 +150,7 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(t.appName),
-          actions: [
-            Center(child: Text(online ? t.online : t.offline)),
-            Switch(
-              value: online,
-              onChanged: (v) => ref.read(onlineProvider.notifier).state = v,
-            ),
-            const LanguageButton(),
-          ],
+          actions: const [LanguageButton()],
           bottom: TabBar(
             isScrollable: true,
             tabs: [
@@ -135,11 +160,62 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
             ],
           ),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _deliveryTab(t, online),
-            _taxiTab(t, online),
-            _parcelTab(t, online),
+            _onlineBar(online),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _deliveryTab(t, online),
+                  _taxiTab(t, online),
+                  _parcelTab(t, online),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Liniya holati — "Liniyaga chiqish" / "Ishni yakunlash".
+  Widget _onlineBar(bool online) {
+    final color = online ? const Color(0xFF2E7D32) : const Color(0xFF9E9E9E);
+    return Material(
+      color: color.withValues(alpha: 0.12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Row(
+          children: [
+            Icon(online ? Icons.online_prediction : Icons.power_settings_new,
+                color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    online ? 'Siz liniyadasiz' : 'Siz oflaynsiz',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                  ),
+                  Text(
+                    online
+                        ? 'Yangi buyurtmalar keladi'
+                        : 'Buyurtma olish uchun liniyaga chiqing',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.outline),
+                  ),
+                ],
+              ),
+            ),
+            FilledButton(
+              onPressed: () => _setOnline(!online),
+              style: FilledButton.styleFrom(
+                backgroundColor: online ? const Color(0xFFC62828) : const Color(0xFF2E7D32),
+              ),
+              child: Text(online ? 'Ishni yakunlash' : 'Liniyaga chiqish'),
+            ),
           ],
         ),
       ),

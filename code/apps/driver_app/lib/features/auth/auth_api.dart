@@ -42,6 +42,17 @@ class AuthApi {
     return (data?['exists'] as bool?) ?? false;
   }
 
+  /// Onlayn/oflayn holatni o'rnatish (Liniyaga chiqish / Ishni yakunlash).
+  Future<void> setOnline(bool isOnline) async {
+    await _dio.post('/auth/driver/status', data: {'isOnline': isOnline});
+  }
+
+  /// Joriy haydovchi profilidagi onlayn holat (ilova ochilganda tiklash uchun).
+  Future<bool> fetchOnline() async {
+    final res = await _dio.get('/auth/driver/me');
+    return (res.data['data']?['isOnline'] as bool?) ?? false;
+  }
+
   /// Telefon + 8 xonali kod bilan kirish (uzoq muddatli token).
   Future<({AuthUser user, String access, String refresh})> driverLogin(
     String phone,
