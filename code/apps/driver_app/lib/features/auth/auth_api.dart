@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import 'auth_user.dart';
+import 'driver_profile.dart';
 
 class AuthApi {
   final Dio _dio;
@@ -53,6 +54,12 @@ class AuthApi {
     return (res.data['data']?['isOnline'] as bool?) ?? false;
   }
 
+  /// To'liq haydovchi profili (profil/sozlamalar sahifasi uchun).
+  Future<DriverProfile> driverProfile() async {
+    final res = await _dio.get('/auth/driver/me');
+    return DriverProfile.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
   /// Telefon + 8 xonali kod bilan kirish (uzoq muddatli token).
   Future<({AuthUser user, String access, String refresh})> driverLogin(
     String phone,
@@ -72,3 +79,8 @@ class AuthApi {
 }
 
 final authApiProvider = Provider<AuthApi>((ref) => AuthApi(ref.read(dioProvider)));
+
+/// Joriy haydovchi profili (profil/sozlamalar uchun).
+final driverProfileProvider = FutureProvider<DriverProfile>(
+  (ref) => ref.read(authApiProvider).driverProfile(),
+);

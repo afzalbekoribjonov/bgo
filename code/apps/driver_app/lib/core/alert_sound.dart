@@ -39,3 +39,6 @@ final alertSoundProvider = Provider<AlertSound>((ref) {
   ref.onDispose(sound.dispose);
   return sound;
 });
+
+/// Ovoz signali yoqilganmi (Ovoz va til sozlamasidan boshqariladi).
+final soundEnabledProvider = StateProvider<bool>((ref) => true);

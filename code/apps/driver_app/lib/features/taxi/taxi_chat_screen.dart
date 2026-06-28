@@ -172,32 +172,53 @@ class _TaxiChatScreenState extends ConsumerState<TaxiChatScreen> {
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.78,
         ),
         decoration: BoxDecoration(
-          color: mine ? scheme.primaryContainer : scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+          color: mine ? scheme.primary : scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(mine ? 16 : 4),
+            bottomRight: Radius.circular(mine ? 4 : 16),
+          ),
         ),
         child: Column(
           crossAxisAlignment:
               mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
-              mine ? t.chatYou : t.chatParty,
+              m.text,
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: scheme.outline,
+                color: mine ? Colors.white : scheme.onSurface,
+                fontSize: 15,
               ),
             ),
             const SizedBox(height: 2),
-            Text(m.text),
+            Text(
+              _time(m.createdAt),
+              style: TextStyle(
+                fontSize: 10.5,
+                color: mine
+                    ? Colors.white.withValues(alpha: 0.8)
+                    : scheme.outline,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// createdAt -> "HH:mm" (mahalliy vaqt).
+  String _time(String iso) {
+    final dt = DateTime.tryParse(iso)?.toLocal();
+    if (dt == null) return '';
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
   Widget _inputBar(AppLocalizations t) {

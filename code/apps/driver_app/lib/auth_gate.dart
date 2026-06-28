@@ -5,7 +5,7 @@ import 'package:beshariq_core/beshariq_core.dart';
 import 'core/location_pinger.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/login_flow.dart';
-import 'features/delivery/delivery_board_screen.dart';
+import 'features/home/driver_home_screen.dart';
 
 /// Auth holatiga qarab ekran ko'rsatadi.
 class AuthGate extends ConsumerStatefulWidget {
@@ -40,7 +40,7 @@ class _AuthGateState extends ConsumerState<AuthGate> {
       AuthStatus.unknown => const _Splash(),
       AuthStatus.unauthenticated => const LoginFlow(),
       AuthStatus.authenticated =>
-        const LocationPinger(child: DeliveryBoardScreen()),
+        const LocationPinger(child: DriverHomeScreen()),
     };
   }
 }
