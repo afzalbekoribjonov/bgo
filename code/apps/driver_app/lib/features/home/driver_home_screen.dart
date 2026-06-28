@@ -35,7 +35,7 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   final MapController _map = MapController();
-  final DraggableScrollableController _sheet = DraggableScrollableController();
+  bool _panelHidden = false; // xarita bosilganda panel pastga yashirinadi
   DriverFix? _fix;
   double _zoom = 16;
   Timer? _gpsTimer;
@@ -71,7 +71,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     _offerTimer?.cancel();
     _tick?.cancel();
     ref.read(alertSoundProvider).stop();
-    _sheet.dispose();
     _map.dispose();
     super.dispose();
   }
@@ -205,16 +204,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   void _onMoonTap(bool online) {
     if (online && _offer == null) {
-      setState(() => _showOfflineSlider = true);
-      _sheet.animateTo(0.30,
-          duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+      setState(() {
+        _showOfflineSlider = true;
+        _panelHidden = false;
+      });
     }
-  }
-
-  void _toggleSheet() {
-    final size = _sheet.isAttached ? _sheet.size : 0.30;
-    _sheet.animateTo(size > 0.20 ? 0.10 : 0.30,
-        duration: const Duration(milliseconds: 260), curve: Curves.easeOut);
   }
 
   @override
@@ -240,12 +234,38 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           ),
           Positioned(top: top + 10, right: 16, child: _avatar()),
           Positioned(top: top + 72, right: 20, child: _poolBadge()),
-          Positioned(right: 18, bottom: hasOffer ? 200 : MediaQuery.of(context).size.height * 0.32, child: _recenter()),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOut,
+            right: 18,
+            bottom: hasOffer ? 200 : (_panelHidden ? 26 : 208),
+            child: _recenter(),
+          ),
           // Yangi buyurtma banneri (yuqorida)
           if (hasOffer)
             Positioned(top: 0, left: 0, right: 0, child: _orderBanner(top)),
           // Pastki panel yoki qabul paneli
-          if (hasOffer) _acceptPanel() else _bottomSheet(online),
+          if (hasOffer) _acceptPanel() else _bottomPanel(online),
+          // Panel yashiringanda — tortib chiqarish uchun kichik tutqich
+          if (!hasOffer && _panelHidden)
+            Positioned(
+              bottom: 0, left: 0, right: 0,
+              child: GestureDetector(
+                onTap: () => setState(() => _panelHidden = false),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  height: 26,
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 56, height: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           // "Buyurtma olinmadi"
           if (_showNotTaken) _notTakenOverlay(),
         ],
@@ -274,7 +294,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             setState(() => _zoom = camera.zoom);
           }
         },
-        onTap: (_, __) => _toggleSheet(),
+        onTap: (_, __) {
+          if (_offer == null) setState(() => _panelHidden = !_panelHidden);
+        },
       ),
       children: [
         TileLayer(
@@ -610,18 +632,21 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   // ---------------- Pastki panel (taklif yo'q payti) ----------------
 
-  Widget _bottomSheet(bool online) {
+  /// Pastki panel — kontent o'lchamida (bo'sh joy yo'q). Xarita bosilsa
+  /// pastga yashirinadi (AnimatedSlide).
+  Widget _bottomPanel(bool online) {
     final scheme = Theme.of(context).colorScheme;
     final showSlider = !online || _showOfflineSlider;
-    return DraggableScrollableSheet(
-      controller: _sheet,
-      initialChildSize: 0.30,
-      minChildSize: 0.10,
-      maxChildSize: 0.55,
-      snap: true,
-      snapSizes: const [0.10, 0.30, 0.55],
-      builder: (ctx, scrollCtrl) {
-        return Container(
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+        offset: _panelHidden ? const Offset(0, 1) : Offset.zero,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(
+              16, 8, 16, 16 + MediaQuery.of(context).padding.bottom),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -631,13 +656,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 18)],
           ),
-          child: ListView(
-            controller: scrollCtrl,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: _toggleSheet,
+                onTap: () => setState(() => _panelHidden = true),
                 child: Container(
                   alignment: Alignment.center,
                   padding: const EdgeInsets.only(bottom: 12),
@@ -671,8 +695,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ],
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

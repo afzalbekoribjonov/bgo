@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/nav_support.dart';
 import 'offer_api.dart';
 
 /// Qabul qilinmagan buyurtmalar (pool) — istalgan haydovchi olishi mumkin.
@@ -14,6 +16,22 @@ class PoolScreen extends ConsumerStatefulWidget {
 
 class _PoolScreenState extends ConsumerState<PoolScreen> {
   String? _busy;
+  LatLng? _me;
+
+  @override
+  void initState() {
+    super.initState();
+    driverCurrentLatLng().then((p) {
+      if (mounted && p != null) setState(() => _me = p);
+    });
+  }
+
+  /// Joriy joydan pickup'gача masofa (km).
+  String? _distance(DriverOffer o) {
+    if (_me == null) return null;
+    final km = const Distance().as(LengthUnit.Kilometer, _me!, o.pickup);
+    return '${km.toStringAsFixed(1)} km';
+  }
 
   Future<void> _take(DriverOffer o) async {
     setState(() => _busy = o.orderId);
@@ -78,9 +96,11 @@ class _PoolScreenState extends ConsumerState<PoolScreen> {
   Widget _card(DriverOffer o) {
     final emoji = o.vertical == 'taxi' ? '🚕' : (o.vertical == 'parcel' ? '📦' : '🍽️');
     final busy = _busy == o.orderId;
+    final scheme = Theme.of(context).colorScheme;
+    final dist = _distance(o);
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -97,6 +117,22 @@ class _PoolScreenState extends ConsumerState<PoolScreen> {
                 Text('+${groupThousands(o.earning)} so‘m',
                     style: const TextStyle(
                         color: Color(0xFF2E7D32), fontWeight: FontWeight.w800)),
+              ],
+            ),
+            const SizedBox(height: 5),
+            // Masofa + narx (kichik shrift)
+            Row(
+              children: [
+                if (dist != null) ...[
+                  const Icon(Icons.route_rounded, size: 13, color: Color(0xFF1565C0)),
+                  const SizedBox(width: 4),
+                  Text(dist, style: TextStyle(fontSize: 12, color: scheme.outline)),
+                  const SizedBox(width: 14),
+                ],
+                const Icon(Icons.payments_rounded, size: 13, color: Color(0xFF2E7D32)),
+                const SizedBox(width: 4),
+                Text('${groupThousands(o.amount)} so‘m',
+                    style: TextStyle(fontSize: 12, color: scheme.outline)),
               ],
             ),
             if (o.dropoffText?.isNotEmpty == true) ...[
