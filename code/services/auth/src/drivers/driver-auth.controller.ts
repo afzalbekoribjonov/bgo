@@ -51,6 +51,14 @@ export class DriverAuthController {
     return { success: true, data: await this.drivers.getByPhone(user.phone) };
   }
 
+  /** Hisob balansi + to'ldirish tarixi (Hisobim). */
+  @Get('balance')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  async balance(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.drivers.getBalance(user.phone) };
+  }
+
   /** Onlayn/oflayn (Liniyaga chiqish / Ishni yakunlash). */
   @Post('status')
   @HttpCode(200)

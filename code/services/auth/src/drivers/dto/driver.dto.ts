@@ -111,3 +111,16 @@ export class DriverStatusDto {
   @IsBoolean()
   isOnline!: boolean;
 }
+
+/** Admin: haydovchi hisobini to'ldirish. */
+export class TopupDto {
+  @IsInt()
+  @Min(1000)
+  @Max(100000000)
+  amount!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  note?: string;
+}

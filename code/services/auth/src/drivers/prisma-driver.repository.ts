@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   DriverProfileEntity,
   DriverProfilePatch,
+  DriverTopupEntity,
   NewDriverProfile,
 } from './driver.entity';
 import { DriverRepository } from './driver.repository';
@@ -74,6 +75,37 @@ export class PrismaDriverRepository extends DriverRepository {
     await this.prisma.driverProfile.delete({ where: { id } });
   }
 
+  async topup(
+    driverId: string,
+    amount: number,
+    note?: string,
+  ): Promise<DriverProfileEntity> {
+    const [, profile] = await this.prisma.$transaction([
+      this.prisma.driverTopup.create({
+        data: { driverId, amount, note: note ?? null },
+      }),
+      this.prisma.driverProfile.update({
+        where: { id: driverId },
+        data: { balance: { increment: amount } },
+      }),
+    ]);
+    return this.toEntity(profile);
+  }
+
+  async listTopups(driverId: string): Promise<DriverTopupEntity[]> {
+    const rows = await this.prisma.driverTopup.findMany({
+      where: { driverId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      driverId: r.driverId,
+      amount: r.amount,
+      note: r.note,
+      createdAt: r.createdAt.toISOString(),
+    }));
+  }
+
   private toEntity(d: PrismaDriver): DriverProfileEntity {
     return {
       id: d.id,
@@ -88,6 +120,7 @@ export class PrismaDriverRepository extends DriverRepository {
       loginCode: d.loginCode,
       isActive: d.isActive,
       isOnline: d.isOnline,
+      balance: d.balance,
       createdAt: d.createdAt.toISOString(),
       updatedAt: d.updatedAt.toISOString(),
     };

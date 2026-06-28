@@ -1,5 +1,6 @@
-import { Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { combineEarnings } from '../common/earnings';
+import { ReportPeriod } from '../common/reporting';
 import { ParcelService } from '../parcel/parcel.service';
 import { TaxiService } from '../taxi/taxi.service';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
@@ -29,6 +30,18 @@ export class CourierController {
   @Get('my-orders')
   async myOrders(@CurrentUser() user: AccessTokenPayload) {
     return { success: true, data: await this.orders.listDriverOrders(user.sub) };
+  }
+
+  /** Haydovchi statistikasi (Bugun) — ?period=today|week|month. */
+  @Get('stats')
+  async stats(
+    @CurrentUser() user: AccessTokenPayload,
+    @Query('period') period?: string,
+  ) {
+    const p = (['today', 'week', 'month'].includes(period ?? '')
+      ? period
+      : 'today') as ReportPeriod;
+    return { success: true, data: await this.orders.driverStats(user.sub, p) };
   }
 
   /** Haydovchi daromadi — uchala vertikal (ovqat + taksi + dostavka). */

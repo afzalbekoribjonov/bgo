@@ -1,6 +1,7 @@
 import {
   DriverProfileEntity,
   DriverProfilePatch,
+  DriverTopupEntity,
   NewDriverProfile,
 } from './driver.entity';
 
@@ -15,4 +16,12 @@ export abstract class DriverRepository {
     patch: DriverProfilePatch,
   ): Promise<DriverProfileEntity>;
   abstract delete(id: string): Promise<void>;
+
+  /** Hisobni to'ldirish (balansga qo'shadi + tarix yozadi). */
+  abstract topup(
+    driverId: string,
+    amount: number,
+    note?: string,
+  ): Promise<DriverProfileEntity>;
+  abstract listTopups(driverId: string): Promise<DriverTopupEntity[]>;
 }

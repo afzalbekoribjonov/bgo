@@ -86,6 +86,21 @@ export class DriversService {
     return this.toAdmin(updated);
   }
 
+  /** Hisobni to'ldirish (admin/office). */
+  async topup(id: string, amount: number, note?: string) {
+    await this.requireDriver(id);
+    const updated = await this.repo.topup(id, amount, note);
+    return this.toAdmin(updated);
+  }
+
+  /** Haydovchi balansi + to'ldirish tarixi (ilova — Hisobim). */
+  async getBalance(phone: string) {
+    const profile = await this.repo.findByPhone(phone);
+    if (!profile) throw new NotFoundException('Haydovchi topilmadi');
+    const topups = await this.repo.listTopups(profile.id);
+    return { balance: profile.balance, topups };
+  }
+
   // ---------- Haydovchi ilovasi ----------
 
   /** Raqam bizning haydovchimi (login inputi uchun). */

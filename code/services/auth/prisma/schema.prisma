@@ -97,11 +97,26 @@ model DriverProfile {
   isActive  Boolean @default(true) // admin bloklashi mumkin
   isOnline  Boolean @default(false) // Liniyaga chiqish / Ishni yakunlash
 
+  // Hisob (komissiya shu balansdan olinadi — haydovchida pul bo'lishi shart)
+  balance Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@map("driver_profiles")
+}
+
+/** Haydovchi hisobini to'ldirish tarixi (admin/office to'ldiradi). */
+model DriverTopup {
+  id        String   @id @default(uuid())
+  driverId  String // DriverProfile.id
+  amount    Int
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([driverId])
+  @@map("driver_topups")
 }
 
 /** Hamkorlik arizasi (oshxona/haydovchi). plan/08-admin-workspace.md */

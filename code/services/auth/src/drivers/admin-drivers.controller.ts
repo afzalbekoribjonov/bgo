@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { DriversService } from './drivers.service';
-import { CreateDriverDto, UpdateDriverDto } from './dto/driver.dto';
+import { CreateDriverDto, TopupDto, UpdateDriverDto } from './dto/driver.dto';
 
 /** Haydovchilarni boshqarish — faqat admin. plan/08-admin-workspace.md */
 @Controller('auth/admin/drivers')
@@ -41,5 +41,13 @@ export class AdminDriversController {
   @Post(':id/regenerate-code')
   async regenerate(@Param('id') id: string) {
     return { success: true, data: await this.drivers.regenerateCode(id) };
+  }
+
+  @Post(':id/topup')
+  async topup(@Param('id') id: string, @Body() dto: TopupDto) {
+    return {
+      success: true,
+      data: await this.drivers.topup(id, dto.amount, dto.note),
+    };
   }
 }

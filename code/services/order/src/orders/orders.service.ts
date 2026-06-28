@@ -355,6 +355,73 @@ export class OrdersService {
     );
   }
 
+  /**
+   * Haydovchi statistikasi (Bugun ekrani) — kun/hafta/oy bo'yicha bajarilgan
+   * buyurtmalar (3 vertikal), kunlik grafik nuqtalari va ro'yxat.
+   */
+  async driverStats(driverId: string, period: ReportPeriod) {
+    const start = periodStart(period).getTime();
+    const [foodOrders, taxiTrips, parcels] = await Promise.all([
+      this.repo.findByDriver(driverId),
+      this.taxi.listDriverTrips(driverId),
+      this.parcel.listDriverParcels(driverId),
+    ]);
+
+    type Done = {
+      type: 'food' | 'taxi' | 'parcel';
+      amount: number;
+      earning: number;
+      createdAt: string;
+    };
+    const done: Done[] = [];
+    for (const o of foodOrders) {
+      if (o.status === 'DELIVERED') {
+        done.push({ type: 'food', amount: o.total, earning: o.courierEarning, createdAt: o.createdAt });
+      }
+    }
+    for (const t of taxiTrips) {
+      if (t.status === 'COMPLETED') {
+        done.push({ type: 'taxi', amount: t.fare, earning: t.driverEarning, createdAt: t.createdAt });
+      }
+    }
+    for (const p of parcels) {
+      if (p.status === 'DELIVERED') {
+        done.push({ type: 'parcel', amount: p.fare, earning: p.driverEarning, createdAt: p.createdAt });
+      }
+    }
+
+    const inPeriod = done
+      .filter((d) => new Date(d.createdAt).getTime() >= start)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const totalEarning = inPeriod.reduce((s, d) => s + d.earning, 0);
+
+    // Kunlik grafik nuqtalari (start..bugun)
+    const dayMap = new Map<string, { count: number; earning: number }>();
+    for (const d of inPeriod) {
+      const key = d.createdAt.slice(0, 10);
+      const cur = dayMap.get(key) ?? { count: 0, earning: 0 };
+      cur.count += 1;
+      cur.earning += d.earning;
+      dayMap.set(key, cur);
+    }
+    const daily: { date: string; count: number; earning: number }[] = [];
+    const dayMs = 86400000;
+    for (let t = new Date(start).setHours(0, 0, 0, 0); t <= Date.now(); t += dayMs) {
+      const key = new Date(t).toISOString().slice(0, 10);
+      const v = dayMap.get(key) ?? { count: 0, earning: 0 };
+      daily.push({ date: key, count: v.count, earning: v.earning });
+    }
+
+    return {
+      period,
+      totalCount: inPeriod.length,
+      totalEarning,
+      daily,
+      orders: inPeriod.slice(0, 50),
+    };
+  }
+
   /** Haydovchi yetkazishni qabul qiladi (READY -> ASSIGNED). */
   async acceptDelivery(id: string, driverId: string): Promise<Order> {
     const order = await this.repo.findById(id);
