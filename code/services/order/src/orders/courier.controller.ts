@@ -13,7 +13,7 @@ import { ReportPeriod } from '../common/reporting';
 import { ParcelService } from '../parcel/parcel.service';
 import { TaxiService } from '../taxi/taxi.service';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
-import { DispatchService } from './dispatch.service';
+import { DispatchService, DispatchVertical } from './dispatch.service';
 import { OrdersService } from './orders.service';
 
 /**
@@ -37,18 +37,35 @@ export class CourierController {
     return { success: true, data: await this.dispatch.getOfferFor(user.sub) };
   }
 
-  /** Taklifni qabul qilish. */
+  /** Taklifni qabul qilish (vertikalga qarab). */
   @Post('offer/:id/accept')
   @HttpCode(200)
   async acceptOffer(
     @Param('id') id: string,
     @CurrentUser() user: AccessTokenPayload,
   ) {
-    if (!this.dispatch.canAccept(user.sub, id)) {
+    return { success: true, data: await this.acceptDispatch(id, user.sub) };
+  }
+
+  /** Vertikalga qarab tegishli servis bilan qabul qiladi. */
+  private async acceptDispatch(id: string, driverId: string) {
+    const offer = this.dispatch.getById(id);
+    if (!offer || !this.dispatch.canAccept(driverId, id)) {
       throw new BadRequestException('Buyurtma endi mavjud emas');
     }
-    const order = await this.orders.acceptDelivery(id, user.sub);
-    return { success: true, data: order };
+    const data = await this.acceptByVertical(offer.vertical, id, driverId);
+    this.dispatch.clear(id);
+    return data;
+  }
+
+  private acceptByVertical(
+    vertical: DispatchVertical,
+    id: string,
+    driverId: string,
+  ) {
+    if (vertical === 'taxi') return this.taxi.accept(id, driverId);
+    if (vertical === 'parcel') return this.parcel.accept(id, driverId);
+    return this.orders.acceptDelivery(id, driverId);
   }
 
   /** Taklifni o'tkazib yuborish (keyingi haydovchiga). */
@@ -75,11 +92,7 @@ export class CourierController {
     @Param('id') id: string,
     @CurrentUser() user: AccessTokenPayload,
   ) {
-    if (!this.dispatch.canAccept(user.sub, id)) {
-      throw new BadRequestException('Buyurtma endi mavjud emas');
-    }
-    const order = await this.orders.acceptDelivery(id, user.sub);
-    return { success: true, data: order };
+    return { success: true, data: await this.acceptDispatch(id, user.sub) };
   }
 
   /** Yetkazishga tayyor (READY), hali biriktirilmagan buyurtmalar. */

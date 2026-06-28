@@ -149,6 +149,12 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
       .map((s) => this.toOffer(s));
   }
 
+  /** Buyurtma taklifi (vertikalni bilish uchun). */
+  getById(orderId: string): DispatchOffer | null {
+    const s = this.offers.get(orderId);
+    return s ? this.toOffer(s) : null;
+  }
+
   /** Haydovchi shu buyurtmani qabul qila oladimi (taklif yoki pool). */
   canAccept(driverId: string, orderId: string): boolean {
     const s = this.offers.get(orderId);

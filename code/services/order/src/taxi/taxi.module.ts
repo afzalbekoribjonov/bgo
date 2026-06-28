@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 import { NotificationClientModule } from '../notification-client/notification-client.module';
+import { DispatchModule } from '../orders/dispatch.module';
 import { TariffService } from '../tariff/tariff.service';
 import { TrackingModule } from '../tracking/tracking.module';
 import { PrismaTaxiMessageRepository } from './prisma-taxi-message.repository';
@@ -14,7 +15,12 @@ import { TaxiService } from './taxi.service';
 
 /** Taksi vertikali moduli. plan/06-driver-app.md */
 @Module({
-  imports: [JwtModule.register({}), NotificationClientModule, TrackingModule],
+  imports: [
+    JwtModule.register({}),
+    NotificationClientModule,
+    TrackingModule,
+    DispatchModule,
+  ],
   controllers: [TaxiController, TaxiDriverController],
   providers: [
     TaxiService,

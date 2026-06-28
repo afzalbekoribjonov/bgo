@@ -2,8 +2,10 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { DispatchService } from '../orders/dispatch.service';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { GeoPoint, haversineKm } from '../common/geo';
 import { roundFare } from '../common/money';
@@ -32,7 +34,26 @@ export class ParcelService {
     private readonly repo: ParcelRepository,
     private readonly tariff: TariffService,
     private readonly notifications: NotificationClient,
+    private readonly dispatch: DispatchService,
   ) {}
+
+  private readonly logger = new Logger(ParcelService.name);
+
+  /** Yangi dostavkani eng yaqin online haydovchiga taklif qiladi. */
+  private async offerParcel(parcel: ParcelDelivery): Promise<void> {
+    await this.dispatch.offer({
+      orderId: parcel.id,
+      vertical: 'parcel',
+      pickupLat: parcel.pickup.lat,
+      pickupLng: parcel.pickup.lng,
+      pickupName: parcel.pickup.text || 'Dostavka',
+      dropoffLat: parcel.destination?.lat ?? null,
+      dropoffLng: parcel.destination?.lng ?? null,
+      dropoffText: parcel.destination?.text ?? null,
+      amount: parcel.fare,
+      earning: parcel.driverEarning,
+    });
+  }
 
   async estimate(pickup: GeoPoint, destination: GeoPoint, size: ParcelSize) {
     const t = await this.tariff.getTariff();
@@ -48,7 +69,7 @@ export class ParcelService {
 
   async create(customerId: string, dto: RequestParcelDto): Promise<ParcelDelivery> {
     const e = await this.estimate(dto.pickup, dto.destination, dto.size);
-    return this.repo.create({
+    const parcel = await this.repo.create({
       customerId,
       pickup: dto.pickup,
       destination: dto.destination,
@@ -61,6 +82,10 @@ export class ParcelService {
       commission: e.commission,
       driverEarning: e.driverEarning,
     });
+    this.offerParcel(parcel).catch((err) =>
+      this.logger.warn(`Dostavka taklif xatosi: ${(err as Error).message}`),
+    );
+    return parcel;
   }
 
   estimateDto(dto: EstimateParcelDto) {
@@ -86,6 +111,7 @@ export class ParcelService {
     if (!['PENDING', 'ACCEPTED'].includes(parcel.status)) {
       throw new BadRequestException('Dostavkani bu bosqichda bekor qilib bo\'lmaydi');
     }
+    this.dispatch.clear(id);
     return this.repo.updateStatus(id, 'CANCELLED');
   }
 
@@ -146,6 +172,7 @@ export class ParcelService {
       throw new BadRequestException('Dostavka allaqachon biriktirilgan');
     }
     const updated = await this.repo.assignDriver(id, driverId);
+    this.dispatch.clear(id);
     await this.notifyCustomer(updated, 'Kuryer dostavkani qabul qildi');
     return updated;
   }

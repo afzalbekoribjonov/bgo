@@ -2,8 +2,10 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { DispatchService } from '../orders/dispatch.service';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { haversineKm } from '../common/geo';
 import { roundFare } from '../common/money';
@@ -33,7 +35,26 @@ export class TaxiService {
     private readonly tariff: TariffService,
     private readonly notifications: NotificationClient,
     private readonly driverLocations: DriverLocationService,
+    private readonly dispatch: DispatchService,
   ) {}
+
+  private readonly logger = new Logger(TaxiService.name);
+
+  /** Yangi safarni eng yaqin online haydovchiga taklif qiladi. */
+  private async offerTrip(trip: TaxiTrip): Promise<void> {
+    await this.dispatch.offer({
+      orderId: trip.id,
+      vertical: 'taxi',
+      pickupLat: trip.pickup.lat,
+      pickupLng: trip.pickup.lng,
+      pickupName: trip.pickup.text || 'Taksi buyurtmasi',
+      dropoffLat: trip.destination?.lat ?? null,
+      dropoffLng: trip.destination?.lng ?? null,
+      dropoffText: trip.destination?.text ?? null,
+      amount: trip.fare,
+      earning: trip.driverEarning,
+    });
+  }
 
   /** Taksi tarifi (mijoz ilovasi minimal narxni ko'rsatishi uchun). */
   async taxiTariff() {
@@ -65,9 +86,10 @@ export class TaxiService {
   async create(customerId: string, dto: RequestTaxiDto): Promise<TaxiTrip> {
     // Manzil belgilangan -> narx oldindan (FIXED). Belgilanmagan -> metered
     // (narx safar yakunida masofa + kutishdan hisoblanadi).
+    let trip: TaxiTrip;
     if (dto.destination) {
       const e = await this.estimate(dto.pickup, dto.destination);
-      return this.repo.create({
+      trip = await this.repo.create({
         customerId,
         pickup: dto.pickup,
         destination: dto.destination,
@@ -77,16 +99,21 @@ export class TaxiService {
         commission: e.commission,
         driverEarning: e.driverEarning,
       });
+    } else {
+      trip = await this.repo.create({
+        customerId,
+        pickup: dto.pickup,
+        metered: true,
+        distanceKm: 0,
+        fare: 0,
+        commission: 0,
+        driverEarning: 0,
+      });
     }
-    return this.repo.create({
-      customerId,
-      pickup: dto.pickup,
-      metered: true,
-      distanceKm: 0,
-      fare: 0,
-      commission: 0,
-      driverEarning: 0,
-    });
+    this.offerTrip(trip).catch((e) =>
+      this.logger.warn(`Taksi taklif xatosi: ${(e as Error).message}`),
+    );
+    return trip;
   }
 
   listMine(customerId: string) {
@@ -210,6 +237,7 @@ export class TaxiService {
     if (!['PENDING', 'ACCEPTED'].includes(trip.status)) {
       throw new BadRequestException('Safarni bu bosqichda bekor qilib bo\'lmaydi');
     }
+    this.dispatch.clear(id);
     const cancelled = await this.repo.updateStatus(id, 'CANCELLED');
     await this.messages.deleteByTrip(id).catch(() => undefined);
     return cancelled;
@@ -272,6 +300,7 @@ export class TaxiService {
       throw new BadRequestException('Safar allaqachon biriktirilgan');
     }
     const updated = await this.repo.assignDriver(id, driverId);
+    this.dispatch.clear(id);
     await this.notifications.notify(
       updated.customerId,
       'Taksi',
