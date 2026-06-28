@@ -1,7 +1,9 @@
 import type {
+  AdminDriver,
   AdminOrder,
   AdminRestaurant,
   CreateAreaInput,
+  CreateDriverInput,
   CreateRestaurantInput,
   CreateRoadInput,
   GeoPlace,
@@ -16,6 +18,7 @@ import type {
   ServiceArea,
   Stats,
   Tariff,
+  UpdateDriverInput,
   UpdateRestaurantInput,
 } from './types';
 import { clearToken, getToken } from './auth';
@@ -79,6 +82,27 @@ export const assignRestaurantOwner = (id: string, ownerUserId: string) =>
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ownerUserId }),
+  });
+
+// ----- Haydovchilar (admin onboarding + 8 xonali kod) -----
+export const getDrivers = () => api<AdminDriver[]>('/auth/admin/drivers');
+export const getDriver = (id: string) =>
+  api<AdminDriver>(`/auth/admin/drivers/${id}`);
+export const createDriver = (body: CreateDriverInput) =>
+  api<AdminDriver>('/auth/admin/drivers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const updateDriver = (id: string, body: UpdateDriverInput) =>
+  api<AdminDriver>(`/auth/admin/drivers/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+export const regenerateDriverCode = (id: string) =>
+  api<AdminDriver>(`/auth/admin/drivers/${id}/regenerate-code`, {
+    method: 'POST',
   });
 export const getPromos = () => api<PromoCode[]>('/admin/promos');
 export const createPromo = (body: {

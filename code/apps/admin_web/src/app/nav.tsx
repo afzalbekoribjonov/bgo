@@ -7,6 +7,7 @@ const LINKS = [
   { href: '/', label: 'Dashboard' },
   { href: '/orders', label: 'Buyurtmalar' },
   { href: '/restaurants', label: 'Oshxonalar' },
+  { href: '/drivers', label: 'Haydovchilar' },
   { href: '/tariff', label: 'Tariflar' },
   { href: '/promos', label: 'Promokodlar' },
   { href: '/partners', label: 'Hamkorlik' },

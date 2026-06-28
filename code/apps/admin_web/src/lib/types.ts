@@ -156,6 +156,43 @@ export interface RestaurantMenuView {
   categories: MenuCategoryView[];
 }
 
+export interface AdminDriver {
+  id: string;
+  userId: string;
+  phone: string;
+  fullName: string;
+  age: number | null;
+  carName: string | null;
+  carYear: number | null;
+  plateNumber: string | null;
+  licenseInfo: string | null;
+  loginCode: string;
+  isActive: boolean;
+  isOnline: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDriverInput {
+  phone: string;
+  fullName: string;
+  age?: number;
+  carName?: string;
+  carYear?: number;
+  plateNumber?: string;
+  licenseInfo?: string;
+}
+
+export interface UpdateDriverInput {
+  fullName?: string;
+  age?: number;
+  carName?: string;
+  carYear?: number;
+  plateNumber?: string;
+  licenseInfo?: string;
+  isActive?: boolean;
+}
+
 export type ReportPeriod = 'today' | 'week' | 'month';
 
 export interface ReportDayPoint {
