@@ -32,6 +32,29 @@ export class DriverLocationService {
     return this.repo.remove(driverId);
   }
 
+  /**
+   * Nuqtaga eng yaqin online haydovchi id'lari (masofa bo'yicha; exclude tashqari).
+   * Dispatch (buyurtmani eng yaqin haydovchiga taklif qilish) uchun.
+   */
+  async nearestDriverIds(
+    lat: number,
+    lng: number,
+    exclude: Set<string> = new Set(),
+  ): Promise<string[]> {
+    const since = new Date(Date.now() - ONLINE_MAX_AGE_SEC * 1000);
+    const recent = await this.repo.listSince(since);
+    const origin = { text: '', lat, lng };
+    return recent
+      .filter((d) => !exclude.has(d.driverId))
+      .map((d) => ({
+        id: d.driverId,
+        dist: haversineKm(origin, { text: '', lat: d.lat, lng: d.lng }),
+      }))
+      .filter((d) => d.dist <= NEARBY_RADIUS_KM)
+      .sort((a, b) => a.dist - b.dist)
+      .map((d) => d.id);
+  }
+
   /** Nuqta atrofidagi online haydovchilar (anonim), masofa bo'yicha tartiblangan. */
   async nearby(lat: number, lng: number): Promise<NearbyDriver[]> {
     const since = new Date(Date.now() - ONLINE_MAX_AGE_SEC * 1000);

@@ -1,9 +1,19 @@
-import { Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { combineEarnings } from '../common/earnings';
 import { ReportPeriod } from '../common/reporting';
 import { ParcelService } from '../parcel/parcel.service';
 import { TaxiService } from '../taxi/taxi.service';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
+import { DispatchService } from './dispatch.service';
 import { OrdersService } from './orders.service';
 
 /**
@@ -18,7 +28,59 @@ export class CourierController {
     private readonly orders: OrdersService,
     private readonly taxi: TaxiService,
     private readonly parcel: ParcelService,
+    private readonly dispatch: DispatchService,
   ) {}
+
+  /** Menga hozir taklif qilingan buyurtma (yoki null). */
+  @Get('offer')
+  async offer(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.dispatch.getOfferFor(user.sub) };
+  }
+
+  /** Taklifni qabul qilish. */
+  @Post('offer/:id/accept')
+  @HttpCode(200)
+  async acceptOffer(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+  ) {
+    if (!this.dispatch.canAccept(user.sub, id)) {
+      throw new BadRequestException('Buyurtma endi mavjud emas');
+    }
+    const order = await this.orders.acceptDelivery(id, user.sub);
+    return { success: true, data: order };
+  }
+
+  /** Taklifni o'tkazib yuborish (keyingi haydovchiga). */
+  @Post('offer/:id/skip')
+  @HttpCode(200)
+  async skipOffer(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+  ) {
+    await this.dispatch.skip(user.sub, id);
+    return { success: true, data: { ok: true } };
+  }
+
+  /** Qabul qilinmagan (pool) buyurtmalar — hammaga. */
+  @Get('pool')
+  async pool() {
+    return { success: true, data: this.dispatch.pool() };
+  }
+
+  /** Pool'dan buyurtma olish. */
+  @Post('pool/:id/accept')
+  @HttpCode(200)
+  async acceptPool(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+  ) {
+    if (!this.dispatch.canAccept(user.sub, id)) {
+      throw new BadRequestException('Buyurtma endi mavjud emas');
+    }
+    const order = await this.orders.acceptDelivery(id, user.sub);
+    return { success: true, data: order };
+  }
 
   /** Yetkazishga tayyor (READY), hali biriktirilmagan buyurtmalar. */
   @Get('available')

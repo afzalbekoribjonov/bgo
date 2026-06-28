@@ -5,8 +5,10 @@ import { NotificationClientModule } from '../notification-client/notification-cl
 import { ParcelModule } from '../parcel/parcel.module';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
 import { TaxiModule } from '../taxi/taxi.module';
+import { TrackingModule } from '../tracking/tracking.module';
 import { AdminController } from './admin.controller';
 import { CourierController } from './courier.controller';
+import { DispatchService } from './dispatch.service';
 import { KitchenController } from './kitchen.controller';
 import { OrderRepository } from './order.repository';
 import { OrdersController } from './orders.controller';
@@ -21,6 +23,7 @@ import { PromoService } from '../promo/promo.service';
     TaxiModule,
     ParcelModule,
     NotificationClientModule,
+    TrackingModule,
   ],
   controllers: [
     OrdersController,
@@ -30,6 +33,7 @@ import { PromoService } from '../promo/promo.service';
   ],
   providers: [
     OrdersService,
+    DispatchService,
     RestaurantClient,
     TariffService,
     PromoService,

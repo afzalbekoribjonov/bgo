@@ -2,8 +2,10 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { DispatchService } from './dispatch.service';
 import { NotificationClient } from '../notification-client/notification.client';
 import { PromoService } from '../promo/promo.service';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
@@ -67,7 +69,10 @@ export class OrdersService {
     private readonly taxi: TaxiService,
     private readonly parcel: ParcelService,
     private readonly notifications: NotificationClient,
+    private readonly dispatch: DispatchService,
   ) {}
+
+  private readonly logger = new Logger(OrdersService.name);
 
   /** Mijozga buyurtma holati o'zgargani haqida push (best-effort). */
   private notifyOrderStatus(order: Order): Promise<void> {
@@ -191,8 +196,32 @@ export class OrdersService {
     return this.transition(id, ['ACCEPTED'], 'PREPARING');
   }
 
-  markReady(id: string) {
-    return this.transition(id, ['ACCEPTED', 'PREPARING'], 'READY');
+  async markReady(id: string) {
+    const order = await this.transition(id, ['ACCEPTED', 'PREPARING'], 'READY');
+    // Eng yaqin online haydovchiga taklif qilamiz (best-effort).
+    this.offerToDrivers(order).catch((e) =>
+      this.logger.warn(`Dispatch taklif xatosi: ${(e as Error).message}`),
+    );
+    return order;
+  }
+
+  /** Ovqat buyurtmasini eng yaqin haydovchiga taklif qiladi (oshxona = pickup). */
+  private async offerToDrivers(order: Order): Promise<void> {
+    const dir = await this.restaurant.getRestaurantDirectory();
+    const r = dir.get(order.restaurantId);
+    if (!r) return;
+    await this.dispatch.offer({
+      orderId: order.id,
+      vertical: 'food',
+      pickupLat: r.lat,
+      pickupLng: r.lng,
+      pickupName: r.name,
+      dropoffLat: order.address.lat ?? null,
+      dropoffLng: order.address.lng ?? null,
+      dropoffText: order.address.text,
+      amount: order.total,
+      earning: order.courierEarning,
+    });
   }
 
   rejectByRestaurant(id: string) {
@@ -433,6 +462,7 @@ export class OrdersService {
       throw new BadRequestException('Buyurtma allaqachon haydovchiga biriktirilgan');
     }
     const updated = await this.repo.assignDriver(id, driverId);
+    this.dispatch.clear(id); // dispatchdan olib tashlaymiz
     await this.notifyOrderStatus(updated);
     return updated;
   }
