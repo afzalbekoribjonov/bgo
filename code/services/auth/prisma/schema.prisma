@@ -74,6 +74,36 @@ model TelegramLink {
   @@map("telegram_links")
 }
 
+/**
+ * Haydovchi profili — admin qo'shadi (ro'yxatdan o'tishsiz), haydovchi 8 xonali
+ * kod bilan kiradi. Hamma narsa telefon raqami orqali bog'lanadi.
+ * plan/06-driver-app.md
+ */
+model DriverProfile {
+  id       String  @id @default(uuid())
+  userId   String  @unique // auth User bilan bog'lanish
+  phone    String  @unique // login + barcha ma'lumotni bog'lovchi
+  fullName String // FISH
+  age      Int?
+
+  // Avtomobil ma'lumotlari
+  carName     String? // nomi/modeli
+  carYear     Int?
+  plateNumber String? // davlat raqami (tех pasport)
+  licenseInfo String? // haydovchilik guvohnomasi ma'lumotlari
+
+  // Login (admin beradi) + holat
+  loginCode String // 8 xonali kod
+  isActive  Boolean @default(true) // admin bloklashi mumkin
+  isOnline  Boolean @default(false) // Liniyaga chiqish / Ishni yakunlash
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("driver_profiles")
+}
+
 /** Hamkorlik arizasi (oshxona/haydovchi). plan/08-admin-workspace.md */
 model PartnerApplication {
   id        String        @id @default(uuid())
