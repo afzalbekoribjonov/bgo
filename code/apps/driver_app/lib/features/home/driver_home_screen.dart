@@ -100,7 +100,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   void _onMoonTap(bool online) {
     if (online) {
       setState(() => _showOfflineSlider = true);
-      _sheet.animateTo(0.42,
+      _sheet.animateTo(0.30,
           duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
     }
   }
@@ -150,8 +150,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           ),
           Positioned(top: top + 84, left: 18, child: _SpeedBadge(_fix?.speedKmh ?? 0)),
           Positioned(top: top + 10, right: 16, child: _avatar()),
-          Positioned(right: 18, bottom: h * 0.30, child: _recenter()),
-          _bottomSheet(online, available),
+          Positioned(right: 18, bottom: h * 0.32, child: _recenter()),
+          _bottomSheet(online),
         ],
       ),
     );
@@ -178,6 +178,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             setState(() => _zoom = camera.zoom);
           }
         },
+        onTap: (_, __) => _toggleSheet(),
       ),
       children: [
         TileLayer(
@@ -304,16 +305,25 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   // ---------------- Tortiluvchi panel ----------------
 
-  Widget _bottomSheet(bool online, int available) {
+  void _toggleSheet() {
+    final size = _sheet.isAttached ? _sheet.size : 0.30;
+    _sheet.animateTo(
+      size > 0.20 ? 0.10 : 0.30,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Widget _bottomSheet(bool online) {
     final scheme = Theme.of(context).colorScheme;
     final showSlider = !online || _showOfflineSlider;
     return DraggableScrollableSheet(
       controller: _sheet,
-      initialChildSize: 0.27,
-      minChildSize: 0.27,
-      maxChildSize: 0.62,
+      initialChildSize: 0.30,
+      minChildSize: 0.10,
+      maxChildSize: 0.55,
       snap: true,
-      snapSizes: const [0.27, 0.62],
+      snapSizes: const [0.10, 0.30, 0.55],
       builder: (ctx, scrollCtrl) {
         return Container(
           decoration: BoxDecoration(
@@ -327,19 +337,25 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           ),
           child: ListView(
             controller: scrollCtrl,
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             children: [
-              Center(
+              // Tortuvchi/bosiluvchi grabber
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _toggleSheet,
                 child: Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: scheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(3),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    width: 46,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: scheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(child: _walletCard(online)),
@@ -347,8 +363,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   Expanded(child: _todayCard()),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (showSlider)
+              if (showSlider) ...[
+                const SizedBox(height: 16),
                 SlideToConfirm(
                   key: ValueKey('slider_$online'),
                   reverse: online,
@@ -359,35 +375,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       : Icons.arrow_forward_rounded,
                   fillColor: online ? const Color(0xFFC62828) : _gold,
                   onConfirmed: () => _setOnline(!online),
-                )
-              else
-                _waitingArea(available),
+                ),
+              ],
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _waitingArea(int available) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 26),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          const _PulseDot(),
-          const SizedBox(height: 12),
-          Text(
-            available > 0 ? '$available ta yangi buyurtma' : 'Buyurtmalar shu yerda chiqadi',
-            style: TextStyle(
-                fontWeight: FontWeight.w700, color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 4),
-          Text('Liniyadan chiqish uchun yuqoridagi tugmani bosing',
-              style: TextStyle(fontSize: 12, color: scheme.outline)),
-        ],
-      ),
     );
   }
 
@@ -485,11 +478,14 @@ class _PremiumCard extends StatelessWidget {
                             color: color,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 3),
-                    Text(value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 16.5, fontWeight: FontWeight.w800)),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(value,
+                          maxLines: 1,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w800)),
+                    ),
                   ],
                 ),
               ),
@@ -675,53 +671,3 @@ class _SpeedBadge extends StatelessWidget {
   }
 }
 
-// ================= Pulslovchi nuqta =================
-
-class _PulseDot extends StatefulWidget {
-  const _PulseDot();
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, __) {
-        final t = _c.value;
-        return SizedBox(
-          width: 44,
-          height: 44,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 20 + t * 24,
-                height: 20 + t * 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _gold.withValues(alpha: (1 - t) * 0.4),
-                ),
-              ),
-              Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(color: _gold, shape: BoxShape.circle),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
