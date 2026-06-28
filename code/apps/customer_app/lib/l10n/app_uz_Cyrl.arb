@@ -53,6 +53,8 @@
   "foodPromoTitle": "Бепул етказиб бериш",
   "foodPromoSubtitle": "Танланган ошхоналардан биринчи буюртмага",
   "foodSectionRestaurants": "Ошхоналар",
+  "restaurantsMapTitle": "Ошхоналар харитаси",
+  "restaurantsMapEmpty": "Жойлашуви белгиланган ошхона йўқ",
   "foodNothingFound": "Ҳеч нарса топилмади",
   "greetingHi": "Салом",
   "homeLocation": "Бешариқ тумани",

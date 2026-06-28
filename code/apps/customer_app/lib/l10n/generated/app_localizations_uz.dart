@@ -157,6 +157,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get foodSectionRestaurants => 'Oshxonalar';
 
   @override
+  String get restaurantsMapTitle => 'Oshxonalar xaritasi';
+
+  @override
+  String get restaurantsMapEmpty => 'Joylashuvi belgilangan oshxona yo\'q';
+
+  @override
   String get foodNothingFound => 'Hech narsa topilmadi';
 
   @override
@@ -773,6 +779,12 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get foodSectionRestaurants => 'Ошхоналар';
+
+  @override
+  String get restaurantsMapTitle => 'Ошхоналар харитаси';
+
+  @override
+  String get restaurantsMapEmpty => 'Жойлашуви белгиланган ошхона йўқ';
 
   @override
   String get foodNothingFound => 'Ҳеч нарса топилмади';

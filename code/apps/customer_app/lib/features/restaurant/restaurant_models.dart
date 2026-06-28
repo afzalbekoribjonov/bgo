@@ -8,14 +8,23 @@ class RestaurantSummary {
   final double rating;
   final String? logoUrl;
 
+  /// Xaritadagi joylashuvi (admin belgilaydi). 0 bo'lsa — hali belgilanmagan.
+  final double lat;
+  final double lng;
+
   const RestaurantSummary({
     required this.id,
     required this.name,
     required this.address,
     required this.isOpen,
     required this.rating,
+    this.lat = 0,
+    this.lng = 0,
     this.logoUrl,
   });
+
+  /// Xaritada ko'rsatish mumkinmi (joylashuv belgilangan).
+  bool get hasLocation => lat != 0 && lng != 0;
 
   factory RestaurantSummary.fromJson(Map<String, dynamic> json) {
     return RestaurantSummary(
@@ -24,6 +33,8 @@ class RestaurantSummary {
       address: (json['address'] as String?) ?? '',
       isOpen: (json['isOpen'] as bool?) ?? false,
       rating: ((json['rating'] as num?) ?? 0).toDouble(),
+      lat: ((json['lat'] as num?) ?? 0).toDouble(),
+      lng: ((json['lng'] as num?) ?? 0).toDouble(),
       logoUrl: json['logoUrl'] as String?,
     );
   }

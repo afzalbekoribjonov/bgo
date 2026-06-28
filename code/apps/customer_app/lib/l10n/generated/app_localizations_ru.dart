@@ -157,6 +157,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get foodSectionRestaurants => 'Рестораны';
 
   @override
+  String get restaurantsMapTitle => 'Карта ресторанов';
+
+  @override
+  String get restaurantsMapEmpty => 'Нет ресторанов с указанным расположением';
+
+  @override
   String get foodNothingFound => 'Ничего не найдено';
 
   @override

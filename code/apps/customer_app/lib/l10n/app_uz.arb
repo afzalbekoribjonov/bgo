@@ -62,6 +62,8 @@
   "foodPromoTitle": "Bepul yetkazib berish",
   "foodPromoSubtitle": "Tanlangan oshxonalardan birinchi buyurtmaga",
   "foodSectionRestaurants": "Oshxonalar",
+  "restaurantsMapTitle": "Oshxonalar xaritasi",
+  "restaurantsMapEmpty": "Joylashuvi belgilangan oshxona yo'q",
   "foodNothingFound": "Hech narsa topilmadi",
   "greetingHi": "Salom",
   "homeLocation": "Beshariq tumani",

@@ -384,6 +384,18 @@ abstract class AppLocalizations {
   /// **'Oshxonalar'**
   String get foodSectionRestaurants;
 
+  /// No description provided for @restaurantsMapTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oshxonalar xaritasi'**
+  String get restaurantsMapTitle;
+
+  /// No description provided for @restaurantsMapEmpty.
+  ///
+  /// In uz, this message translates to:
+  /// **'Joylashuvi belgilangan oshxona yo\'q'**
+  String get restaurantsMapEmpty;
+
   /// No description provided for @foodNothingFound.
   ///
   /// In uz, this message translates to:

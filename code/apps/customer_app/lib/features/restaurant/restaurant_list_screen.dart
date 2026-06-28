@@ -6,6 +6,7 @@ import '../../widgets/async_error.dart';
 import 'restaurant_api.dart';
 import 'restaurant_card.dart';
 import 'restaurant_models.dart';
+import 'restaurants_map_screen.dart';
 
 enum _FoodFilter { all, open, top }
 
@@ -52,7 +53,20 @@ class _RestaurantListScreenState extends ConsumerState<RestaurantListScreen> {
     final async = ref.watch(restaurantsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.serviceFood)),
+      appBar: AppBar(
+        title: Text(t.serviceFood),
+        actions: [
+          IconButton(
+            tooltip: t.restaurantsMapTitle,
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const RestaurantsMapScreen(),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => AsyncErrorRetry(

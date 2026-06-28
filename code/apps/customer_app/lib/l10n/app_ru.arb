@@ -53,6 +53,8 @@
   "foodPromoTitle": "Бесплатная доставка",
   "foodPromoSubtitle": "На первый заказ из выбранных ресторанов",
   "foodSectionRestaurants": "Рестораны",
+  "restaurantsMapTitle": "Карта ресторанов",
+  "restaurantsMapEmpty": "Нет ресторанов с указанным расположением",
   "foodNothingFound": "Ничего не найдено",
   "greetingHi": "Привет",
   "homeLocation": "Бешарикский район",
