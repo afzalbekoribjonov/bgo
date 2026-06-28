@@ -36,6 +36,10 @@ export class PrismaTaxiMessageRepository extends TaxiMessageRepository {
     return this.toMessage(created as Row);
   }
 
+  async deleteByTrip(tripId: string): Promise<void> {
+    await this.prisma.taxiMessage.deleteMany({ where: { tripId } });
+  }
+
   private toMessage(m: Row): TaxiMessage {
     return {
       id: m.id as string,

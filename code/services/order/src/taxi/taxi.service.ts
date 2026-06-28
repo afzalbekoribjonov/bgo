@@ -210,7 +210,9 @@ export class TaxiService {
     if (!['PENDING', 'ACCEPTED'].includes(trip.status)) {
       throw new BadRequestException('Safarni bu bosqichda bekor qilib bo\'lmaydi');
     }
-    return this.repo.updateStatus(id, 'CANCELLED');
+    const cancelled = await this.repo.updateStatus(id, 'CANCELLED');
+    await this.messages.deleteByTrip(id).catch(() => undefined);
+    return cancelled;
   }
 
   // ---------- Haydovchi ----------
@@ -339,6 +341,8 @@ export class TaxiService {
       `Safar yakunlandi. To'lov: ${fare} so'm`,
       { type: 'taxi', id: updated.id, status: 'COMPLETED' },
     );
+    // Safar yakunlandi — suhbat saqlanib qolmaydi.
+    await this.messages.deleteByTrip(id).catch(() => undefined);
     return updated;
   }
 
