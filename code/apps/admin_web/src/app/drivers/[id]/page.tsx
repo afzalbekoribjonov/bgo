@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  formatSom,
   getDriver,
   regenerateDriverCode,
+  topupDriver,
   updateDriver,
 } from '@/lib/api';
 import type { AdminDriver } from '@/lib/types';
@@ -96,6 +98,24 @@ export default function DriverDetailPage() {
     }
   }
 
+  async function topup() {
+    const raw = window.prompt('Hisobni qancha summaga to‘ldirasiz? (so‘m)', '50000');
+    if (!raw) return;
+    const amount = parseInt(raw.replace(/[^0-9]/g, ''), 10);
+    if (!amount || amount < 1000) {
+      window.alert('Summa kamida 1000 so‘m bo‘lishi kerak');
+      return;
+    }
+    const note = window.prompt('Izoh (ixtiyoriy):', 'Office to‘ldirish') ?? undefined;
+    try {
+      const x = await topupDriver(id, amount, note || undefined);
+      setD(x);
+      window.alert(`Hisob to‘ldirildi. Yangi balans: ${formatSom(x.balance)}`);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -156,6 +176,36 @@ export default function DriverDetailPage() {
         </div>
         <button className="btn ghost" onClick={regenerate}>
           ↻ Kodni qayta yaratish
+        </button>
+      </div>
+
+      {/* Hisob balansi */}
+      <div
+        className="card"
+        style={{
+          marginBottom: 16,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 10,
+        }}
+      >
+        <div>
+          <div className="muted" style={{ fontSize: 13 }}>
+            Hisob balansi (komissiya shu balansdan olinadi)
+          </div>
+          <strong
+            style={{
+              fontSize: 28,
+              color: d.balance > 0 ? 'var(--green)' : 'var(--red)',
+            }}
+          >
+            {formatSom(d.balance)}
+          </strong>
+        </div>
+        <button className="btn" onClick={topup}>
+          + Hisobni to‘ldirish
         </button>
       </div>
 

@@ -10,6 +10,7 @@ class DriverProfile {
   final String? licenseInfo;
   final bool isActive;
   final bool isOnline;
+  final int balance;
 
   const DriverProfile({
     required this.id,
@@ -22,6 +23,7 @@ class DriverProfile {
     this.carYear,
     this.plateNumber,
     this.licenseInfo,
+    this.balance = 0,
   });
 
   /// Avatar uchun ism bosh harfi.
@@ -42,6 +44,7 @@ class DriverProfile {
       licenseInfo: json['licenseInfo'] as String?,
       isActive: (json['isActive'] as bool?) ?? true,
       isOnline: (json['isOnline'] as bool?) ?? false,
+      balance: (json['balance'] as num?)?.toInt() ?? 0,
     );
   }
 }

@@ -169,6 +169,7 @@ export interface AdminDriver {
   loginCode: string;
   isActive: boolean;
   isOnline: boolean;
+  balance: number;
   createdAt: string;
   updatedAt: string;
 }

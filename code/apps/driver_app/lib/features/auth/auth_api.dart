@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import 'auth_user.dart';
+import 'driver_balance.dart';
 import 'driver_profile.dart';
 
 class AuthApi {
@@ -60,6 +61,12 @@ class AuthApi {
     return DriverProfile.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
+  /// Hisob balansi + to'ldirish tarixi (Hisobim).
+  Future<DriverBalance> balance() async {
+    final res = await _dio.get('/auth/driver/balance');
+    return DriverBalance.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
   /// Telefon + 8 xonali kod bilan kirish (uzoq muddatli token).
   Future<({AuthUser user, String access, String refresh})> driverLogin(
     String phone,
@@ -83,4 +90,9 @@ final authApiProvider = Provider<AuthApi>((ref) => AuthApi(ref.read(dioProvider)
 /// Joriy haydovchi profili (profil/sozlamalar uchun).
 final driverProfileProvider = FutureProvider<DriverProfile>(
   (ref) => ref.read(authApiProvider).driverProfile(),
+);
+
+/// Hisob balansi + tarix (Hisobim).
+final driverBalanceProvider = FutureProvider<DriverBalance>(
+  (ref) => ref.read(authApiProvider).balance(),
 );

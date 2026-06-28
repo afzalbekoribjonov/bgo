@@ -11,6 +11,37 @@ final LatLngBounds beshariqBounds = LatLngBounds(
   const LatLng(40.58, 70.86),
 );
 
+/// Haydovchining joriy joylashuvi + yo'nalishi (heading) + tezligi.
+class DriverFix {
+  final LatLng pos;
+  final double heading; // gradus (0 = shimol)
+  final double speedKmh; // km/soat
+  const DriverFix(this.pos, this.heading, this.speedKmh);
+}
+
+/// Joriy GPS o'qishi (joylashuv + heading + tezlik). Yo'q bo'lsa null.
+Future<DriverFix?> driverCurrentFix() async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return null;
+    var perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
+      return null;
+    }
+    final p = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+    final kmh = (p.speed.isNaN || p.speed < 0 ? 0.0 : p.speed) * 3.6;
+    final heading = p.heading.isNaN ? 0.0 : p.heading;
+    return DriverFix(LatLng(p.latitude, p.longitude), heading, kmh);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Haydovchining joriy GPS joylashuvi (yo'q bo'lsa null).
 Future<LatLng?> driverCurrentLatLng() async {
   try {

@@ -59,12 +59,14 @@ class EarningsPart {
   final int count;
   final int earning;
   final int todayEarning;
+  final int todayCount;
   final int activeCount;
 
   const EarningsPart({
     required this.count,
     required this.earning,
     required this.todayEarning,
+    required this.todayCount,
     required this.activeCount,
   });
 
@@ -74,6 +76,7 @@ class EarningsPart {
       count: (j['count'] as num?)?.toInt() ?? 0,
       earning: (j['earning'] as num?)?.toInt() ?? 0,
       todayEarning: (j['todayEarning'] as num?)?.toInt() ?? 0,
+      todayCount: (j['todayCount'] as num?)?.toInt() ?? 0,
       activeCount: (j['activeCount'] as num?)?.toInt() ?? 0,
     );
   }

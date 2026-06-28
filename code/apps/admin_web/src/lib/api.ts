@@ -104,6 +104,12 @@ export const regenerateDriverCode = (id: string) =>
   api<AdminDriver>(`/auth/admin/drivers/${id}/regenerate-code`, {
     method: 'POST',
   });
+export const topupDriver = (id: string, amount: number, note?: string) =>
+  api<AdminDriver>(`/auth/admin/drivers/${id}/topup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, note }),
+  });
 export const getPromos = () => api<PromoCode[]>('/admin/promos');
 export const createPromo = (body: {
   code: string;
