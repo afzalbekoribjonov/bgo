@@ -9,7 +9,6 @@ import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/async_error.dart';
 import '../../widgets/language_button.dart';
-import '../auth/auth_controller.dart';
 import '../nav/driver_nav_screen.dart';
 import '../parcel/parcel_api.dart';
 import '../parcel/parcel_models.dart';
@@ -126,11 +125,6 @@ class _DeliveryBoardScreenState extends ConsumerState<DeliveryBoardScreen> {
               onChanged: (v) => ref.read(onlineProvider.notifier).state = v,
             ),
             const LanguageButton(),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: t.logout,
-              onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-            ),
           ],
           bottom: TabBar(
             isScrollable: true,

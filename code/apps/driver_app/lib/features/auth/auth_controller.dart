@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import 'auth_api.dart';
@@ -12,8 +15,12 @@ class AuthState {
   const AuthState(this.status, [this.user]);
 }
 
-/// Haydovchi autentifikatsiyasi (rozilik bosqichisiz — haydovchi alohida tekshiriladi).
+/// Haydovchi autentifikatsiyasi — admin qo'shgan, 8 xonali kod bilan kiradi.
+/// Sessiya ilova o'chirilmaguncha saqlanadi (logout yo'q, kesh + uzoq token).
 class AuthController extends Notifier<AuthState> {
+  static const _userKey = 'driver_user';
+  final _secure = const FlutterSecureStorage();
+
   @override
   AuthState build() => const AuthState(AuthStatus.unknown);
 
@@ -21,39 +28,66 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> bootstrap() async {
     final storage = ref.read(tokenStorageProvider);
-    try {
-      final token = await storage.readAccess();
-      if (token == null) {
-        state = const AuthState(AuthStatus.unauthenticated);
-        return;
-      }
-      final user = await _api.me();
-      state = AuthState(AuthStatus.authenticated, user);
-    } catch (_) {
-      try {
-        await storage.clear();
-      } catch (_) {
-        // e'tiborsiz
-      }
+    final token = await storage.readAccess();
+    if (token == null) {
       state = const AuthState(AuthStatus.unauthenticated);
+      return;
+    }
+    // Keshlangan foydalanuvchi bo'lsa — darhol kiritamiz (oflayn ham ishlaydi).
+    final cached = await _readCachedUser();
+    if (cached != null) state = AuthState(AuthStatus.authenticated, cached);
+
+    try {
+      final user = await _api.me();
+      await _cacheUser(user);
+      state = AuthState(AuthStatus.authenticated, user);
+    } catch (e) {
+      // Faqat token yaroqsiz bo'lsa chiqaramiz; tarmoq xatosida sessiya qoladi.
+      final code = httpStatus(e);
+      if (code == 401 || code == 403) {
+        await _fullClear();
+        state = const AuthState(AuthStatus.unauthenticated);
+      } else if (cached == null) {
+        // Token bor, lekin profil ham, tarmoq ham yo'q — keyingi ochilishda qayta.
+        state = const AuthState(AuthStatus.unauthenticated);
+      }
+      // aks holda: keshdagi 'authenticated' holatda qolamiz
     }
   }
 
-  Future<String?> requestOtp(String phone) => _api.requestOtp(phone);
+  /// Raqam admin qo'shgan haydovchimi? (kod inputini ochishdan oldin)
+  Future<bool> checkDriver(String phone) => _api.driverCheck(phone);
 
-  Future<void> verifyOtp(String phone, String code) async {
-    final result = await _api.verifyOtp(phone, code);
+  /// Telefon + 8 xonali kod bilan kirish.
+  Future<void> driverLogin(String phone, String code) async {
+    final result = await _api.driverLogin(phone, code);
     await ref
         .read(tokenStorageProvider)
         .saveTokens(access: result.access, refresh: result.refresh);
+    await _cacheUser(result.user);
     state = AuthState(AuthStatus.authenticated, result.user);
   }
 
-  Future<void> logout() async {
-    // Tokenni serverdan o'chiramiz (token hali yaroqli) — best-effort.
-    await ref.read(pushServiceProvider).unregister();
-    await ref.read(tokenStorageProvider).clear();
-    state = const AuthState(AuthStatus.unauthenticated);
+  Future<void> _cacheUser(AuthUser user) =>
+      _secure.write(key: _userKey, value: jsonEncode(user.toJson()));
+
+  Future<AuthUser?> _readCachedUser() async {
+    try {
+      final raw = await _secure.read(key: _userKey);
+      if (raw == null) return null;
+      return AuthUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _fullClear() async {
+    try {
+      await ref.read(tokenStorageProvider).clear();
+    } catch (_) {}
+    try {
+      await _secure.delete(key: _userKey);
+    } catch (_) {}
   }
 }
 

@@ -7,7 +7,8 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/language_button.dart';
 import 'auth_controller.dart';
 
-/// Haydovchi kirishi: telefon -> OTP.
+/// Haydovchi kirishi: telefon -> administrator bergan 8 xonali kod.
+/// Ro'yxatdan o'tish yo'q — haydovchi admin tomonidan qo'shiladi.
 class LoginFlow extends ConsumerStatefulWidget {
   const LoginFlow({super.key});
 
@@ -19,10 +20,9 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
   final _phoneCtrl = TextEditingController(text: '+998');
   final _codeCtrl = TextEditingController();
 
-  bool _otpStep = false;
+  bool _codeStep = false;
   bool _loading = false;
   String? _error;
-  String? _devCode;
   String _phone = '';
 
   static final _phoneRegex = RegExp(r'^\+998\d{9}$');
@@ -34,7 +34,8 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
     super.dispose();
   }
 
-  Future<void> _sendCode() async {
+  /// 1-bosqich: raqamni tekshirish (bizning haydovchimi?).
+  Future<void> _continue() async {
     final t = AppLocalizations.of(context)!;
     final phone = _phoneCtrl.text.trim();
     if (!_phoneRegex.hasMatch(phone)) {
@@ -46,28 +47,40 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
       _error = null;
     });
     try {
-      final code =
-          await ref.read(authControllerProvider.notifier).requestOtp(phone);
+      final exists =
+          await ref.read(authControllerProvider.notifier).checkDriver(phone);
       if (!mounted) return;
+      if (!exists) {
+        setState(() {
+          _loading = false;
+          _error =
+              'Siz bizning haydovchimiz emassiz. Iltimos, administrator bilan bog‘laning.';
+        });
+        return;
+      }
       setState(() {
         _phone = phone;
-        _devCode = code;
-        _otpStep = true;
+        _codeStep = true;
         _loading = false;
+        _codeCtrl.clear();
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = isNetworkError(e)
-            ? t.errorNetwork
-            : (httpStatus(e) == 400 ? t.errorInvalidPhone : t.errorGeneric);
+        _error = isNetworkError(e) ? t.errorNetwork : t.errorGeneric;
       });
     }
   }
 
-  Future<void> _verify() async {
+  /// 2-bosqich: 8 xonali kod bilan kirish.
+  Future<void> _login() async {
     final t = AppLocalizations.of(context)!;
+    final code = _codeCtrl.text.trim();
+    if (code.length != 8) {
+      setState(() => _error = "Kod 8 xonali bo‘lishi kerak");
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -75,14 +88,17 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .verifyOtp(_phone, _codeCtrl.text.trim());
+          .driverLogin(_phone, code);
+      // muvaffaqiyatli — AuthGate avtomatik bosh ekranga o'tkazadi
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _error = isNetworkError(e)
             ? t.errorNetwork
-            : (httpStatus(e) == 400 ? t.errorInvalidCode : t.errorGeneric);
+            : (httpStatus(e) == 401
+                ? "Kod noto‘g‘ri. Administratordan tekshiring."
+                : t.errorGeneric);
       });
     }
   }
@@ -98,7 +114,7 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: _otpStep ? _buildOtpStep(t) : _buildPhoneStep(t),
+          child: _codeStep ? _buildCodeStep(t) : _buildPhoneStep(t),
         ),
       ),
     );
@@ -109,9 +125,17 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        Text(t.loginTitle, style: Theme.of(context).textTheme.headlineSmall),
+        const Icon(Icons.local_taxi, size: 56),
+        const SizedBox(height: 16),
+        Text('Haydovchi kirishi',
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center),
         const SizedBox(height: 8),
-        Text(t.loginSubtitle, style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          'Administrator ro‘yxatga olgan telefon raqamingizni kiriting.',
+          style: Theme.of(context).textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 24),
         TextField(
           controller: _phoneCtrl,
@@ -129,62 +153,62 @@ class _LoginFlowState extends ConsumerState<LoginFlow> {
         if (_error != null) _ErrorText(_error!),
         const SizedBox(height: 24),
         FilledButton(
-          onPressed: _loading ? null : _sendCode,
-          child: _loading ? const _Spinner() : Text(t.sendCode),
+          onPressed: _loading ? null : _continue,
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+          child: _loading ? const _Spinner() : const Text('Davom etish'),
         ),
       ],
     );
   }
 
-  Widget _buildOtpStep(AppLocalizations t) {
+  Widget _buildCodeStep(AppLocalizations t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        Text(t.otpTitle, style: Theme.of(context).textTheme.headlineSmall),
+        const Icon(Icons.password, size: 56),
+        const SizedBox(height: 16),
+        Text('Kirish kodi',
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center),
         const SizedBox(height: 8),
-        Text(t.otpSubtitle(_phone), style: Theme.of(context).textTheme.bodyMedium),
-        if (_devCode != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(t.devCodeHint(_devCode!)),
-          ),
-        ],
+        Text(
+          'Administrator bergan 8 xonali kodni kiriting.\n$_phone',
+          style: Theme.of(context).textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 24),
         TextField(
           controller: _codeCtrl,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
+          autofocus: true,
           style: const TextStyle(fontSize: 24, letterSpacing: 8),
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(6),
+            LengthLimitingTextInputFormatter(8),
           ],
-          decoration: InputDecoration(
-            labelText: t.otpLabel,
-            border: const OutlineInputBorder(),
+          decoration: const InputDecoration(
+            counterText: '',
+            hintText: '••••••••',
+            border: OutlineInputBorder(),
           ),
         ),
         if (_error != null) _ErrorText(_error!),
         const SizedBox(height: 24),
         FilledButton(
-          onPressed: _loading ? null : _verify,
-          child: _loading ? const _Spinner() : Text(t.verify),
+          onPressed: _loading ? null : _login,
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+          child: _loading ? const _Spinner() : const Text('Kirish'),
         ),
         TextButton(
           onPressed: _loading
               ? null
               : () => setState(() {
-                    _otpStep = false;
+                    _codeStep = false;
                     _error = null;
-                    _codeCtrl.clear();
                   }),
-          child: Text(t.resendCode),
+          child: const Text('← Raqamni o‘zgartirish'),
         ),
       ],
     );

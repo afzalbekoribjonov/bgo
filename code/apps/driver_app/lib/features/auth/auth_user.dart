@@ -22,4 +22,11 @@ class AuthUser {
           .toList(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'phone': phone,
+        'locale': locale,
+        'roles': roles,
+      };
 }
