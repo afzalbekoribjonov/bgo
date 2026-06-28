@@ -15,16 +15,17 @@ import '../../core/nav_support.dart';
 import '../../widgets/slide_to_confirm.dart';
 import '../auth/auth_api.dart';
 import '../delivery/delivery_api.dart';
-import '../parcel/parcel_api.dart';
+import '../orders/offer_api.dart';
+import '../orders/pool_screen.dart';
 import '../profile/driver_profile_screen.dart';
 import '../stats/today_screen.dart';
-import '../taxi/taxi_api.dart';
 import 'balance_screen.dart';
 
 const _gold = Color(0xFFD4AF37);
 const _offlineNav = Color(0xFF263238);
 
-/// Haydovchi bosh ekrani — xarita + navigator belgisi + tortiluvchi panel.
+/// Haydovchi bosh ekrani — xarita + navigator + tortiluvchi panel +
+/// yangi buyurtma (taklif) oqimi. plan/06-driver-app.md
 class DriverHomeScreen extends ConsumerStatefulWidget {
   const DriverHomeScreen({super.key});
 
@@ -38,10 +39,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   DriverFix? _fix;
   double _zoom = 16;
   Timer? _gpsTimer;
-  Timer? _pollTimer;
-  int _lastAvailable = 0;
-  bool _silenced = false;
+  Timer? _offerTimer;
+  Timer? _tick;
   bool _showOfflineSlider = false;
+
+  // Buyurtma taklifi
+  DriverOffer? _offer;
+  int _offerLeft = 0;
+  List<LatLng> _route = const [];
+  bool _showNotTaken = false;
+  bool _accepting = false;
 
   @override
   void initState() {
@@ -49,18 +56,20 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     _initOnline();
     _refreshGps();
     _gpsTimer = Timer.periodic(const Duration(seconds: 3), (_) => _refreshGps());
-    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) {
-      if (!mounted || !ref.read(onlineProvider)) return;
-      ref.invalidate(availableOrdersProvider);
-      ref.invalidate(availableTaxiProvider);
-      ref.invalidate(availableParcelsProvider);
+    _offerTimer =
+        Timer.periodic(const Duration(seconds: 2), (_) => _pollOffer());
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_offer != null && mounted) {
+        setState(() => _offerLeft = (_offerLeft - 1).clamp(0, 60));
+      }
     });
   }
 
   @override
   void dispose() {
     _gpsTimer?.cancel();
-    _pollTimer?.cancel();
+    _offerTimer?.cancel();
+    _tick?.cancel();
     ref.read(alertSoundProvider).stop();
     _sheet.dispose();
     _map.dispose();
@@ -81,10 +90,107 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     _map.move(fix.pos, _zoom < 11 ? 16 : _zoom);
   }
 
+  // ---------------- Taklif oqimi ----------------
+
+  Future<void> _pollOffer() async {
+    if (!mounted || !ref.read(onlineProvider) || _accepting) return;
+    try {
+      final offer = await ref.read(offerApiProvider).current();
+      if (!mounted) return;
+      if (offer != null) {
+        final isNew = _offer?.orderId != offer.orderId;
+        setState(() {
+          _offer = offer;
+          _offerLeft = offer.secondsLeft;
+        });
+        if (isNew) {
+          _alertOn();
+          _loadRoute(offer);
+        }
+      } else if (_offer != null) {
+        // Taklif yo'qoldi (qabul qilinmadi / boshqaga o'tdi)
+        _clearOffer(notTaken: true);
+      }
+      ref.invalidate(poolProvider);
+    } catch (_) {/* tarmoq — jim */}
+  }
+
+  void _alertOn() {
+    if (ref.read(soundEnabledProvider)) ref.read(alertSoundProvider).start();
+    HapticFeedback.heavyImpact();
+    Future.delayed(const Duration(milliseconds: 400), HapticFeedback.heavyImpact);
+  }
+
+  Future<void> _loadRoute(DriverOffer offer) async {
+    final me = _fix?.pos;
+    if (me == null) return;
+    final dir =
+        await ref.read(driverRoutingServiceProvider).directions(me, offer.pickup);
+    if (!mounted || _offer?.orderId != offer.orderId) return;
+    setState(() => _route = dir?.points ?? [me, offer.pickup]);
+  }
+
+  void _clearOffer({bool notTaken = false}) {
+    ref.read(alertSoundProvider).stop();
+    setState(() {
+      _offer = null;
+      _route = const [];
+      _offerLeft = 0;
+    });
+    if (notTaken) {
+      setState(() => _showNotTaken = true);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _showNotTaken = false);
+      });
+    }
+  }
+
+  Future<void> _skipOffer() async {
+    final o = _offer;
+    if (o == null) return;
+    _clearOffer();
+    try {
+      await ref.read(offerApiProvider).skip(o.orderId);
+    } catch (_) {}
+  }
+
+  Future<void> _acceptOffer() async {
+    final o = _offer;
+    if (o == null || _accepting) return;
+    setState(() => _accepting = true);
+    ref.read(alertSoundProvider).stop();
+    try {
+      await ref.read(offerApiProvider).accept(o.orderId);
+      if (!mounted) return;
+      setState(() {
+        _offer = null;
+        _route = const [];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Buyurtma qabul qilindi')),
+      );
+      // Keyingi bosqich (yo'l/yetkazish) — alohida.
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isNetworkError(e) ? 'Tarmoq xatosi' : 'Buyurtma endi mavjud emas')),
+        );
+        _clearOffer();
+      }
+    } finally {
+      if (mounted) setState(() => _accepting = false);
+    }
+  }
+
+  // ---------------- Online ----------------
+
   Future<void> _setOnline(bool value) async {
     ref.read(onlineProvider.notifier).state = value;
     _showOfflineSlider = false;
-    if (!value) ref.read(alertSoundProvider).stop();
+    if (!value) {
+      ref.read(alertSoundProvider).stop();
+      _clearOffer();
+    }
     HapticFeedback.mediumImpact();
     try {
       await ref.read(authApiProvider).setOnline(value);
@@ -98,60 +204,50 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 
   void _onMoonTap(bool online) {
-    if (online) {
+    if (online && _offer == null) {
       setState(() => _showOfflineSlider = true);
       _sheet.animateTo(0.30,
           duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
     }
   }
 
-  void _updateAlert(int available, bool online) {
-    final alert = ref.read(alertSoundProvider);
-    if (!online || available == 0) {
-      _silenced = false;
-      _lastAvailable = available;
-      if (alert.isPlaying) alert.stop();
-      return;
-    }
-    if (available > _lastAvailable) {
-      _silenced = false;
-      HapticFeedback.heavyImpact();
-      Future.delayed(const Duration(milliseconds: 350), HapticFeedback.heavyImpact);
-    }
-    _lastAvailable = available;
-    final soundOn = ref.read(soundEnabledProvider);
-    if (_silenced || !soundOn) {
-      if (alert.isPlaying) alert.stop();
-    } else {
-      if (!alert.isPlaying) alert.start();
-    }
+  void _toggleSheet() {
+    final size = _sheet.isAttached ? _sheet.size : 0.30;
+    _sheet.animateTo(size > 0.20 ? 0.10 : 0.30,
+        duration: const Duration(milliseconds: 260), curve: Curves.easeOut);
   }
 
   @override
   Widget build(BuildContext context) {
     final online = ref.watch(onlineProvider);
-    final available = (ref.watch(availableOrdersProvider).value?.length ?? 0) +
-        (ref.watch(availableTaxiProvider).value?.length ?? 0) +
-        (ref.watch(availableParcelsProvider).value?.length ?? 0);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _updateAlert(available, online);
-    });
     final top = MediaQuery.of(context).padding.top;
-    final h = MediaQuery.of(context).size.height;
+    final hasOffer = _offer != null;
 
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(child: _mapWidget(online)),
+          // Indikatorlar
           Positioned(
-            top: top + 10,
+            top: top + (hasOffer ? 74 : 10),
             left: 16,
             child: _StatusMoon(online: online, onTap: () => _onMoonTap(online)),
           ),
-          Positioned(top: top + 84, left: 18, child: _SpeedBadge(_fix?.speedKmh ?? 0)),
+          Positioned(
+            top: top + (hasOffer ? 142 : 84),
+            left: 18,
+            child: _SpeedBadge(_fix?.speedKmh ?? 0),
+          ),
           Positioned(top: top + 10, right: 16, child: _avatar()),
-          Positioned(right: 18, bottom: h * 0.32, child: _recenter()),
-          _bottomSheet(online),
+          Positioned(top: top + 72, right: 20, child: _poolBadge()),
+          Positioned(right: 18, bottom: hasOffer ? 200 : MediaQuery.of(context).size.height * 0.32, child: _recenter()),
+          // Yangi buyurtma banneri (yuqorida)
+          if (hasOffer)
+            Positioned(top: 0, left: 0, right: 0, child: _orderBanner(top)),
+          // Pastki panel yoki qabul paneli
+          if (hasOffer) _acceptPanel() else _bottomSheet(online),
+          // "Buyurtma olinmadi"
+          if (_showNotTaken) _notTakenOverlay(),
         ],
       ),
     );
@@ -186,7 +282,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           userAgentPackageName: 'com.beshariq.driver_app',
           maxZoom: 19,
         ),
-        if (roads.isNotEmpty && _zoom >= 13)
+        if (roads.isNotEmpty && _zoom >= 13 && _offer == null)
           PolylineLayer(
             polylines: [
               for (final r in roads)
@@ -200,8 +296,30 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                 ),
             ],
           ),
-        if (places.isNotEmpty && _zoom >= 14)
+        // Yangi buyurtma marshruti (yashil)
+        if (_route.length >= 2)
+          PolylineLayer(polylines: [
+            Polyline(
+              points: _route,
+              strokeWidth: 6,
+              color: const Color(0xFF2E7D32),
+              borderStrokeWidth: 2,
+              borderColor: Colors.white,
+            ),
+          ]),
+        if (places.isNotEmpty && _zoom >= 14 && _offer == null)
           MarkerLayer(markers: [for (final p in places) _placeMarker(p)]),
+        // Olib ketish nuqtasi — bayroq
+        if (_offer != null)
+          MarkerLayer(markers: [
+            Marker(
+              point: _offer!.pickup,
+              width: 40,
+              height: 44,
+              alignment: Alignment.topCenter,
+              child: const Icon(Icons.flag_rounded, color: Color(0xFF2E7D32), size: 38, shadows: [Shadow(color: Colors.black45, blurRadius: 4)]),
+            ),
+          ]),
         if (_fix != null)
           MarkerLayer(markers: [_driverMarker(_fix!, online)]),
       ],
@@ -246,9 +364,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF455A64))),
+                      fontSize: 8.5, fontWeight: FontWeight.w600, color: Color(0xFF455A64))),
             ),
           ],
         ),
@@ -277,9 +393,45 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         ),
         child: Center(
           child: Text(initial,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
         ),
+      ),
+    );
+  }
+
+  Widget _poolBadge() {
+    final count = ref.watch(poolProvider).valueOrNull?.length ?? 0;
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const PoolScreen()),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+            ),
+            child: const Icon(Icons.list_alt_rounded, color: _offlineNav, size: 24),
+          ),
+          if (count > 0)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                decoration: const BoxDecoration(color: Color(0xFFD32F2F), shape: BoxShape.circle),
+                child: Text('$count',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -295,24 +447,168 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           if (_fix != null) _map.move(_fix!.pos, 16.5);
         },
         child: const SizedBox(
-          width: 54,
-          height: 54,
+          width: 54, height: 54,
           child: Icon(Icons.my_location_rounded, color: _offlineNav, size: 27),
         ),
       ),
     );
   }
 
-  // ---------------- Tortiluvchi panel ----------------
+  // ---------------- Yangi buyurtma banneri ----------------
 
-  void _toggleSheet() {
-    final size = _sheet.isAttached ? _sheet.size : 0.30;
-    _sheet.animateTo(
-      size > 0.20 ? 0.10 : 0.30,
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOut,
+  Widget _orderBanner(double topPad) {
+    final progress = (_offerLeft / 20).clamp(0.0, 1.0);
+    return GestureDetector(
+      onTap: _skipOffer,
+      child: Container(
+        height: topPad + 60,
+        color: const Color(0xFFC62828), // qizil asos
+        child: Stack(
+          children: [
+            // Yashil — o'ngdan kamayadi (vaqt o'tishi bilan)
+            FractionallySizedBox(
+              widthFactor: progress,
+              alignment: Alignment.centerLeft,
+              child: Container(color: const Color(0xFF2E7D32)),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topPad + 8, left: 18, right: 18),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Yangi buyurtma',
+                            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                        Text("O'tkazib yuborish uchun bosing",
+                            style: TextStyle(color: Colors.white70, fontSize: 10.5)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text('$_offerLeft',
+                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
+  // ---------------- Qabul paneli ----------------
+
+  Widget _acceptPanel() {
+    final o = _offer!;
+    final scheme = Theme.of(context).colorScheme;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 16)],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(child: _infoChip(Icons.route_rounded, 'Masofa', '${o.distanceKm.toStringAsFixed(1)} km', const Color(0xFF1565C0))),
+                const SizedBox(width: 12),
+                Expanded(child: _infoChip(Icons.payments_rounded, 'Narx', groupThousands(o.amount), const Color(0xFF2E7D32))),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('${o.pickupName} · ulush +${groupThousands(o.earning)} so‘m',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: scheme.outline, fontSize: 12.5)),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: _accepting ? null : _acceptOffer,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(60),
+                backgroundColor: const Color(0xFF2E7D32),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              child: _accepting
+                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
+                  : const Text('Buyurtmani olish'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String title, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _notTakenOverlay() {
+    return IgnorePointer(
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.white),
+              SizedBox(width: 10),
+              Text('Buyurtma olinmadi',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------- Pastki panel (taklif yo'q payti) ----------------
 
   Widget _bottomSheet(bool online) {
     final scheme = Theme.of(context).colorScheme;
@@ -339,7 +635,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             controller: scrollCtrl,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             children: [
-              // Tortuvchi/bosiluvchi grabber
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _toggleSheet,
@@ -347,8 +642,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Container(
-                    width: 46,
-                    height: 5,
+                    width: 46, height: 5,
                     decoration: BoxDecoration(
                       color: scheme.outlineVariant,
                       borderRadius: BorderRadius.circular(3),
@@ -358,7 +652,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ),
               Row(
                 children: [
-                  Expanded(child: _walletCard(online)),
+                  Expanded(child: _walletCard()),
                   const SizedBox(width: 12),
                   Expanded(child: _todayCard()),
                 ],
@@ -370,9 +664,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   reverse: online,
                   glow: !online,
                   label: online ? 'Ishni yakunlash' : 'Liniyaga chiqish',
-                  icon: online
-                      ? Icons.arrow_back_rounded
-                      : Icons.arrow_forward_rounded,
+                  icon: online ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
                   fillColor: online ? const Color(0xFFC62828) : _gold,
                   onConfirmed: () => _setOnline(!online),
                 ),
@@ -384,7 +676,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     );
   }
 
-  Widget _walletCard(bool online) {
+  Widget _walletCard() {
     final balance = ref.watch(driverProfileProvider).valueOrNull?.balance ?? 0;
     return _PremiumCard(
       icon: Icons.account_balance_wallet_rounded,
@@ -398,8 +690,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   }
 
   Widget _todayCard() {
-    final todayCount =
-        ref.watch(earningsProvider).valueOrNull?.total.todayCount ?? 0;
+    final todayCount = ref.watch(earningsProvider).valueOrNull?.total.todayCount ?? 0;
     return _PremiumCard(
       icon: Icons.insights_rounded,
       color: const Color(0xFF1565C0),
@@ -446,24 +737,17 @@ class _PremiumCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: color.withValues(alpha: 0.22)),
             boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
+              BoxShadow(color: color.withValues(alpha: 0.12), blurRadius: 10, offset: const Offset(0, 4)),
             ],
           ),
           child: Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 42, height: 42,
                 decoration: BoxDecoration(
                   color: color,
                   borderRadius: BorderRadius.circular(13),
-                  boxShadow: [
-                    BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8),
-                  ],
+                  boxShadow: [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8)],
                 ),
                 child: Icon(icon, color: Colors.white, size: 23),
               ),
@@ -472,19 +756,12 @@ class _PremiumCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: TextStyle(
-                            fontSize: 12.5,
-                            color: color,
-                            fontWeight: FontWeight.w700)),
+                    Text(title, style: TextStyle(fontSize: 12.5, color: color, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 3),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text(value,
-                          maxLines: 1,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w800)),
+                      child: Text(value, maxLines: 1, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
@@ -497,7 +774,7 @@ class _PremiumCard extends StatelessWidget {
   }
 }
 
-// ================= Status oy (online/offline) =================
+// ================= Status oy =================
 
 class _StatusMoon extends StatelessWidget {
   final bool online;
@@ -509,28 +786,22 @@ class _StatusMoon extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 62,
-        height: 62,
+        width: 62, height: 62,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           boxShadow: [
-            if (online)
-              BoxShadow(color: _gold.withValues(alpha: 0.65), blurRadius: 20, spreadRadius: 2),
+            if (online) BoxShadow(color: _gold.withValues(alpha: 0.65), blurRadius: 20, spreadRadius: 2),
             const BoxShadow(color: Colors.black38, blurRadius: 6),
           ],
         ),
         child: ClipOval(
-          child: CustomPaint(
-            size: const Size.square(62),
-            painter: _MoonPainter(online),
-          ),
+          child: CustomPaint(size: const Size.square(62), painter: _MoonPainter(online)),
         ),
       ),
     );
   }
 }
 
-/// Oy yuzasi — kraterlar + yorug'lik aksi. Online=tillo (porlaydi), offline=kulrang.
 class _MoonPainter extends CustomPainter {
   final bool online;
   _MoonPainter(this.online);
@@ -542,12 +813,9 @@ class _MoonPainter extends CustomPainter {
     final base = online ? const Color(0xFFD4AF37) : const Color(0xFF9AA3A8);
     final light = online ? const Color(0xFFF4D469) : const Color(0xFFBCC3C7);
     final dark = online ? const Color(0xFFA8842A) : const Color(0xFF7E888E);
-
-    // Asos — radial gradient (yuqori-chapdan yorug')
     final rect = Rect.fromCircle(center: c, radius: r);
     canvas.drawCircle(
-      c,
-      r,
+      c, r,
       Paint()
         ..shader = RadialGradient(
           center: const Alignment(-0.4, -0.5),
@@ -555,8 +823,6 @@ class _MoonPainter extends CustomPainter {
           stops: const [0.0, 0.55, 1.0],
         ).createShader(rect),
     );
-
-    // Kraterlar
     final crater = Paint()..color = dark.withValues(alpha: 0.65);
     final craters = <(Offset, double)>[
       (Offset(r * 0.75, r * 0.7), r * 0.2),
@@ -567,19 +833,11 @@ class _MoonPainter extends CustomPainter {
     ];
     for (final (o, rad) in craters) {
       canvas.drawCircle(o, rad, crater);
-      canvas.drawCircle(
-        o.translate(-rad * 0.25, -rad * 0.25),
-        rad * 0.7,
-        Paint()..color = light.withValues(alpha: 0.25),
-      );
+      canvas.drawCircle(o.translate(-rad * 0.25, -rad * 0.25), rad * 0.7,
+          Paint()..color = light.withValues(alpha: 0.25));
     }
-
-    // Yorug'lik aksi (glossy highlight)
-    canvas.drawCircle(
-      Offset(r * 0.6, r * 0.55),
-      r * 0.35,
-      Paint()..color = Colors.white.withValues(alpha: online ? 0.28 : 0.18),
-    );
+    canvas.drawCircle(Offset(r * 0.6, r * 0.55), r * 0.35,
+        Paint()..color = Colors.white.withValues(alpha: online ? 0.28 : 0.18));
   }
 
   @override
@@ -597,26 +855,20 @@ class _NavPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final cx = w / 2;
-
-    // Yumshoq nur (glow)
     if (glow) {
       canvas.drawCircle(
-        Offset(cx, h * 0.55),
-        w * 0.4,
+        Offset(cx, h * 0.55), w * 0.4,
         Paint()
           ..color = color.withValues(alpha: 0.25)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       );
     }
-
-    // Strelka (uchli navigator)
     final path = ui.Path()
       ..moveTo(cx, h * 0.12)
       ..lineTo(w * 0.82, h * 0.82)
       ..lineTo(cx, h * 0.66)
       ..lineTo(w * 0.18, h * 0.82)
       ..close();
-
     canvas.drawPath(
       path,
       Paint()
@@ -649,25 +901,21 @@ class _SpeedBadge extends StatelessWidget {
     final over = speedKmh > 70;
     final color = over ? const Color(0xFFD32F2F) : _offlineNav;
     return Container(
-      width: 50,
-      height: 50,
+      width: 50, height: 50,
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(
-            color: over ? const Color(0xFFD32F2F) : Colors.transparent, width: 3),
+        border: Border.all(color: over ? const Color(0xFFD32F2F) : Colors.transparent, width: 3),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('${speedKmh.round()}',
-              style: TextStyle(
-                  fontSize: 17, fontWeight: FontWeight.w900, color: color, height: 1)),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color, height: 1)),
           Text('km/s', style: TextStyle(fontSize: 8, color: color)),
         ],
       ),
     );
   }
 }
-

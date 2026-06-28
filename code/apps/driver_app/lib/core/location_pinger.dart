@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../features/delivery/delivery_api.dart';
 
 /// Haydovchi joylashuvini backendga yuboruvchi API.
 /// Mijoz ilovasi shu joylashuvni jonli kuzatadi (taksi/dostavka).
@@ -45,6 +46,7 @@ class _LocationPingerState extends ConsumerState<LocationPinger>
     with WidgetsBindingObserver {
   Timer? _timer;
   bool _askedPermission = false;
+  bool _wasOnline = false;
 
   @override
   void initState() {
@@ -75,6 +77,16 @@ class _LocationPingerState extends ConsumerState<LocationPinger>
   }
 
   Future<void> _pingOnce() async {
+    // Faqat liniyaga chiqqan (online) haydovchi joylashuvini yuboradi —
+    // dispatch faqat haqiqiy online haydovchilarga buyurtma taklif qiladi.
+    if (!ref.read(onlineProvider)) {
+      if (_wasOnline) {
+        _wasOnline = false;
+        await ref.read(driverLocationApiProvider).offline();
+      }
+      return;
+    }
+    _wasOnline = true;
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return;
       final perm = await Geolocator.checkPermission();
