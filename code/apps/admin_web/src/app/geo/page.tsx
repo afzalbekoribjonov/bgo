@@ -12,6 +12,7 @@ import {
   getGeoAreas,
   getGeoRoads,
   importOsmRoads,
+  importOsmPlaces,
   updateGeoArea,
 } from '@/lib/api';
 import {
@@ -366,6 +367,28 @@ function MapEditor({
     }
   }
 
+  async function runImportOsmPlaces() {
+    if (
+      !window.confirm(
+        "OSM'dan nomli joylar (qishloq/mahalla...) import qilinadi. Mavjudlari saqlanadi, faqat yangilari qo'shiladi. Davom etasizmi?",
+      )
+    )
+      return;
+    setImporting(true);
+    setError(null);
+    try {
+      const res = await importOsmPlaces();
+      await onChanged();
+      window.alert(
+        `${res.imported} ta joy qo'shildi (${res.skipped} ta mavjud edi)`,
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setImporting(false);
+    }
+  }
+
   const grouped = useMemo(() => {
     const g: Record<RoadKind, MapRoad[]> = { center: [], main: [], street: [] };
     for (const r of roads) (g[r.kind] ?? g.street).push(r);
@@ -401,6 +424,9 @@ function MapEditor({
         <div style={{ flex: 1 }} />
         <button className="btn ghost" onClick={runImportOsm} disabled={importing}>
           {importing ? 'Import qilinmoqda…' : '⤓ OSM yo‘llarini import'}
+        </button>
+        <button className="btn ghost" onClick={runImportOsmPlaces} disabled={importing}>
+          {importing ? 'Import qilinmoqda…' : '⤓ OSM joylarini import'}
         </button>
       </div>
 

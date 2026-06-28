@@ -82,4 +82,11 @@ export class AdminGeoController {
   async importOsm() {
     return { success: true, data: await this.geo.importOsmRoads() };
   }
+
+  /** Nomli joylarni (qishloq/mahalla...) OSM'dan import — dublikatsiz qo'shadi. */
+  @Post('import-osm-places')
+  @HttpCode(200)
+  async importOsmPlaces() {
+    return { success: true, data: await this.geo.importOsmPlaces() };
+  }
 }

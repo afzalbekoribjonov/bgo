@@ -26,6 +26,14 @@ interface OverpassWay {
   tags?: { highway?: string; name?: string; ref?: string };
 }
 
+/** Overpass API javobidagi nuqta (node) elementi — nomli joy. */
+interface OverpassNode {
+  type: string;
+  lat?: number;
+  lon?: number;
+  tags?: { name?: string; place?: string };
+}
+
 /**
  * Xizmat hududlari (tumanlar) + nomli joylar. Admin boshqaradi, kengaytiriladi.
  * plan/12-maps-navigation.md
@@ -157,6 +165,90 @@ export class GeoService {
     const imported = await this.repo.createManyRoads(roads);
     this.logger.log(`OSM yo'llari import qilindi: ${imported}`);
     return { imported };
+  }
+
+  /**
+   * Beshariq tumanidagi nomli joylarni (qishloq/mahalla/shaharcha...) OSM'dan
+   * import qiladi — xaritada ko'proq nom ko'rinadi. Yo'llardan farqli o'laroq,
+   * joylar admin tomonidan ham qo'shiladi: shuning uchun BARCHASINI O'CHIRMAYMIZ,
+   * faqat nomi bo'yicha hali yo'q joylarni qo'shamiz (dublikatsiz, idempotent).
+   */
+  async importOsmPlaces(): Promise<{ imported: number; skipped: number }> {
+    const areas = await this.repo.listAreas(false);
+    if (areas.length === 0) {
+      throw new BadRequestException('Avval xizmat hududi yarating');
+    }
+    const areaId = areas[0].id;
+
+    // Mavjud joy nomlari (admin/seed) — dublikatdan saqlanish uchun.
+    const existing = new Set<string>();
+    for (const a of areas) {
+      for (const p of a.places ?? []) {
+        existing.add(p.label.trim().toLowerCase());
+      }
+    }
+
+    const bbox = '40.36,70.52,40.52,70.74';
+    const types = 'city|town|village|hamlet|suburb|neighbourhood|quarter|locality';
+    const query =
+      `[out:json][timeout:90];node["place"~"^(${types})$"]["name"](${bbox});out;`;
+
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
+        'User-Agent': 'BeshariqSuperApp/1.0 (orifjonov0916@gmail.com)',
+      },
+      body: 'data=' + encodeURIComponent(query),
+    });
+    if (!res.ok) {
+      throw new BadRequestException(`Overpass xatosi: ${res.status}`);
+    }
+    const json = (await res.json()) as { elements?: OverpassNode[] };
+    const elements = json.elements ?? [];
+
+    // Yangi joylar admin/seed dan keyin tursin (sortOrder katta).
+    let order = 1000;
+    let imported = 0;
+    let skipped = 0;
+    for (const el of elements) {
+      if (
+        el.type !== 'node' ||
+        typeof el.lat !== 'number' ||
+        typeof el.lon !== 'number'
+      ) {
+        continue;
+      }
+      const name = el.tags?.name?.trim();
+      if (!name) continue;
+      if (existing.has(name.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+      const place = el.tags?.place ?? '';
+      // Mahalla-tipidagilar 'mahalla', yirikroq aholi punktlari 'landmark'.
+      const category = ['suburb', 'neighbourhood', 'quarter', 'hamlet'].includes(
+        place,
+      )
+        ? 'mahalla'
+        : 'landmark';
+      await this.repo.createPlace({
+        areaId,
+        label: name,
+        lat: el.lat,
+        lng: el.lon,
+        category,
+        sortOrder: order++,
+      });
+      existing.add(name.toLowerCase());
+      imported++;
+    }
+
+    this.logger.log(
+      `OSM joylari import qilindi: ${imported} (o'tkazib yuborildi: ${skipped})`,
+    );
+    return { imported, skipped };
   }
 
   private async requireArea(id: string) {
