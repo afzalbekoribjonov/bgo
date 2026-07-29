@@ -73,4 +73,35 @@ export class DriverAuthController {
       data: await this.drivers.setOnline(user.phone, dto.isOnline),
     };
   }
+
+  /** Menga kelgan xabarlar (admin yuborgan; broadcast + shaxsiy). */
+  @Get('messages')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  async messages(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.drivers.myMessages(user.sub) };
+  }
+
+  /** O'qilmagan xabarlar soni (qo'ng'iroqcha badge). */
+  @Get('messages/unread-count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  async unreadCount(@CurrentUser() user: AccessTokenPayload) {
+    return {
+      success: true,
+      data: await this.drivers.unreadMessagesCount(user.sub),
+    };
+  }
+
+  /** Xabarlar ekrani ochildi — hammasini o'qilgan deb belgilash. */
+  @Post('messages/read')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  async markRead(@CurrentUser() user: AccessTokenPayload) {
+    return {
+      success: true,
+      data: await this.drivers.markMessagesRead(user.sub),
+    };
+  }
 }

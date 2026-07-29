@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { InternalKeyGuard } from '../notifications/internal-key.guard';
+import { InternalUsersController } from './internal-users.controller';
 import { PrismaUserRepository } from './prisma-user.repository';
 import { UserRepository } from './user.repository';
 
@@ -8,7 +11,12 @@ import { UserRepository } from './user.repository';
  * Dev/test uchun in-memory variant ham bor: ./in-memory-user.repository.ts
  */
 @Module({
-  providers: [{ provide: UserRepository, useClass: PrismaUserRepository }],
+  imports: [NotificationsModule],
+  controllers: [InternalUsersController],
+  providers: [
+    { provide: UserRepository, useClass: PrismaUserRepository },
+    InternalKeyGuard,
+  ],
   exports: [UserRepository],
 })
 export class UsersModule {}

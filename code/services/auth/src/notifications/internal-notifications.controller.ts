@@ -27,6 +27,7 @@ export class InternalNotificationsController {
       title: dto.title,
       body: dto.body,
       data: dto.data,
+      android: dto.android,
     });
     return { success: true, data: result };
   }

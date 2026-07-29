@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -89,6 +90,17 @@ export class UpdateDriverDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Comfort tarifi — faqat admin yoqadi/o'chiradi. */
+  @IsOptional()
+  @IsBoolean()
+  isComfort?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  rating?: number;
 }
 
 /** Haydovchi ilovasi: raqam haydovchimi? */
@@ -123,4 +135,35 @@ export class TopupDto {
   @IsString()
   @MaxLength(120)
   note?: string;
+}
+
+/** Admin: haydovchini ma'lum muddatga bloklash. */
+export class BlockDriverDto {
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  reason!: string;
+
+  /** Necha daqiqaga (masalan 1440 = 1 kun). */
+  @IsInt()
+  @Min(5)
+  @Max(43200) // 30 kun
+  minutes!: number;
+}
+
+/** Admin: haydovchi(lar)ga xabar yuborish. driverUserId yo'q = hammaga. */
+export class SendDriverMessageDto {
+  @IsOptional()
+  @IsString()
+  driverUserId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  title?: string;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(2000)
+  body!: string;
 }

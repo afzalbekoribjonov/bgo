@@ -19,7 +19,17 @@ model User {
   consentPrivacy    Boolean   @default(false)
   consentVersion    String?
   consentAcceptedAt DateTime?
-  createdAt         DateTime  @default(now())
+
+  // Admin bloklashi (masalan haydovchidan shikoyat asosida) — bloklangan
+  // foydalanuvchi OTP orqali kira olmaydi (aniq sabab bilan rad etiladi).
+  isBlocked     Boolean   @default(false)
+  blockedReason String?
+  blockedAt     DateTime?
+
+  // Admin xabarlari (CustomerMessage) oxirgi o'qilgan payt — badge uchun.
+  messagesReadAt DateTime?
+
+  createdAt DateTime @default(now())
 
   @@map("users")
 }
@@ -94,11 +104,30 @@ model DriverProfile {
 
   // Login (admin beradi) + holat
   loginCode String // 8 xonali kod
-  isActive  Boolean @default(true) // admin bloklashi mumkin
+  isActive  Boolean @default(true) // admin butunlay o'chirishi mumkin (doimiy)
   isOnline  Boolean @default(false) // Liniyaga chiqish / Ishni yakunlash
+  isComfort Boolean @default(false) // Comfort tarifi (faqat admin yoqadi)
+
+  // Vaqtinchalik bloklash (masalan ketma-ket bekor qilishlar uchun) — isActive'dan
+  // farqli, muddati tugagach o'zi tugaydi. blockedUntil o'tmishda/null bo'lsa
+  // bloklanmagan hisoblanadi. Darhol blokdan chiqarish uchun admin blockedUntil'ni
+  // null qiladi (masalan haydovchi ofisga kelib jarima to'lagach).
+  blockedUntil DateTime?
+  blockReason  String?
+
+  // Ketma-ket (uzluksiz) bekor qilingan buyurtmalar soni — har muvaffaqiyatli
+  // yakunlangan buyurtmada 0'ga tushadi. services/order har cancel/complete
+  // hodisasida internal endpoint orqali yangilaydi (Shubhali haydovchilar).
+  consecutiveCancellations Int @default(0)
 
   // Hisob (komissiya shu balansdan olinadi — haydovchida pul bo'lishi shart)
   balance Int @default(0)
+
+  // Reyting (admin yoki mijoz bahosi asosida — 0-5)
+  rating Float @default(0)
+
+  // Xabarlar oxirgi o'qilgan payt (badge: shundan keyingilar "yangi")
+  messagesReadAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -107,12 +136,47 @@ model DriverProfile {
   @@map("driver_profiles")
 }
 
+/**
+ * Admin → haydovchi xabari. driverUserId null bo'lsa — barcha haydovchilarga
+ * (broadcast). Haydovchi javob yozolmaydi (faqat o'qish).
+ */
+model DriverMessage {
+  id           String   @id @default(uuid())
+  driverUserId String? // null = hammaga
+  title        String?
+  body         String
+  createdAt    DateTime @default(now())
+
+  @@index([driverUserId, createdAt])
+  @@map("driver_messages")
+}
+
+/**
+ * Admin → mijoz xabari. customerId null bo'lsa — barcha mijozlarga
+ * (broadcast). Mijoz javob yozolmaydi (faqat o'qish). DriverMessage bilan
+ * bir xil naqsh.
+ */
+model CustomerMessage {
+  id         String   @id @default(uuid())
+  customerId String? // null = hammaga
+  title      String?
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([customerId, createdAt])
+  @@map("customer_messages")
+}
+
 /** Haydovchi hisobini to'ldirish tarixi (admin/office to'ldiradi). */
 model DriverTopup {
   id        String   @id @default(uuid())
   driverId  String // DriverProfile.id
   amount    Int
   note      String?
+  // false = haydovchiga ko'rsatilmaydi (masalan bekor qilish jarimasi mijoz
+  // aybi bilan bo'lganda sezdirmasdan qaytariladigan tuzatish). Balans darhol
+  // to'g'ri bo'ladi, faqat bu qatorlar tarixda ko'rinmaydi.
+  visible   Boolean  @default(true)
   createdAt DateTime @default(now())
 
   @@index([driverId])
@@ -134,4 +198,29 @@ model PartnerApplication {
   @@index([userId])
   @@index([status])
   @@map("partner_applications")
+}
+
+/** Oshxona paneli login/parol kirishi (admin yaratadi). plan/07-restaurant-app.md */
+model KitchenCredential {
+  id           String   @id @default(uuid())
+  restaurantId String   @unique
+  username     String   @unique
+  passwordHash String // scrypt: salt:hash
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("kitchen_credentials")
+}
+
+/** Sotuvchi paneli login/parol kirishi (admin yaratadi) — Do'konlar/Qurilish. */
+model SellerCredential {
+  id           String   @id @default(uuid())
+  sellerId     String   @unique
+  username     String   @unique
+  passwordHash String // scrypt: salt:hash
+  sellerType   String // SHOP | CONSTRUCTION
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("seller_credentials")
 }

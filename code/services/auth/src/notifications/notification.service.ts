@@ -126,6 +126,37 @@ export class NotificationService {
     }
   }
 
+  /**
+   * FCM multicast xabarini quradi. dataOnly bo'lsa — 'notification' bloki yo'q
+   * (faqat data), ilova background handleri to'liq ekran signalni o'zi ko'rsatadi.
+   */
+  private buildMessage(
+    tokens: string[],
+    payload: NotificationPayload,
+  ): admin.messaging.MulticastMessage {
+    const a = payload.android;
+    if (a?.dataOnly) {
+      return {
+        tokens,
+        // title/body'ni ham data ichida yuboramiz — ilova o'zi ko'rsatadi.
+        data: { ...(payload.data ?? {}), title: payload.title, body: payload.body },
+        android: { priority: 'high' },
+      };
+    }
+    const message: admin.messaging.MulticastMessage = {
+      tokens,
+      notification: { title: payload.title, body: payload.body },
+      data: payload.data ?? {},
+    };
+    if (a?.priority || a?.channelId) {
+      message.android = {
+        priority: a.priority === 'normal' ? 'normal' : 'high',
+        ...(a.channelId ? { notification: { channelId: a.channelId } } : {}),
+      };
+    }
+    return message;
+  }
+
   private async sendPush(
     tokens: string[],
     payload: NotificationPayload,
@@ -140,11 +171,9 @@ export class NotificationService {
     if (!messaging) return { delivered: 0, channel: 'fcm' };
 
     try {
-      const res = await messaging.sendEachForMulticast({
-        tokens,
-        notification: { title: payload.title, body: payload.body },
-        data: payload.data ?? {},
-      });
+      const res = await messaging.sendEachForMulticast(
+        this.buildMessage(tokens, payload),
+      );
       // Eskirgan/yaroqsiz tokenlarni tozalaymiz
       res.responses.forEach((r, i) => {
         if (!r.success && r.error && STALE_TOKEN_ERRORS.has(r.error.code)) {

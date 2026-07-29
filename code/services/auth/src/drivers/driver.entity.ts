@@ -12,9 +12,35 @@ export interface DriverProfileEntity {
   loginCode: string;
   isActive: boolean;
   isOnline: boolean;
+  /** Comfort tarifi yoqilganmi (faqat admin boshqaradi). */
+  isComfort: boolean;
   balance: number;
+  rating: number;
+  /** Xabarlar oxirgi o'qilgan payt (null — hech qachon ochilmagan). */
+  messagesReadAt?: string | null;
+  /** Vaqtinchalik bloklash — o'tmishda/null bo'lsa bloklanmagan. */
+  blockedUntil?: string | null;
+  blockReason?: string | null;
+  /** Ketma-ket bekor qilingan buyurtmalar — muvaffaqiyatli yakunda 0'ga tushadi. */
+  consecutiveCancellations: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Admin → haydovchi xabari (driverUserId null = hammaga). */
+export interface DriverMessageEntity {
+  id: string;
+  driverUserId?: string | null;
+  title?: string | null;
+  body: string;
+  createdAt: string;
+}
+
+/** Yangi xabar (repo). */
+export interface NewDriverMessage {
+  driverUserId?: string | null;
+  title?: string | null;
+  body: string;
 }
 
 /** Hisob to'ldirish yozuvi. */
@@ -45,4 +71,10 @@ export type DriverProfilePatch = Partial<
 > & {
   isActive?: boolean;
   isOnline?: boolean;
+  isComfort?: boolean;
+  rating?: number;
+  /** `null` — blokdan darhol chiqarish. */
+  blockedUntil?: Date | null;
+  blockReason?: string | null;
+  consecutiveCancellations?: number;
 };

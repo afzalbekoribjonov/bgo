@@ -49,6 +49,29 @@ export class PrismaUserRepository extends UserRepository {
     return this.toEntity(user);
   }
 
+  async block(id: string, reason: string): Promise<UserEntity> {
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: { isBlocked: true, blockedReason: reason, blockedAt: new Date() },
+    });
+    return this.toEntity(user);
+  }
+
+  async unblock(id: string): Promise<UserEntity> {
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: { isBlocked: false, blockedReason: null, blockedAt: null },
+    });
+    return this.toEntity(user);
+  }
+
+  async markMessagesRead(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { messagesReadAt: new Date() },
+    });
+  }
+
   private toEntity(u: PrismaUser): UserEntity {
     return {
       id: u.id,
@@ -63,6 +86,10 @@ export class PrismaUserRepository extends UserRepository {
             acceptedAt: (u.consentAcceptedAt ?? new Date()).toISOString(),
           }
         : undefined,
+      isBlocked: u.isBlocked,
+      blockedReason: u.blockedReason,
+      blockedAt: u.blockedAt?.toISOString() ?? null,
+      messagesReadAt: u.messagesReadAt?.toISOString() ?? null,
       createdAt: u.createdAt.toISOString(),
     };
   }

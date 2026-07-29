@@ -26,4 +26,13 @@ export class SendNotificationDto {
   @IsOptional()
   @IsObject()
   data?: Record<string, string>;
+
+  /** Android yetkazish sozlamasi (yangi buyurtma — yuqori muhimlik, data-only). */
+  @IsOptional()
+  @IsObject()
+  android?: {
+    priority?: 'high' | 'normal';
+    channelId?: string;
+    dataOnly?: boolean;
+  };
 }

@@ -12,5 +12,9 @@ export interface UserEntity {
   locale: string;
   roles: string[];
   consent?: Consent;
+  isBlocked: boolean;
+  blockedReason?: string | null;
+  blockedAt?: string | null;
+  messagesReadAt?: string | null;
   createdAt: string;
 }

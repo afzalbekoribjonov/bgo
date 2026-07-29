@@ -5,9 +5,11 @@ import {
 } from '../../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  DriverMessageEntity,
   DriverProfileEntity,
   DriverProfilePatch,
   DriverTopupEntity,
+  NewDriverMessage,
   NewDriverProfile,
 } from './driver.entity';
 import { DriverRepository } from './driver.repository';
@@ -33,6 +35,11 @@ export class PrismaDriverRepository extends DriverRepository {
 
   async findByPhone(phone: string): Promise<DriverProfileEntity | null> {
     const row = await this.prisma.driverProfile.findUnique({ where: { phone } });
+    return row ? this.toEntity(row) : null;
+  }
+
+  async findByUserId(userId: string): Promise<DriverProfileEntity | null> {
+    const row = await this.prisma.driverProfile.findUnique({ where: { userId } });
     return row ? this.toEntity(row) : null;
   }
 
@@ -67,6 +74,13 @@ export class PrismaDriverRepository extends DriverRepository {
     if (patch.loginCode !== undefined) data.loginCode = patch.loginCode;
     if (patch.isActive !== undefined) data.isActive = patch.isActive;
     if (patch.isOnline !== undefined) data.isOnline = patch.isOnline;
+    if (patch.isComfort !== undefined) data.isComfort = patch.isComfort;
+    if (patch.rating !== undefined) data.rating = patch.rating;
+    if (patch.blockedUntil !== undefined) data.blockedUntil = patch.blockedUntil;
+    if (patch.blockReason !== undefined) data.blockReason = patch.blockReason;
+    if (patch.consecutiveCancellations !== undefined) {
+      data.consecutiveCancellations = patch.consecutiveCancellations;
+    }
     const row = await this.prisma.driverProfile.update({ where: { id }, data });
     return this.toEntity(row);
   }
@@ -79,10 +93,11 @@ export class PrismaDriverRepository extends DriverRepository {
     driverId: string,
     amount: number,
     note?: string,
+    visible = true,
   ): Promise<DriverProfileEntity> {
     const [, profile] = await this.prisma.$transaction([
       this.prisma.driverTopup.create({
-        data: { driverId, amount, note: note ?? null },
+        data: { driverId, amount, note: note ?? null, visible },
       }),
       this.prisma.driverProfile.update({
         where: { id: driverId },
@@ -94,7 +109,7 @@ export class PrismaDriverRepository extends DriverRepository {
 
   async listTopups(driverId: string): Promise<DriverTopupEntity[]> {
     const rows = await this.prisma.driverTopup.findMany({
-      where: { driverId },
+      where: { driverId, visible: true },
       orderBy: { createdAt: 'desc' },
     });
     return rows.map((r) => ({
@@ -104,6 +119,74 @@ export class PrismaDriverRepository extends DriverRepository {
       note: r.note,
       createdAt: r.createdAt.toISOString(),
     }));
+  }
+
+  // ---------- Xabarlar (admin → haydovchi) ----------
+
+  async createMessage(data: NewDriverMessage): Promise<DriverMessageEntity> {
+    const row = await this.prisma.driverMessage.create({
+      data: {
+        driverUserId: data.driverUserId ?? null,
+        title: data.title ?? null,
+        body: data.body,
+      },
+    });
+    return this.toMessage(row);
+  }
+
+  async listMessagesFor(
+    driverUserId: string,
+    limit: number,
+  ): Promise<DriverMessageEntity[]> {
+    const rows = await this.prisma.driverMessage.findMany({
+      where: { OR: [{ driverUserId: null }, { driverUserId }] },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return rows.map((r) => this.toMessage(r));
+  }
+
+  async listAllMessages(limit: number): Promise<DriverMessageEntity[]> {
+    const rows = await this.prisma.driverMessage.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return rows.map((r) => this.toMessage(r));
+  }
+
+  async countMessagesSince(
+    driverUserId: string,
+    since: Date | null,
+  ): Promise<number> {
+    return this.prisma.driverMessage.count({
+      where: {
+        OR: [{ driverUserId: null }, { driverUserId }],
+        ...(since ? { createdAt: { gt: since } } : {}),
+      },
+    });
+  }
+
+  async markMessagesRead(profileId: string): Promise<void> {
+    await this.prisma.driverProfile.update({
+      where: { id: profileId },
+      data: { messagesReadAt: new Date() },
+    });
+  }
+
+  private toMessage(m: {
+    id: string;
+    driverUserId: string | null;
+    title: string | null;
+    body: string;
+    createdAt: Date;
+  }): DriverMessageEntity {
+    return {
+      id: m.id,
+      driverUserId: m.driverUserId,
+      title: m.title,
+      body: m.body,
+      createdAt: m.createdAt.toISOString(),
+    };
   }
 
   private toEntity(d: PrismaDriver): DriverProfileEntity {
@@ -120,7 +203,13 @@ export class PrismaDriverRepository extends DriverRepository {
       loginCode: d.loginCode,
       isActive: d.isActive,
       isOnline: d.isOnline,
+      isComfort: d.isComfort,
       balance: d.balance,
+      rating: d.rating,
+      messagesReadAt: d.messagesReadAt?.toISOString() ?? null,
+      blockedUntil: d.blockedUntil?.toISOString() ?? null,
+      blockReason: d.blockReason,
+      consecutiveCancellations: d.consecutiveCancellations,
       createdAt: d.createdAt.toISOString(),
       updatedAt: d.updatedAt.toISOString(),
     };

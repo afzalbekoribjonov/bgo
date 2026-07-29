@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -77,6 +78,14 @@ export class AuthService {
       user = await this.users.create({ phone });
       isNew = true;
       this.logger.log(`Yangi foydalanuvchi: ${phone}`);
+    }
+
+    if (user.isBlocked) {
+      throw new ForbiddenException(
+        user.blockedReason
+          ? `Hisobingiz bloklangan: ${user.blockedReason}`
+          : 'Hisobingiz bloklangan. Administratorlarga murojaat qiling.',
+      );
     }
 
     user = await this.ensureSeededRoles(user);

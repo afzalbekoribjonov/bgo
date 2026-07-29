@@ -10,4 +10,7 @@ export abstract class UserRepository {
   abstract findAll(): Promise<UserEntity[]>;
   abstract create(data: { phone: string; locale?: string }): Promise<UserEntity>;
   abstract update(id: string, patch: Partial<UserEntity>): Promise<UserEntity>;
+  abstract block(id: string, reason: string): Promise<UserEntity>;
+  abstract unblock(id: string): Promise<UserEntity>;
+  abstract markMessagesRead(id: string): Promise<void>;
 }

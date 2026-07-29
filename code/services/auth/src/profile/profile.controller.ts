@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard } from '@beshariq/nest-auth';
+import { CustomersService } from '../customers/customers.service';
 import {
   RegisterDeviceTokenDto,
   RemoveDeviceTokenDto,
@@ -29,6 +30,7 @@ export class ProfileController {
   constructor(
     private readonly profile: ProfileService,
     private readonly notifications: NotificationService,
+    private readonly customers: CustomersService,
   ) {}
 
   @Patch()
@@ -103,5 +105,29 @@ export class ProfileController {
   ) {
     await this.notifications.unregisterToken(user.sub, dto.token);
     return { success: true };
+  }
+
+  // ---------- Xabarlar (admin → mijoz) ----------
+
+  /** Menga kelgan xabarlar (admin yuborgan; broadcast + shaxsiy). */
+  @Get('messages')
+  async messages(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.customers.myMessages(user.sub) };
+  }
+
+  /** O'qilmagan xabarlar soni (badge). */
+  @Get('messages/unread-count')
+  async unreadCount(@CurrentUser() user: AccessTokenPayload) {
+    return {
+      success: true,
+      data: await this.customers.unreadMessagesCount(user.sub),
+    };
+  }
+
+  /** Xabarlar ekrani ochildi — hammasini o'qilgan deb belgilash. */
+  @Post('messages/read')
+  @HttpCode(200)
+  async markMessagesRead(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.customers.markMessagesRead(user.sub) };
   }
 }
