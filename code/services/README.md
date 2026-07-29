@@ -1,27 +1,29 @@
-# Services — Backend microservislar
+# Services — Backend mikroservislar
 
-Har servis mustaqil: o'z DB'si, o'z API'si. Aloqa — REST/gRPC (sinxron) yoki NATS event (asinxron).
-Batafsil: [`../../plan/04-backend-services.md`](../../plan/04-backend-services.md).
+Har servis mustaqil: o'z Postgres bazasi (Prisma), o'z API'si. Servislararo aloqa —
+REST orqali `x-internal-key` bilan himoyalangan `/internal/*` endpointlar (thin-client
+naqshi, masalan `src/*-client/*.client.ts`). Dev'da hammasi hostda `node dist/main.js`
+bilan ishlaydi; Docker faqat infra (Postgres, OSRM) uchun ishlatiladi — [`../infra/`](../infra/).
 
-## Holat
+## Servislar
 
-| Servis | Til | Holat | Faza |
-|--------|-----|-------|------|
-| **gateway** | NestJS | ✅ skelet + routing | 0 |
-| **auth** | NestJS | ✅ OTP+JWT (in-memory) | 1 |
-| user | NestJS | ⬜ rejada | 1 |
-| **restaurant** | NestJS | ✅ katalog+menyu (in-memory) | 2 |
-| pricing | NestJS | ⬜ rejada | 2 |
-| promo | NestJS | ⬜ rejada | 2 |
-| **order** | NestJS | ✅ buyurtma (in-memory, narx katalogdan) | 2 |
-| media | NestJS | ⬜ rejada | 2 |
-| notification | NestJS | ⬜ rejada | 2 |
-| location | **Go** | ⬜ rejada | 3 |
-| routing | Go/NestJS | ⬜ rejada | 3 |
-| delivery | NestJS | ⬜ rejada | 3 |
-| taxi | NestJS | ⬜ rejada | 4 |
-| payment | NestJS | ⬜ rejada | 7 |
-| reporting | NestJS | ⬜ rejada | 6 |
+| Servis | Port | Baza | Vazifasi |
+|--------|------|------|----------|
+| **gateway** | 4000 | — | Reverse proxy — barcha `/api/v1/*` so'rovlarni tegishli servisga yo'naltiradi. Baza yo'q, `@beshariq/nest-auth`ga bog'liq emas. |
+| **auth** | 4001 | auth_db | Telefon+OTP/haydovchi-kod autentifikatsiya, JWT, mijoz/haydovchi profili, manzillar, xabarlar (admin→mijoz/haydovchi), push token, bloklash. |
+| **restaurant** | 4003 | restaurant_db | Oshxonalar, menyu/kategoriya katalogi, egalik (owner), boshqaruv paneli endpointlari. |
+| **order** | 4004 | order_db | Uchta vertikal: ovqat buyurtmasi, taksi (TaxiTrip), pochta (ParcelDelivery) — narxlash, dispatch, tarif/promo, hisobot. |
+| **market** | 4005 | market_db | Beshariq Market — katalog, buyurtma, izoh/layk, support chat. |
+| **marketplace** | 4006 | marketplace_db | Uchinchi tomon sotuvchilar do'konlari — katalog, buyurtma. |
+| **support** | 4007 | support_db | AI (Gemini) yordamchi chat — mijoz/haydovchi, FAQ, admin eskalatsiya. |
 
-> Har servis o'z fazasida yaratiladi (yo'l xaritasi: [`../../plan/15-roadmap-mvp.md`](../../plan/15-roadmap-mvp.md)).
-> Yangi NestJS servis qo'shish: `gateway`ni namuna sifatida ko'chiring (package.json nomini `@beshariq/<servis>` qiling).
+## Umumiy paketlar (`../packages/`)
+
+- `@beshariq/nest-auth` — `JwtAuthGuard`, `RolesGuard`, `@Roles`, `@CurrentUser` (barcha DB'li servislarda ishlatiladi, gateway'da yo'q).
+- `@beshariq/i18n` — ilova matnlari tarjima katalogi (`getTranslations`) + ko'p tilli DB kontent yordamchilari (`I18nString`, `pickLocale`, `localeFromHeader`) — `restaurant`, `market`, `marketplace`, `support`da ishlatiladi.
+
+## Yangi servis qo'shish
+
+`market` yoki `marketplace`ni namuna sifatida ko'chiring (`package.json` nomini
+`@beshariq/<servis>` qiling). `tsconfig.json` root'dagi [`../tsconfig.base.json`](../tsconfig.base.json)ni
+`extends` qilishi shart — faqat `outDir`/`baseUrl`/`include`/`exclude` servisga xos qoladi.

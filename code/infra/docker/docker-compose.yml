@@ -2,7 +2,12 @@
 # Ishga tushirish:  docker compose -f infra/docker/docker-compose.yml up -d
 # To'xtatish:        docker compose -f infra/docker/docker-compose.yml down
 #
-# Eslatma: prod uchun docker-compose.prod.yml alohida bo'ladi.
+# !!!!! DIQQAT !!!!!
+# "down -v" YOZMANG — bu barcha ma'lumotni o'chiradi!
+# Faqat "down" (volumes'siz) ishlatish xavfsiz.
+# Zaxira olish: code/infra/scripts/backup.ps1
+#
+# Eslatma: prod uchun Neon bepul PostgreSQL tavsiya etiladi (code/infra/scripts/neon-setup.md).
 
 name: beshariq-infra
 
@@ -28,37 +33,21 @@ services:
       timeout: 5s
       retries: 5
 
-  # --- Redis (kesh, sessiya, real-time geo, navbat) ---
-  redis:
-    image: redis:7-alpine
-    container_name: beshariq-redis
+  # --- OSRM (marshrut + yo'lga yopishtirish — O'zbekiston, self-hosted) ---
+  # Ma'lumot tayyorlash: infra/osrm/build-osrm.sh (bir martalik, infra/osrm/README.md).
+  # Umumiy demo serverdan farqli — cheklovsiz, jonli GPS oqimi (har necha soniyada
+  # /nearest) uchun yaroqli.
+  osrm:
+    image: osrm/osrm-backend
+    container_name: beshariq-osrm
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["osrm-routed", "--algorithm", "mld", "/data/uzbekistan-latest.osrm"]
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${OSRM_PORT:-5000}:5000"
     volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # --- NATS (event bus — servislararo asinxron aloqa) ---
-  nats:
-    image: nats:2-alpine
-    container_name: beshariq-nats
-    restart: unless-stopped
-    command: ["-js"] # JetStream yoqilgan (kafolatli yetkazish)
-    ports:
-      - "${NATS_PORT:-4222}:4222"
-      - "8222:8222" # monitoring
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./../osrm/data:/data:ro
+    # Eslatma: osrm-backend image'da wget/curl yo'q — healthcheck qo'shilmadi.
+    # Ishlab turganini tekshirish: curl http://localhost:5000/nearest/v1/driving/70.6,40.4
 
 volumes:
   postgres_data:
-  redis_data:

@@ -13,6 +13,9 @@ CREATE DATABASE pricing_db;
 CREATE DATABASE promo_db;
 CREATE DATABASE payment_db;
 CREATE DATABASE notif_db;
+CREATE DATABASE market_db;
+CREATE DATABASE marketplace_db;
+CREATE DATABASE support_db;
 
 -- Navigator/geo uchun alohida DB (PostGIS bilan)
 CREATE DATABASE geo_db;
