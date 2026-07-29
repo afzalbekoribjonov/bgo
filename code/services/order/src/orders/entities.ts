@@ -25,14 +25,22 @@ export interface OrderAddress {
 export interface OrderItem {
   menuItemId: string;
   nameSnapshot: string;
-  priceSnapshot: number;
+  priceSnapshot: number; // oshxona narxi (haydovchi oshxonaga shu narxni to'laydi)
+  markup: number; // per-dona xizmat haqi ustamasi (platforma daromadi)
   qty: number;
-  lineTotal: number;
+  lineTotal: number; // oshxona narxi × qty (haydovchi to'lovi)
 }
+
+/** Kim/nima sabab bilan holatni o'zgartirdi — audit va "kim bekor qildi" uchun. */
+export type StatusActor = 'customer' | 'kitchen' | 'driver' | 'admin' | 'system';
 
 export interface OrderStatusEntry {
   status: OrderStatus;
   at: string;
+  by?: StatusActor;
+  /** Shu o'tishga aloqador haydovchi (masalan, haydovchi voz kechganda — joriy driverId tozalangandan keyin ham saqlanib qoladi). */
+  driverId?: string;
+  reason?: string;
 }
 
 export interface Order {
@@ -43,16 +51,43 @@ export interface Order {
   type: OrderType;
   restaurantId: string;
   items: OrderItem[];
-  itemsTotal: number;
-  deliveryFee: number;
-  commission: number;
-  courierEarning: number;
+  itemsTotal: number; // oshxona taom summasi (haydovchi oshxonaga to'laydi)
+  serviceFee: number; // xizmat haqi (Σ ustama) — platforma daromadi, haydovchi balansidan
+  deliveryFee: number; // yetkazish (haydovchi to'liq oladi — komissiyasiz)
+  commission: number; // eskirgan (0)
+  courierEarning: number; // haydovchi daromadi = deliveryFee
   promoCode?: string;
   discount: number;
-  total: number;
+  total: number; // mijoz to'lovi = itemsTotal + serviceFee + deliveryFee − discount
   paymentType: PaymentType;
   address: OrderAddress;
+  /** Haydovchi GPS orqali haqiqatda bosib o'tgan masofa (oshxonadan mijozgacha, narxga ta'sir qilmaydi). */
+  actualDistanceKm?: number;
   status: OrderStatus;
+  kitchenAcceptedAt?: string | null;
+  driverAcceptedAt?: string | null;
+  rating?: number | null;
+  ratingComment?: string | null;
   statusHistory: OrderStatusEntry[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export type ChatRole = 'kitchen' | 'driver';
+
+/** Ovqat buyurtmasi suhbat xabari (oshxona↔haydovchi). */
+export interface OrderMessage {
+  id: string;
+  orderId: string;
+  senderId: string;
+  senderRole: ChatRole;
+  text: string;
+  createdAt: string;
+}
+
+export interface NewOrderMessage {
+  orderId: string;
+  senderId: string;
+  senderRole: ChatRole;
+  text: string;
 }

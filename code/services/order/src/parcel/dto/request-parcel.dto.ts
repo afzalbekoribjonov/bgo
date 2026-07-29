@@ -11,6 +11,10 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import {
+  DRIVER_CANCEL_REASONS,
+  DriverCancelReason,
+} from '../../common/cancel-reasons';
 
 export class GeoPointDto {
   @IsString()
@@ -53,6 +57,17 @@ export class RequestParcelDto extends EstimateParcelDto {
   @IsNotEmpty()
   @MaxLength(20)
   recipientPhone!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  note?: string;
+}
+
+/** Kuryer dostavkani bekor qiladi — sabab majburiy. */
+export class DriverCancelParcelDto {
+  @IsIn(DRIVER_CANCEL_REASONS)
+  reason!: DriverCancelReason;
 
   @IsOptional()
   @IsString()

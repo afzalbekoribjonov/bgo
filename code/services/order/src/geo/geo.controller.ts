@@ -18,6 +18,12 @@ export class GeoController {
     return { success: true, data: await this.geo.listRoads() };
   }
 
+  /** Admin belgilagan xarita belgilar (do'kon/fermer/svetofor/...). */
+  @Get('markers')
+  async markers() {
+    return { success: true, data: await this.geo.listMarkers() };
+  }
+
   /** Nuqta xizmat hududi ichidami: ?lat=..&lng=.. */
   @Get('check')
   async check(@Query('lat') lat: string, @Query('lng') lng: string) {

@@ -16,7 +16,7 @@ export function summarizeEarnings<T>(
   isDone: (i: T) => boolean,
   isActive: (i: T) => boolean,
   earningOf: (i: T) => number,
-  createdAtOf: (i: T) => string,
+  doneAtOf: (i: T) => string, // yakunlanish vaqti (updatedAt)
 ): EarningsSummary {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -32,7 +32,7 @@ export function summarizeEarnings<T>(
       count += 1;
       const e = earningOf(item);
       earning += e;
-      if (new Date(createdAtOf(item)) >= todayStart) {
+      if (new Date(doneAtOf(item)) >= todayStart) {
         todayEarning += e;
         todayCount += 1;
       }

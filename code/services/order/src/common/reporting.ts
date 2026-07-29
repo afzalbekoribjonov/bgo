@@ -105,6 +105,63 @@ export function buildVerticalReport<T>(
   };
 }
 
+/**
+ * Ixtiyoriy sana oralig'i uchun hisobot (istalgan kun/oy/davr) — `buildVerticalReport`
+ * bilan bir xil natija shakli, lekin "bugundan orqaga N kun" emas, aniq [from,to].
+ */
+export function buildVerticalReportRange<T>(
+  items: T[],
+  from: Date,
+  to: Date,
+  opts: ReportOpts<T>,
+): VerticalReport {
+  const fromTs = from.getTime();
+  const toTs = to.getTime();
+
+  const daily = new Map<string, VerticalDay>();
+  for (let t = new Date(from).setHours(0, 0, 0, 0); t <= toTs; t += 86_400_000) {
+    const key = localDateKey(new Date(t));
+    daily.set(key, { date: key, orders: 0, revenue: 0, profit: 0 });
+  }
+
+  let count = 0;
+  let delivered = 0;
+  let cancelled = 0;
+  let revenue = 0;
+  let profit = 0;
+
+  for (const item of items) {
+    const created = new Date(opts.createdAtOf(item));
+    const ts = created.getTime();
+    if (ts < fromTs || ts > toTs) continue;
+    count += 1;
+    const bucket = daily.get(localDateKey(created));
+    if (bucket) bucket.orders += 1;
+    if (opts.isDone(item)) {
+      delivered += 1;
+      const rev = opts.revenueOf(item);
+      const pf = opts.profitOf(item);
+      revenue += rev;
+      profit += pf;
+      if (bucket) {
+        bucket.revenue += rev;
+        bucket.profit += pf;
+      }
+    } else if (opts.isCancelled(item)) {
+      cancelled += 1;
+    }
+  }
+
+  return {
+    count,
+    delivered,
+    cancelled,
+    revenue,
+    profit,
+    daily: Array.from(daily.values()),
+  };
+}
+
 /** Bir nechta vertikal hisobotini kun-bo'yicha (index bo'yicha) jamlaydi. */
 export function combineVerticalReports(reports: VerticalReport[]): VerticalReport {
   const length = reports[0]?.daily.length ?? 0;

@@ -1,6 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+/** Android push yetkazish sozlamasi (yuqori muhimlik / data-only). */
+export interface AndroidPushOptions {
+  priority?: 'high' | 'normal';
+  channelId?: string;
+  dataOnly?: boolean;
+}
+
 /**
  * Auth servisining push (FCM) endpointiga xabar yuboradi (servislararo).
  * BEST-EFFORT: xato bo'lsa ham buyurtma/safar oqimini TO'XTATMAYDI (log + qaytadi).
@@ -24,6 +31,7 @@ export class NotificationClient {
     title: string,
     body: string,
     data?: Record<string, string>,
+    android?: AndroidPushOptions,
   ): Promise<void> {
     if (!userId) return;
     if (!this.key) {
@@ -39,7 +47,7 @@ export class NotificationClient {
             'Content-Type': 'application/json',
             'x-internal-key': this.key,
           },
-          body: JSON.stringify({ userId, title, body, data }),
+          body: JSON.stringify({ userId, title, body, data, android }),
         },
       );
       if (!res.ok) this.logger.warn(`Push yuborilmadi: ${res.status}`);

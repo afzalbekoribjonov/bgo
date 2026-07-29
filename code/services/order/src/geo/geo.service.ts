@@ -7,11 +7,14 @@ import {
 import { pointInPolygon } from '../common/polygon';
 import {
   CreateAreaDto,
+  CreateMarkerDto,
   CreatePlaceDto,
   CreateRoadDto,
   UpdateAreaDto,
+  UpdateRoadDto,
 } from './dto/geo.dto';
 import {
+  MapMarker,
   MapRoad,
   NewMapRoad,
   RoadKind,
@@ -105,8 +108,27 @@ export class GeoService {
     return this.repo.createRoad({ areaId, ...dto });
   }
 
+  async updateRoad(id: string, dto: UpdateRoadDto) {
+    return this.repo.updateRoad(id, dto);
+  }
+
   deleteRoad(id: string) {
     return this.repo.deleteRoad(id);
+  }
+
+  // ---------- Belgilar (markers) ----------
+
+  listMarkers(areaId?: string): Promise<MapMarker[]> {
+    return this.repo.listMarkers(areaId);
+  }
+
+  async addMarker(areaId: string, dto: CreateMarkerDto) {
+    await this.requireArea(areaId);
+    return this.repo.createMarker({ areaId, ...dto });
+  }
+
+  deleteMarker(id: string) {
+    return this.repo.deleteMarker(id);
   }
 
   /**

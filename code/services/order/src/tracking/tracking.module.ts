@@ -5,6 +5,7 @@ import { DriverLocationRepository } from './driver-location.repository';
 import { DriverLocationService } from './driver-location.service';
 import { PrismaDriverLocationRepository } from './prisma-driver-location.repository';
 import { TrackingController } from './tracking.controller';
+import { TripDistanceTracker } from './trip-distance-tracker.service';
 
 /** Haydovchi jonli joylashuvi moduli. plan/12-maps-navigation.md */
 @Module({
@@ -12,6 +13,7 @@ import { TrackingController } from './tracking.controller';
   controllers: [TrackingController],
   providers: [
     DriverLocationService,
+    TripDistanceTracker,
     JwtAuthGuard,
     RolesGuard,
     {

@@ -1,5 +1,7 @@
 import {
+  MapMarker,
   MapRoad,
+  NewMapMarker,
   NewMapRoad,
   NewPlace,
   NewServiceArea,
@@ -26,6 +28,7 @@ export abstract class GeoRepository {
   /** Yo'llar — activeOnly: faqat faol hududlarniki. */
   abstract listRoads(activeOnly: boolean): Promise<MapRoad[]>;
   abstract createRoad(data: NewMapRoad): Promise<MapRoad>;
+  abstract updateRoad(id: string, patch: Partial<Omit<NewMapRoad, 'areaId'>>): Promise<MapRoad>;
   abstract deleteRoad(id: string): Promise<void>;
   abstract roadCount(): Promise<number>;
   /** OSM import — barcha yo'llarni o'chirish va ko'plab qo'shish. */
@@ -33,4 +36,9 @@ export abstract class GeoRepository {
   abstract createManyRoads(data: NewMapRoad[]): Promise<number>;
 
   abstract areaCount(): Promise<number>;
+
+  /** Belgilar (marker) — admin qo'shgan do'kon/stiker va boshqalar. */
+  abstract listMarkers(areaId?: string): Promise<MapMarker[]>;
+  abstract createMarker(data: NewMapMarker): Promise<MapMarker>;
+  abstract deleteMarker(id: string): Promise<void>;
 }

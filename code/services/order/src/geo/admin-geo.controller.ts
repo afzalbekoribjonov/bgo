@@ -7,14 +7,17 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import {
   CreateAreaDto,
+  CreateMarkerDto,
   CreatePlaceDto,
   CreateRoadDto,
   UpdateAreaDto,
+  UpdateRoadDto,
 } from './dto/geo.dto';
 import { GeoService } from './geo.service';
 
@@ -69,10 +72,32 @@ export class AdminGeoController {
     return { success: true, data: await this.geo.addRoad(id, dto) };
   }
 
+  @Patch('roads/:id')
+  async updateRoad(@Param('id') id: string, @Body() dto: UpdateRoadDto) {
+    return { success: true, data: await this.geo.updateRoad(id, dto) };
+  }
+
   @Delete('roads/:id')
   @HttpCode(200)
   async deleteRoad(@Param('id') id: string) {
     await this.geo.deleteRoad(id);
+    return { success: true };
+  }
+
+  @Get('markers')
+  async markers(@Query('areaId') areaId?: string) {
+    return { success: true, data: await this.geo.listMarkers(areaId) };
+  }
+
+  @Post('areas/:id/markers')
+  async addMarker(@Param('id') id: string, @Body() dto: CreateMarkerDto) {
+    return { success: true, data: await this.geo.addMarker(id, dto) };
+  }
+
+  @Delete('markers/:id')
+  @HttpCode(200)
+  async deleteMarker(@Param('id') id: string) {
+    await this.geo.deleteMarker(id);
     return { success: true };
   }
 

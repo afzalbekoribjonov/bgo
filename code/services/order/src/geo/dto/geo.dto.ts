@@ -93,11 +93,97 @@ export class CreateRoadDto {
   @MaxLength(120)
   name!: string;
 
-  @IsIn(['street', 'main', 'center'])
-  kind!: 'street' | 'main' | 'center';
+  @IsIn(['street', 'main', 'center', 'farmland'])
+  kind!: 'street' | 'main' | 'center' | 'farmland';
 
   /** Yo'l chizig'i nuqtalari: [[lat,lng], ...] (kamida 2 ta). */
   @IsArray()
   @ArrayMinSize(2)
   points!: number[][];
+
+  @IsOptional()
+  @IsBoolean()
+  isOneWay?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isUnderConstruction?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasTrafficLight?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isRestricted?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  speedLimit?: number;
+}
+
+export class UpdateRoadDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  name?: string;
+
+  @IsOptional()
+  @IsIn(['street', 'main', 'center', 'farmland'])
+  kind?: 'street' | 'main' | 'center' | 'farmland';
+
+  @IsOptional()
+  @IsBoolean()
+  isOneWay?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isUnderConstruction?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasTrafficLight?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isRestricted?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  speedLimit?: number | null;
+}
+
+export class CreateMarkerDto {
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat!: number;
+
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng!: number;
+
+  @IsIn(['shop', 'sticker', 'construction', 'traffic_light', 'restriction', 'farm'])
+  kind!:
+    | 'shop'
+    | 'sticker'
+    | 'construction'
+    | 'traffic_light'
+    | 'restriction'
+    | 'farm';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  label?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  color?: string;
 }

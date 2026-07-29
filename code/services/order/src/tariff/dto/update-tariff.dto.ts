@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class UpdateTariffDto {
   @IsOptional()
@@ -47,6 +47,34 @@ export class UpdateTariffDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(60)
+  taxiWaitFreeMin?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  taxiPickupSurchargePerKm?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(50)
+  taxiPickupSurchargeThresholdKm?: number;
+
+  // Comfort tarifi ustamalari (Start narxiga qo'shiladi)
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  taxiComfortPerKmExtra?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  taxiComfortBaseExtra?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   parcelBaseFare?: number;
 
   @IsOptional()
@@ -64,4 +92,20 @@ export class UpdateTariffDto {
   @Min(0)
   @Max(100)
   parcelCommissionPercent?: number;
+
+  // Ovqat xizmat haqi (ustama) — bizning yagona ovqat daromadimiz.
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  foodServiceThreshold?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  foodServiceFeeUnder?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  foodServiceFeeOver?: number;
 }

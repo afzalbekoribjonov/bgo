@@ -72,7 +72,7 @@ export class TaxiController {
     @CurrentUser() user: AccessTokenPayload,
     @Param('id') id: string,
   ) {
-    return { success: true, data: await this.taxi.getOwned(user.sub, id) };
+    return { success: true, data: await this.taxi.liveForCustomer(user.sub, id) };
   }
 
   /** Biriktirilgan haydovchining jonli joylashuvi (null bo'lishi mumkin). */

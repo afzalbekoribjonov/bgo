@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   ForbiddenException,
   Get,
@@ -10,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { RestaurantClient } from '../restaurant-client/restaurant.client';
+import { SendOrderMessageDto } from './dto/order-message.dto';
 import { OrdersService } from './orders.service';
 
 /**
@@ -25,6 +27,34 @@ export class KitchenController {
     private readonly orders: OrdersService,
     private readonly restaurants: RestaurantClient,
   ) {}
+
+  /** Bajarilgan/bekor buyurtmalar tarixi. */
+  @Get('restaurants/:restaurantId/orders/history')
+  async history(
+    @Param('restaurantId') restaurantId: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    await this.assertOwns(user, authHeader, restaurantId);
+    return {
+      success: true,
+      data: await this.orders.listHistoryForRestaurant(restaurantId),
+    };
+  }
+
+  /** Oshxona statistikasi (bugun + jami + haftalik). */
+  @Get('restaurants/:restaurantId/stats')
+  async stats(
+    @Param('restaurantId') restaurantId: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    await this.assertOwns(user, authHeader, restaurantId);
+    return {
+      success: true,
+      data: await this.orders.statsForRestaurant(restaurantId),
+    };
+  }
 
   /** Oshxonaga kelgan buyurtmalar (faqat egasi). */
   @Get('restaurants/:restaurantId/orders')
@@ -81,6 +111,31 @@ export class KitchenController {
     return { success: true, data: await this.orders.rejectByRestaurant(id) };
   }
 
+  /** Suhbat xabarlari (oshxona↔haydovchi). */
+  @Get('orders/:id/messages')
+  async messages(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    await this.assertOwnsOrder(user, authHeader, id);
+    return { success: true, data: await this.orders.listOrderMessages(id) };
+  }
+
+  @Post('orders/:id/messages')
+  async sendMessage(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: SendOrderMessageDto,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    await this.assertOwnsOrder(user, authHeader, id);
+    return {
+      success: true,
+      data: await this.orders.sendOrderMessage(id, user.sub, 'kitchen', dto.text),
+    };
+  }
+
   /** Buyurtma orqali uning oshxonasi egaligini tekshiradi. */
   private async assertOwnsOrder(
     user: AccessTokenPayload,
@@ -98,6 +153,8 @@ export class KitchenController {
     restaurantId: string,
   ) {
     if (user.roles?.includes('admin')) return;
+    // Oshxona login/parol kirishi — JWT'da restaurantId claim'i.
+    if (user.restaurantId && user.restaurantId === restaurantId) return;
     const token = authHeader?.replace(/^Bearer\s+/i, '') ?? '';
     const owned = await this.restaurants.getOwnedRestaurantIds(token);
     if (!owned.includes(restaurantId)) {

@@ -26,8 +26,9 @@ model ServiceArea {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  places Place[]
-  roads  MapRoad[]
+  places  Place[]
+  roads   MapRoad[]
+  markers MapMarker[]
 
   @@map("service_areas")
 }
@@ -40,10 +41,32 @@ model MapRoad {
   name      String // "Markaziy ko'cha", "Navoiy ko'chasi"
   kind      String      @default("street") // street | main | center
   points    Json // [[lat,lng], ...] — yo'l chizig'i nuqtalari
+  // Yo'l xususiyatlari (navigatsiya uchun)
+  isOneWay          Boolean @default(false)
+  isUnderConstruction Boolean @default(false)
+  hasTrafficLight   Boolean @default(false)
+  isRestricted      Boolean @default(false)
+  speedLimit        Int? // km/soat, null = belgilanmagan
   createdAt DateTime    @default(now())
 
   @@index([areaId])
   @@map("map_roads")
+}
+
+/** Xarita belgisi (do'kon, stiker, qurilish va boshqalar). */
+model MapMarker {
+  id        String      @id @default(uuid())
+  areaId    String
+  area      ServiceArea @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  lat       Float
+  lng       Float
+  kind      String      @default("sticker") // shop | sticker | construction | traffic_light | restriction
+  label     String? // ixtiyoriy nom
+  color     String? // ixtiyoriy rang
+  createdAt DateTime    @default(now())
+
+  @@index([areaId])
+  @@map("map_markers")
 }
 
 /**
@@ -108,10 +131,19 @@ model Tariff {
   taxiMinFare           Int      @default(8000) // minimal taksi haqi, so'm
   taxiCommissionPercent Int      @default(15) // taksi haqidan platforma ulushi, %
   taxiWaitPerMin        Int      @default(500) // pulli kutish, har daqiqa, so'm
+  taxiWaitFreeMin       Int      @default(2) // bepul kutish (daqiqa), keyin pulli
+  taxiPickupSurchargePerKm     Int   @default(500) // olib ketishgacha ustama, har km, so'm
+  taxiPickupSurchargeThresholdKm Float @default(1.6) // shu masofadan oshsa ustama qo'shiladi
+  taxiComfortPerKmExtra   Int    @default(500) // Comfort: har km uchun qo'shimcha, so'm
+  taxiComfortBaseExtra    Int    @default(500) // Comfort: boshlang'ich (yonish) haqqa qo'shimcha, so'm
   parcelBaseFare          Int    @default(4000) // dostavka boshlang'ich haq, so'm
   parcelPerKm             Int    @default(1500) // har km uchun, so'm
   parcelMinFare           Int    @default(6000) // minimal dostavka haqi, so'm
   parcelCommissionPercent Int    @default(15) // dostavka haqidan platforma ulushi, %
+  foodServiceThreshold  Int      @default(19000) // ovqat xizmat haqi chegara narxi, so'm
+  foodServiceFeeUnder   Int      @default(1000) // chegaragacha taom uchun xizmat haqi (per dona)
+  foodServiceFeeOver    Int      @default(1500) // chegaradan yuqori taom uchun xizmat haqi (per dona)
+  driverCancelPenalty   Int      @default(5000) // haydovchi/kuryer bekor qilsa balansdan yechiladigan jarima, so'm
   updatedAt             DateTime @updatedAt
 
   @@map("tariffs")
@@ -119,7 +151,8 @@ model Tariff {
 
 enum TaxiStatus {
   PENDING // yaratildi, haydovchi kutilmoqda
-  ACCEPTED // haydovchi qabul qildi
+  ACCEPTED // haydovchi qabul qildi, olib ketish nuqtasiga yo'lda
+  ARRIVED // haydovchi yetib keldi, yo'lovchi kutilmoqda
   IN_PROGRESS // yo'lovchi olindi, yo'lda
   COMPLETED // yakunlandi
   CANCELLED
@@ -134,8 +167,17 @@ model TaxiTrip {
   pickup        Json // { text, lat, lng }
   destination   Json? // { text, lat, lng } — manzilsiz (metered) rejimda bo'sh
   metered       Boolean     @default(false) // manzilsiz: narx yakunda hisoblanadi
+  tariffClass   String      @default("start") // start | comfort (Comfort — faqat admin yoqqan mashinalar oladi)
   distanceKm    Float       @default(0)
-  waitMinutes   Int         @default(0) // pulli kutish (daqiqa)
+  // Haydovchi GPS orqali haqiqatda bosib o'tgan masofa (IN_PROGRESS davomida
+  // jonli joylashuv ping'laridan jamlanadi). Faqat ko'rsatish uchun — narxga
+  // (distanceKm/fare) ta'sir qilmaydi.
+  actualDistanceKm Float?
+  waitMinutes   Int         @default(0) // yakuniy pulli kutish (daqiqa)
+  waitStartedAt DateTime? // joriy kutish segmenti boshlangan vaqt (null = kutilmayapti)
+  waitAccumSec  Int         @default(0) // jamlangan kutish (yopilgan segmentlar, soniya)
+  pickupDistanceKm Float    @default(0) // haydovchi -> olib ketish nuqtasi (km)
+  pickupSurcharge  Int      @default(0) // olib ketish masofasi ustamasi (so'm)
   fare          Int         @default(0) // umumiy haq (so'm)
   commission    Int         @default(0) // platforma ulushi
   driverEarning Int         @default(0) // haydovchiga
@@ -145,6 +187,7 @@ model TaxiTrip {
   rating        Int? // mijoz bahosi (1-5), safar yakunidan keyin
   ratingComment String?
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   messages TaxiMessage[]
 
@@ -199,16 +242,27 @@ model Order {
   items         Json // OrderItem[] snapshot
   itemsTotal    Int
   deliveryFee   Int
-  commission    Int         @default(0) // bizning ulush (oshxona komissiyasi), so'm
-  courierEarning Int        @default(0) // haydovchiga (yetkazish narxidan), so'm
+  commission    Int         @default(0) // bizning ulush (oshxona komissiyasi), so'm — eskirgan
+  serviceFee    Int         @default(0) // ovqat xizmat haqi (per-item ustama) — platforma daromadi
+  courierEarning Int        @default(0) // haydovchiga (yetkazish narxi to'liq — komissiyasiz), so'm
   promoCode     String? // qo'llanilgan promokod
   discount      Int         @default(0) // chegirma, so'm
   total         Int
   paymentType   PaymentType
   address       Json // { text, lat?, lng? }
+  // Haydovchi GPS orqali haqiqatda bosib o'tgan masofa (PICKED_UP davomida
+  // jamlanadi — oshxonadan mijozgacha). Faqat ko'rsatish uchun, narxga ta'sir qilmaydi.
+  actualDistanceKm Float?
   status        OrderStatus @default(PENDING)
+  kitchenAcceptedAt DateTime? // oshxona qabul qilgan vaqt (ikki tomonlama qabul)
+  driverAcceptedAt  DateTime? // haydovchi qabul qilgan vaqt (ikki tomonlama qabul)
+  rating        Int? // mijoz bahosi (1-5), yetkazilgandan keyin
+  ratingComment String?
   statusHistory Json // OrderStatusEntry[]
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  messages OrderMessage[]
 
   @@index([customerId])
   @@index([restaurantId])
@@ -216,10 +270,26 @@ model Order {
   @@map("orders")
 }
 
+/** Ovqat buyurtmasi suhbat xabari (oshxona↔haydovchi). plan/07-restaurant-app.md */
+model OrderMessage {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderId   String
+  senderRole String // "kitchen" | "driver"
+  text       String
+  createdAt  DateTime @default(now())
+
+  @@index([orderId])
+  @@map("order_messages")
+}
+
 enum ParcelStatus {
   PENDING // yaratildi, kuryer kutilmoqda
-  ACCEPTED // kuryer qabul qildi
+  ACCEPTED // kuryer qabul qildi, jo'natuvchiga yo'lda
+  ARRIVED // jo'natuvchiga yetib keldi
   PICKED_UP // jo'natuvchidan olindi
+  IN_TRANSIT // qabul qiluvchiga yo'lda
   DELIVERED // qabul qiluvchiga yetkazildi
   CANCELLED
 }
@@ -239,6 +309,9 @@ model ParcelDelivery {
   pickup         Json // { text, lat, lng }
   destination    Json // { text, lat, lng }
   distanceKm     Float
+  // Kuryer GPS orqali haqiqatda bosib o'tgan masofa (IN_TRANSIT davomida
+  // jamlanadi). Faqat ko'rsatish uchun — narxga ta'sir qilmaydi.
+  actualDistanceKm Float?
   size           ParcelSize   @default(SMALL)
   recipientName  String
   recipientPhone String
@@ -249,10 +322,74 @@ model ParcelDelivery {
   status         ParcelStatus @default(PENDING)
   paymentType    PaymentType  @default(CASH)
   statusHistory  Json
+  rating         Int? // mijoz bahosi (1-5), yetkazilgandan keyin
+  ratingComment  String?
   createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  messages ParcelMessage[]
 
   @@index([customerId])
   @@index([driverId])
   @@index([status])
   @@map("parcel_deliveries")
+}
+
+enum StoreOrderStatus {
+  PENDING // yaratildi
+  ACCEPTED // haydovchi qabul qildi (DELIVERY)
+  ARRIVED // haydovchi olib ketish nuqtasiga yetib keldi (DELIVERY)
+  PICKED_UP // haydovchi mahsulotni oldi (DELIVERY)
+  IN_TRANSIT // mijozga yo'lda (DELIVERY)
+  DELIVERED // mijozga yetkazildi (DELIVERY)
+  READY_FOR_PICKUP // mijoz olib ketishga tayyor (PICKUP)
+  COMPLETED // mijoz olib ketdi (PICKUP)
+  CANCELLED
+}
+
+enum StoreDeliveryMethod {
+  DELIVERY
+  PICKUP
+}
+
+/** Beshariq Market buyurtmasi — o'z ombori, yetkazish YOKI olib ketish. */
+model StoreOrder {
+  id               String              @id @default(uuid())
+  publicNo         Int                 @unique @default(autoincrement())
+  customerId       String
+  driverId         String? // biriktirilgan kuryer (faqat DELIVERY)
+  pickupLocationId String
+  deliveryMethod   StoreDeliveryMethod
+  address          Json? // { text, lat, lng } — faqat DELIVERY
+  items            Json // StoreOrderItem[]
+  itemsTotal       Int
+  deliveryFee      Int                 @default(0)
+  courierEarning   Int                 @default(0)
+  total            Int
+  status           StoreOrderStatus    @default(PENDING)
+  paymentType      PaymentType         @default(CASH)
+  statusHistory    Json
+  rating           Int?
+  ratingComment    String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+  @@map("store_orders")
+}
+
+/** Dostavka suhbat xabari (mijoz↔kuryer). plan/06-driver-app.md */
+model ParcelMessage {
+  id         String         @id @default(uuid())
+  parcelId   String
+  parcel     ParcelDelivery @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  senderId   String
+  senderRole String // "customer" | "driver"
+  text       String
+  createdAt  DateTime       @default(now())
+
+  @@index([parcelId])
+  @@map("parcel_messages")
 }

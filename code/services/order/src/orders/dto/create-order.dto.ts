@@ -37,6 +37,17 @@ export class OrderAddressDto {
   lng?: number;
 }
 
+/** Promokodni buyurtmadan OLDIN tekshirish so'rovi. */
+export class PromoCheckDto {
+  @IsString()
+  @IsNotEmpty()
+  code!: string;
+
+  @IsInt()
+  @Min(0)
+  itemsTotal!: number;
+}
+
 export class CreateOrderDto {
   // MVP: faqat ovqat
   @IsIn(['FOOD'])

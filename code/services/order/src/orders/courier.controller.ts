@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -8,6 +9,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { SendOrderMessageDto } from './dto/order-message.dto';
+import { DriverCancelOrderDto } from './dto/driver-cancel-order.dto';
 import { combineEarnings } from '../common/earnings';
 import { ReportPeriod } from '../common/reporting';
 import { ParcelService } from '../parcel/parcel.service';
@@ -50,12 +53,13 @@ export class CourierController {
   /** Vertikalga qarab tegishli servis bilan qabul qiladi. */
   private async acceptDispatch(id: string, driverId: string) {
     const offer = this.dispatch.getById(id);
-    if (!offer || !this.dispatch.canAccept(driverId, id)) {
+    if (!offer || !(await this.dispatch.canAccept(driverId, id))) {
       throw new BadRequestException('Buyurtma endi mavjud emas');
     }
-    const data = await this.acceptByVertical(offer.vertical, id, driverId);
+    // await'dan oldin sinxron olib tashlaymiz — Node.js single-thread'i
+    // ikkinchi parallel so'rov slip-through qila olmasligi kafolati.
     this.dispatch.clear(id);
-    return data;
+    return this.acceptByVertical(offer.vertical, id, driverId);
   }
 
   private acceptByVertical(
@@ -79,10 +83,10 @@ export class CourierController {
     return { success: true, data: { ok: true } };
   }
 
-  /** Qabul qilinmagan (pool) buyurtmalar — hammaga. */
+  /** Qabul qilinmagan (pool) buyurtmalar — haydovchi tarifiga ko'ra. */
   @Get('pool')
-  async pool() {
-    return { success: true, data: this.dispatch.pool() };
+  async pool(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.dispatch.poolFor(user.sub) };
   }
 
   /** Pool'dan buyurtma olish. */
@@ -105,6 +109,18 @@ export class CourierController {
   @Get('my-orders')
   async myOrders(@CurrentUser() user: AccessTokenPayload) {
     return { success: true, data: await this.orders.listDriverOrders(user.sub) };
+  }
+
+  /** Bitta ovqat buyurtmasi (oshxona joylashuvi bilan) — faol ish ekrani. */
+  @Get('orders/:id')
+  async orderOne(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+  ) {
+    return {
+      success: true,
+      data: await this.orders.getDriverOrderLive(id, user.sub),
+    };
   }
 
   /** Haydovchi statistikasi (Bugun) — ?period=today|week|month. */
@@ -158,5 +174,45 @@ export class CourierController {
     @CurrentUser() user: AccessTokenPayload,
   ) {
     return { success: true, data: await this.orders.delivered(id, user.sub) };
+  }
+
+  /**
+   * Haydovchi voz kechdi (sabab majburiy) — buyurtma boshqa haydovchiga
+   * qayta taklif qilinadi.
+   */
+  @Post('orders/:id/cancel')
+  @HttpCode(200)
+  async cancelFood(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: DriverCancelOrderDto,
+  ) {
+    return {
+      success: true,
+      data: await this.orders.driverCancelFood(id, user.sub, dto.reason, dto.note),
+    };
+  }
+
+  /** Suhbat (oshxona↔haydovchi) — haydovchi tomoni. */
+  @Get('orders/:id/messages')
+  async messages(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+  ) {
+    await this.orders.assertDriverOrder(id, user.sub);
+    return { success: true, data: await this.orders.listOrderMessages(id) };
+  }
+
+  @Post('orders/:id/messages')
+  async sendMessage(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: SendOrderMessageDto,
+  ) {
+    await this.orders.assertDriverOrder(id, user.sub);
+    return {
+      success: true,
+      data: await this.orders.sendOrderMessage(id, user.sub, 'driver', dto.text),
+    };
   }
 }

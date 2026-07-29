@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 import { NotificationClientModule } from '../notification-client/notification-client.module';
+import { DriverInfoClient } from '../driver-client/driver-info.client';
 import { DispatchModule } from '../orders/dispatch.module';
 import { TariffService } from '../tariff/tariff.service';
 import { TrackingModule } from '../tracking/tracking.module';
@@ -25,6 +26,7 @@ import { TaxiService } from './taxi.service';
   providers: [
     TaxiService,
     TariffService,
+    DriverInfoClient,
     JwtAuthGuard,
     RolesGuard,
     { provide: TaxiRepository, useClass: PrismaTaxiRepository },

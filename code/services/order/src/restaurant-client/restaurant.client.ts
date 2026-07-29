@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -29,10 +30,30 @@ export interface RestaurantSummary {
 export class RestaurantClient {
   private readonly logger = new Logger(RestaurantClient.name);
   private readonly baseUrl: string;
+  private readonly internalKey: string;
 
   constructor(config: ConfigService) {
     this.baseUrl =
       config.get<string>('RESTAURANT_SERVICE_URL') ?? 'http://localhost:3003';
+    this.internalKey = config.get<string>('INTERNAL_API_KEY') ?? 'dev-internal-key';
+  }
+
+  /**
+   * Oshxonani faolsiz (isOpen=false) qiladi — buyurtma qabul qilinmay bekor
+   * bo'lganda (haydovchi/oshxona rad etsa). Best-effort; internal endpoint.
+   */
+  async setInactive(restaurantId: string): Promise<void> {
+    const url = `${this.baseUrl}/api/v1/internal/restaurants/${restaurantId}/inactive`;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'x-internal-key': this.internalKey },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Oshxonani faolsiz qilishda xato: ${(err as Error).message}`,
+      );
+    }
   }
 
   /** Oshxona menyusidagi taomlar (id -> {name, price, isAvailable}). */
@@ -57,8 +78,15 @@ export class RestaurantClient {
     }
 
     const body = (await response.json()) as {
-      data: { categories: { items: Array<CatalogItem & { id: string }> }[] };
+      data: {
+        restaurant: { isOpen: boolean };
+        categories: { items: Array<CatalogItem & { id: string }> }[];
+      };
     };
+
+    if (!body.data.restaurant.isOpen) {
+      throw new BadRequestException('Oshxona hozirda yopiq');
+    }
 
     const map = new Map<string, CatalogItem>();
     for (const category of body.data.categories) {

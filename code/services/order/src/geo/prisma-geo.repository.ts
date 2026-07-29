@@ -3,7 +3,10 @@ import { Prisma } from '../../prisma/generated/client';
 import { PolygonCoords } from '../common/polygon';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  MapMarker,
   MapRoad,
+  MarkerKind,
+  NewMapMarker,
   NewMapRoad,
   NewPlace,
   NewServiceArea,
@@ -117,8 +120,27 @@ export class PrismaGeoRepository extends GeoRepository {
         name: data.name,
         kind: data.kind,
         points: data.points as unknown as Prisma.InputJsonValue,
+        isOneWay: data.isOneWay ?? false,
+        isUnderConstruction: data.isUnderConstruction ?? false,
+        hasTrafficLight: data.hasTrafficLight ?? false,
+        isRestricted: data.isRestricted ?? false,
+        speedLimit: data.speedLimit ?? null,
       },
     });
+    return this.toRoad(r as Row);
+  }
+
+  async updateRoad(id: string, patch: Partial<Omit<NewMapRoad, 'areaId'>>): Promise<MapRoad> {
+    const data: Record<string, unknown> = {};
+    if (patch.name !== undefined) data.name = patch.name;
+    if (patch.kind !== undefined) data.kind = patch.kind;
+    if (patch.points !== undefined) data.points = patch.points as unknown as Prisma.InputJsonValue;
+    if (patch.isOneWay !== undefined) data.isOneWay = patch.isOneWay;
+    if (patch.isUnderConstruction !== undefined) data.isUnderConstruction = patch.isUnderConstruction;
+    if (patch.hasTrafficLight !== undefined) data.hasTrafficLight = patch.hasTrafficLight;
+    if (patch.isRestricted !== undefined) data.isRestricted = patch.isRestricted;
+    if (patch.speedLimit !== undefined) data.speedLimit = patch.speedLimit;
+    const r = await this.prisma.mapRoad.update({ where: { id }, data });
     return this.toRoad(r as Row);
   }
 
@@ -154,6 +176,49 @@ export class PrismaGeoRepository extends GeoRepository {
       name: r.name as string,
       kind: (r.kind as RoadKind) ?? 'street',
       points: r.points as unknown as number[][],
+      isOneWay: (r.isOneWay as boolean) ?? false,
+      isUnderConstruction: (r.isUnderConstruction as boolean) ?? false,
+      hasTrafficLight: (r.hasTrafficLight as boolean) ?? false,
+      isRestricted: (r.isRestricted as boolean) ?? false,
+      speedLimit: (r.speedLimit as number | null) ?? null,
+    };
+  }
+
+  async listMarkers(areaId?: string): Promise<MapMarker[]> {
+    const rows = await this.prisma.mapMarker.findMany({
+      where: areaId ? { areaId } : undefined,
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((m) => this.toMarker(m as Row));
+  }
+
+  async createMarker(data: NewMapMarker): Promise<MapMarker> {
+    const m = await this.prisma.mapMarker.create({
+      data: {
+        areaId: data.areaId,
+        lat: data.lat,
+        lng: data.lng,
+        kind: data.kind,
+        label: data.label ?? null,
+        color: data.color ?? null,
+      },
+    });
+    return this.toMarker(m as Row);
+  }
+
+  async deleteMarker(id: string): Promise<void> {
+    await this.prisma.mapMarker.delete({ where: { id } });
+  }
+
+  private toMarker(m: Row): MapMarker {
+    return {
+      id: m.id as string,
+      areaId: m.areaId as string,
+      lat: m.lat as number,
+      lng: m.lng as number,
+      kind: (m.kind as MarkerKind) ?? 'sticker',
+      label: (m.label as string | null) ?? null,
+      color: (m.color as string | null) ?? null,
     };
   }
 

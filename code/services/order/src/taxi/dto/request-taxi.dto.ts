@@ -1,5 +1,10 @@
 import { Type } from 'class-transformer';
 import {
+  DRIVER_CANCEL_REASONS,
+  DriverCancelReason,
+} from '../../common/cancel-reasons';
+import {
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -40,6 +45,11 @@ export class RequestTaxiDto {
   @ValidateNested()
   @Type(() => GeoPointDto)
   destination?: GeoPointDto;
+
+  /** Tarif klassi: start (standart) | comfort (faqat Comfort mashinalar). */
+  @IsOptional()
+  @IsIn(['start', 'comfort'])
+  tariffClass?: 'start' | 'comfort';
 }
 
 /** Safarni yakunlash — metered uchun masofa, pulli kutish (ixtiyoriy). */
@@ -53,6 +63,17 @@ export class CompleteTaxiDto {
   @IsInt()
   @Min(0)
   waitMinutes?: number;
+}
+
+/** Haydovchi safarni bekor qiladi — sabab majburiy. */
+export class DriverCancelDto {
+  @IsIn(DRIVER_CANCEL_REASONS)
+  reason!: DriverCancelReason;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  note?: string;
 }
 
 /** Suhbat xabari yuborish. Birinchi xabarga "Assalomu alaykum, " server qo'shadi. */
