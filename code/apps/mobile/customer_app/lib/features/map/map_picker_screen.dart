@@ -160,6 +160,11 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
                 setState(() => _pickedLabel = null);
               }
             },
+            overlays: [
+              // Qidiruv/GPS orqali nuqta tanlanganda — tasdiqlovchi pulse.
+              if (_pickedLabel != null)
+                MarkerLayer(markers: [searchPulseMarker(_center)]),
+            ],
           ),
 
           // Markaz pin (uchi markazga to'g'ri kelishi uchun yuqoriga siljitilgan)
