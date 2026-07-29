@@ -48,4 +48,51 @@ export class UserInfoClient {
       return null;
     }
   }
+
+  /**
+   * Bir nechta foydalanuvchining ma'lumotini bitta so'rovda oladi (id -> info)
+   * — admin ro'yxatlarni boyitishda har qator uchun alohida chaqiruv (N+1)
+   * o'rniga. `getUserInfo` bilan bir xil keshni ishlatadi/to'ldiradi.
+   */
+  async getUsersInfo(userIds: string[]): Promise<Map<string, UserBasicInfo | null>> {
+    const result = new Map<string, UserBasicInfo | null>();
+    const uniqueIds = [...new Set(userIds.filter(Boolean))];
+    if (!this.key || uniqueIds.length === 0) return result;
+
+    const toFetch: string[] = [];
+    for (const id of uniqueIds) {
+      const cached = this.cache.get(id);
+      if (cached && Date.now() - cached.at < UserInfoClient.TTL_MS) {
+        result.set(id, cached.info);
+      } else {
+        toFetch.push(id);
+      }
+    }
+    if (toFetch.length === 0) return result;
+
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/api/v1/internal/users/batch?ids=${toFetch.map(encodeURIComponent).join(',')}`,
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(UserInfoClient.FETCH_TIMEOUT_MS),
+        },
+      );
+      if (!res.ok) {
+        for (const id of toFetch) result.set(id, null);
+        return result;
+      }
+      const json = (await res.json()) as { data: UserBasicInfo[] };
+      const found = new Map((json?.data ?? []).map((u) => [u.id, u] as const));
+      for (const id of toFetch) {
+        const info = found.get(id) ?? null;
+        this.cache.set(id, { info, at: Date.now() });
+        result.set(id, info);
+      }
+    } catch (err) {
+      this.logger.warn(`Ko'p mijoz ma'lumoti olinmadi: ${(err as Error).message}`);
+      for (const id of toFetch) result.set(id, null);
+    }
+    return result;
+  }
 }

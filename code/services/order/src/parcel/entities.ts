@@ -61,6 +61,24 @@ export interface ParcelDeliveryLive extends ParcelDelivery {
   driverRatingCount?: number;
 }
 
+/** Admin statistika/hisobot uchun qisqartirilgan qator (select — pickup/destination/statusHistory'siz). */
+export interface ParcelStatsRow {
+  status: ParcelStatus;
+  createdAt: string;
+  fare: number;
+  commission: number;
+  driverId?: string;
+}
+
+/** Kuryer daromadi/statistikasi uchun qisqartirilgan qator. */
+export interface ParcelEarningsRow {
+  status: ParcelStatus;
+  createdAt: string;
+  fare: number;
+  driverEarning: number;
+  updatedAt: string;
+}
+
 export type ChatRole = 'customer' | 'driver';
 
 /** Dostavka suhbat xabari (mijoz↔kuryer). */

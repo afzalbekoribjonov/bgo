@@ -4,7 +4,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   Order,
   OrderAddress,
+  OrderEarningsRow,
   OrderItem,
+  OrderStatsRow,
   OrderStatus,
   OrderStatusEntry,
   OrderType,
@@ -89,6 +91,47 @@ export class PrismaOrderRepository extends OrderRepository {
       orderBy: { createdAt: 'desc' },
     });
     return rows.map((o) => this.toOrder(o as Row));
+  }
+
+  async findAllForStats(): Promise<OrderStatsRow[]> {
+    const rows = await this.prisma.order.findMany({
+      select: {
+        status: true,
+        createdAt: true,
+        total: true,
+        serviceFee: true,
+        discount: true,
+        driverId: true,
+      },
+    });
+    return rows.map((r) => ({
+      status: r.status as OrderStatus,
+      createdAt: r.createdAt.toISOString(),
+      total: r.total,
+      serviceFee: r.serviceFee,
+      discount: r.discount,
+      driverId: r.driverId ?? undefined,
+    }));
+  }
+
+  async findByDriverForEarnings(driverId: string): Promise<OrderEarningsRow[]> {
+    const rows = await this.prisma.order.findMany({
+      where: { driverId },
+      select: {
+        status: true,
+        createdAt: true,
+        total: true,
+        courierEarning: true,
+        updatedAt: true,
+      },
+    });
+    return rows.map((r) => ({
+      status: r.status as OrderStatus,
+      createdAt: r.createdAt.toISOString(),
+      total: r.total,
+      courierEarning: r.courierEarning,
+      updatedAt: r.updatedAt.toISOString(),
+    }));
   }
 
   async findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<Order | null> {

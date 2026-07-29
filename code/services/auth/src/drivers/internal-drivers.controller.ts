@@ -68,6 +68,20 @@ export class InternalDriversController {
     return { success: true };
   }
 
+  /**
+   * GET /api/v1/internal/drivers/batch?ids=a,b,c -> {userId,fullName,carName,carYear,plateNumber}[]
+   * Bir nechta haydovchi ma'lumotini bitta so'rovda oladi — admin ro'yxatlarni
+   * boyitishda har qator uchun alohida chaqiruv (N+1) o'rniga.
+   */
+  @Get('batch')
+  async batch(@Query('ids') ids?: string) {
+    const idList = (ids ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return { success: true, data: await this.drivers.getPublicByUserIds(idList) };
+  }
+
   /** GET /api/v1/internal/drivers/:userId -> { fullName, carName, ... } | null */
   @Get(':userId')
   async byUserId(@Param('userId') userId: string) {

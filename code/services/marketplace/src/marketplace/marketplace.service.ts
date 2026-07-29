@@ -337,7 +337,7 @@ export class MarketplaceService {
   async adminListProducts(sellerId?: string) {
     const products = await this.prisma.product.findMany({
       where: sellerId ? { sellerId } : undefined,
-      include: { seller: true },
+      include: { seller: { select: { name: true } } },
       orderBy: { createdAt: 'desc' },
     });
     return products.map((p) => ({

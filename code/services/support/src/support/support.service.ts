@@ -34,6 +34,7 @@ export class SupportService {
         OR: [{ roles: { isEmpty: true } }, { roles: { has: role } }],
       },
       orderBy: { sortOrder: 'asc' },
+      select: { id: true, label: true },
     });
     return items.map((i) => ({
       id: i.id,
@@ -248,9 +249,8 @@ export class SupportService {
       }),
       this.prisma.supportConversation.count({ where }),
     ]);
-    const items = await Promise.all(
-      rows.map(async (c) => ({ ...c, userInfo: await this.userInfo.getUserInfo(c.userId) })),
-    );
+    const users = await this.userInfo.getUsersInfo(rows.map((c) => c.userId));
+    const items = rows.map((c) => ({ ...c, userInfo: users.get(c.userId) ?? null }));
     return { items, total, page: filter.page, pageSize: filter.pageSize };
   }
 
@@ -290,13 +290,17 @@ export class SupportService {
       orderBy: { createdAt: 'desc' },
       take: 200,
     });
-    return Promise.all(
-      rows.map(async (c) => ({
-        ...c,
-        driverInfo: await this.userInfo.getUserInfo(c.driverUserId),
-        customerInfo: c.customerId ? await this.userInfo.getUserInfo(c.customerId) : null,
-      })),
+    const ids = Array.from(
+      new Set(
+        rows.flatMap((c) => [c.driverUserId, c.customerId]).filter((v): v is string => !!v),
+      ),
     );
+    const users = await this.userInfo.getUsersInfo(ids);
+    return rows.map((c) => ({
+      ...c,
+      driverInfo: users.get(c.driverUserId) ?? null,
+      customerInfo: c.customerId ? users.get(c.customerId) ?? null : null,
+    }));
   }
 
   async setComplaintStatus(id: string, status: 'RESOLVED' | 'DISMISSED') {

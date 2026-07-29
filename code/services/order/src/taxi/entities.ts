@@ -107,6 +107,24 @@ export interface AssignPricing {
   pickupSurcharge: number;
 }
 
+/** Admin statistika/hisobot uchun qisqartirilgan qator (select — pickup/destination/statusHistory'siz). */
+export interface TaxiStatsRow {
+  status: TaxiStatus;
+  createdAt: string;
+  fare: number;
+  commission: number;
+  driverId?: string;
+}
+
+/** Haydovchi daromadi/statistikasi uchun qisqartirilgan qator. */
+export interface TaxiEarningsRow {
+  status: TaxiStatus;
+  createdAt: string;
+  fare: number;
+  driverEarning: number;
+  updatedAt: string;
+}
+
 export type ChatRole = 'customer' | 'driver';
 
 /** Taksi suhbat xabari (mijoz↔haydovchi). */

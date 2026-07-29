@@ -13,6 +13,8 @@ export abstract class DriverRepository {
   abstract findById(id: string): Promise<DriverProfileEntity | null>;
   abstract findByPhone(phone: string): Promise<DriverProfileEntity | null>;
   abstract findByUserId(userId: string): Promise<DriverProfileEntity | null>;
+  /** Bir nechta userId bo'yicha bitta so'rovda (admin ro'yxatlarni boyitish — N+1 o'rniga). */
+  abstract findByUserIds(userIds: string[]): Promise<DriverProfileEntity[]>;
   abstract create(data: NewDriverProfile): Promise<DriverProfileEntity>;
   abstract update(
     id: string,

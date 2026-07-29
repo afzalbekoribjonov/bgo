@@ -489,7 +489,7 @@ export class TaxiService implements OnModuleInit {
 
   /** Taksi davr hisoboti (admin jamlash uchun). */
   async adminReport(period: ReportPeriod) {
-    const trips = await this.repo.findAll();
+    const trips = await this.repo.findAllForStats();
     return buildVerticalReport(trips, period, {
       createdAtOf: (t) => t.createdAt,
       isDone: (t) => t.status === 'COMPLETED',
@@ -501,7 +501,7 @@ export class TaxiService implements OnModuleInit {
 
   /** Taksi hisoboti — ixtiyoriy sana oralig'i (istalgan kun/oy). */
   async adminReportRange(from: Date, to: Date) {
-    const trips = await this.repo.findAll();
+    const trips = await this.repo.findAllForStats();
     return buildVerticalReportRange(trips, from, to, {
       createdAtOf: (t) => t.createdAt,
       isDone: (t) => t.status === 'COMPLETED',
@@ -513,12 +513,17 @@ export class TaxiService implements OnModuleInit {
 
   /** Taksi umumiy statistikasi (aylanma/foyda). */
   async adminStats() {
-    const trips = await this.repo.findAll();
+    const trips = await this.repo.findAllForStats();
     return buildVerticalStats(trips, {
       isDone: (t) => t.status === 'COMPLETED',
       revenueOf: (t) => t.fare,
       profitOf: (t) => t.commission,
     });
+  }
+
+  /** Statistika-qatorlar (band-haydovchi hisoblash kabi yengil ehtiyojlar uchun). */
+  statsRows() {
+    return this.repo.findAllForStats();
   }
 
   /** Admin: bitta safarni to'liq holida (barcha maydonlar). */
@@ -571,7 +576,7 @@ export class TaxiService implements OnModuleInit {
 
   /** Haydovchi taksi daromadi (EarningsSummary). */
   async driverEarnings(driverId: string): Promise<EarningsSummary> {
-    const trips = await this.repo.findByDriver(driverId);
+    const trips = await this.repo.findByDriverForEarnings(driverId);
     return summarizeEarnings(
       trips,
       (t) => t.status === 'COMPLETED',
@@ -579,6 +584,11 @@ export class TaxiService implements OnModuleInit {
       (t) => t.driverEarning,
       (t) => t.updatedAt,
     );
+  }
+
+  /** Daromad-qatorlar (boshqa vertikal "Bugun" hisobotiga jamlash uchun — yengil select). */
+  driverEarningsRows(driverId: string) {
+    return this.repo.findByDriverForEarnings(driverId);
   }
 
   /** Haydovchi qabul qiladi (PENDING -> ACCEPTED). */

@@ -73,6 +73,25 @@ export interface Order {
   updatedAt: string;
 }
 
+/** Admin statistika/hisobot uchun qisqartirilgan qator (select — items/address/statusHistory'siz). */
+export interface OrderStatsRow {
+  status: OrderStatus;
+  createdAt: string;
+  total: number;
+  serviceFee: number;
+  discount: number;
+  driverId?: string;
+}
+
+/** Haydovchi daromadi/statistikasi uchun qisqartirilgan qator. */
+export interface OrderEarningsRow {
+  status: OrderStatus;
+  createdAt: string;
+  total: number;
+  courierEarning: number;
+  updatedAt: string;
+}
+
 export type ChatRole = 'kitchen' | 'driver';
 
 /** Ovqat buyurtmasi suhbat xabari (oshxona↔haydovchi). */

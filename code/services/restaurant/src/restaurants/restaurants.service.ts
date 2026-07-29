@@ -132,6 +132,12 @@ export class RestaurantsService {
   async adminListRestaurants() {
     const restaurants = await this.repo.listRestaurants();
     const sorted = restaurants.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    // Egalar ma'lumotini oldindan bitta so'rovda olib keshni isitadi —
+    // `toAdminRestaurant`ning ichidagi yakka `getUserById` kesh-hit bo'ladi.
+    const ownerIds = sorted
+      .map((r) => r.ownerUserId)
+      .filter((v): v is string => !!v);
+    await this.authClient.getUsersById(ownerIds);
     return Promise.all(sorted.map((r) => this.toAdminRestaurant(r)));
   }
 

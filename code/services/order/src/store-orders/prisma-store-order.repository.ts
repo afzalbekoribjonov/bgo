@@ -6,7 +6,9 @@ import {
   NewStoreOrder,
   StoreDeliveryMethod,
   StoreOrder,
+  StoreOrderEarningsRow,
   StoreOrderItem,
+  StoreOrderStatsRow,
   StoreOrderStatus,
   StoreOrderStatusEntry,
 } from './entities';
@@ -69,6 +71,31 @@ export class PrismaStoreOrderRepository extends StoreOrderRepository {
       orderBy: { createdAt: 'desc' },
     });
     return rows.map((o) => this.toStoreOrder(o as Row));
+  }
+
+  async findAllForStats(): Promise<StoreOrderStatsRow[]> {
+    const rows = await this.prisma.storeOrder.findMany({
+      select: { status: true, createdAt: true, total: true },
+    });
+    return rows.map((r) => ({
+      status: r.status as StoreOrderStatus,
+      createdAt: r.createdAt.toISOString(),
+      total: r.total,
+    }));
+  }
+
+  async findByDriverForEarnings(driverId: string): Promise<StoreOrderEarningsRow[]> {
+    const rows = await this.prisma.storeOrder.findMany({
+      where: { driverId },
+      select: { status: true, createdAt: true, total: true, courierEarning: true, updatedAt: true },
+    });
+    return rows.map((r) => ({
+      status: r.status as StoreOrderStatus,
+      createdAt: r.createdAt.toISOString(),
+      total: r.total,
+      courierEarning: r.courierEarning,
+      updatedAt: r.updatedAt.toISOString(),
+    }));
   }
 
   async findAvailable(): Promise<StoreOrder[]> {

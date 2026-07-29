@@ -43,6 +43,14 @@ export class PrismaDriverRepository extends DriverRepository {
     return row ? this.toEntity(row) : null;
   }
 
+  async findByUserIds(userIds: string[]): Promise<DriverProfileEntity[]> {
+    if (userIds.length === 0) return [];
+    const rows = await this.prisma.driverProfile.findMany({
+      where: { userId: { in: userIds } },
+    });
+    return rows.map((r) => this.toEntity(r));
+  }
+
   async create(data: NewDriverProfile): Promise<DriverProfileEntity> {
     const row = await this.prisma.driverProfile.create({
       data: {

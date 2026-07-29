@@ -1,4 +1,11 @@
-import { NewStoreOrder, StatusActor, StoreOrder, StoreOrderStatus } from './entities';
+import {
+  NewStoreOrder,
+  StatusActor,
+  StoreOrder,
+  StoreOrderEarningsRow,
+  StoreOrderStatsRow,
+  StoreOrderStatus,
+} from './entities';
 
 export interface UpdateStoreStatusMeta {
   by?: StatusActor;
@@ -11,8 +18,12 @@ export abstract class StoreOrderRepository {
   abstract create(data: NewStoreOrder): Promise<StoreOrder>;
   abstract findById(id: string): Promise<StoreOrder | null>;
   abstract findAll(): Promise<StoreOrder[]>;
+  /** Admin statistika/hisobot uchun qisqartirilgan qatorlar (select — items/address/statusHistory'siz). */
+  abstract findAllForStats(): Promise<StoreOrderStatsRow[]>;
   abstract findByCustomer(customerId: string): Promise<StoreOrder[]>;
   abstract findByDriver(driverId: string): Promise<StoreOrder[]>;
+  /** Kuryer daromadi/statistikasi uchun qisqartirilgan qatorlar. */
+  abstract findByDriverForEarnings(driverId: string): Promise<StoreOrderEarningsRow[]>;
   /** Yangi (PENDING), hali kuryer biriktirilmagan DELIVERY buyurtmalar. */
   abstract findAvailable(): Promise<StoreOrder[]>;
   abstract assignDriver(id: string, driverId: string): Promise<StoreOrder>;

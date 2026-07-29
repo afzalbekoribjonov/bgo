@@ -108,9 +108,8 @@ export class MarketService {
       where: { productId },
       orderBy: { createdAt: 'desc' },
     });
-    return Promise.all(
-      comments.map(async (c) => ({ ...c, user: await this.userInfo.getUserInfo(c.userId) })),
-    );
+    const users = await this.userInfo.getUsersInfo(comments.map((c) => c.userId));
+    return comments.map((c) => ({ ...c, user: users.get(c.userId) ?? null }));
   }
 
   async addComment(productId: string, userId: string, text: string) {
@@ -170,12 +169,11 @@ export class MarketService {
       unseenCount: list.filter((m) => m.senderRole === 'CUSTOMER' && !m.seenAt)
         .length,
     }));
-    return Promise.all(
-      threads.map(async (t) => ({
-        ...t,
-        customer: await this.userInfo.getUserInfo(t.customerId),
-      })),
-    );
+    const customers = await this.userInfo.getUsersInfo(threads.map((t) => t.customerId));
+    return threads.map((t) => ({
+      ...t,
+      customer: customers.get(t.customerId) ?? null,
+    }));
   }
 
   async markSupportSeen(customerId: string) {

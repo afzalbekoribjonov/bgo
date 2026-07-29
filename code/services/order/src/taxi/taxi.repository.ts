@@ -3,6 +3,8 @@ import {
   FinalizeTaxiTrip,
   NewTaxiTrip,
   StatusActor,
+  TaxiEarningsRow,
+  TaxiStatsRow,
   TaxiStatus,
   TaxiTrip,
 } from './entities';
@@ -23,6 +25,10 @@ export abstract class TaxiRepository {
   abstract findByDriver(driverId: string): Promise<TaxiTrip[]>;
   /** Bitta safar — haydovchi + publicNo bo'yicha to'g'ridan-to'g'ri (AI shikoyat qidiruvi). */
   abstract findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<TaxiTrip | null>;
+  /** Admin statistika/hisobot uchun qisqartirilgan qatorlar (select — pickup/destination/statusHistory'siz). */
+  abstract findAllForStats(): Promise<TaxiStatsRow[]>;
+  /** Haydovchi daromadi/statistikasi uchun qisqartirilgan qatorlar. */
+  abstract findByDriverForEarnings(driverId: string): Promise<TaxiEarningsRow[]>;
   /** Yangi (PENDING), hali haydovchi biriktirilmagan safarlar. */
   abstract findAvailable(): Promise<TaxiTrip[]>;
   /**

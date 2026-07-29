@@ -1,6 +1,8 @@
 import {
   NewParcelDelivery,
   ParcelDelivery,
+  ParcelEarningsRow,
+  ParcelStatsRow,
   ParcelStatus,
   StatusActor,
 } from './entities';
@@ -21,6 +23,10 @@ export abstract class ParcelRepository {
   abstract findByDriver(driverId: string): Promise<ParcelDelivery[]>;
   /** Bitta dostavka — kuryer + publicNo bo'yicha to'g'ridan-to'g'ri (AI shikoyat qidiruvi). */
   abstract findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<ParcelDelivery | null>;
+  /** Admin statistika/hisobot uchun qisqartirilgan qatorlar (select — pickup/destination/statusHistory'siz). */
+  abstract findAllForStats(): Promise<ParcelStatsRow[]>;
+  /** Kuryer daromadi/statistikasi uchun qisqartirilgan qatorlar. */
+  abstract findByDriverForEarnings(driverId: string): Promise<ParcelEarningsRow[]>;
   /** Yangi (PENDING), hali kuryer biriktirilmagan dostavkalar. */
   abstract findAvailable(): Promise<ParcelDelivery[]>;
   abstract assignDriver(id: string, driverId: string): Promise<ParcelDelivery>;

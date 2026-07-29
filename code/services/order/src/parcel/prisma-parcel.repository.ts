@@ -5,7 +5,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   NewParcelDelivery,
   ParcelDelivery,
+  ParcelEarningsRow,
   ParcelSize,
+  ParcelStatsRow,
   ParcelStatus,
   ParcelStatusEntry,
 } from './entities';
@@ -74,6 +76,33 @@ export class PrismaParcelRepository extends ParcelRepository {
   async findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<ParcelDelivery | null> {
     const p = await this.prisma.parcelDelivery.findFirst({ where: { driverId, publicNo } });
     return p ? this.toParcel(p as Row) : null;
+  }
+
+  async findAllForStats(): Promise<ParcelStatsRow[]> {
+    const rows = await this.prisma.parcelDelivery.findMany({
+      select: { status: true, createdAt: true, fare: true, commission: true, driverId: true },
+    });
+    return rows.map((r) => ({
+      status: r.status as ParcelStatus,
+      createdAt: r.createdAt.toISOString(),
+      fare: r.fare,
+      commission: r.commission,
+      driverId: r.driverId ?? undefined,
+    }));
+  }
+
+  async findByDriverForEarnings(driverId: string): Promise<ParcelEarningsRow[]> {
+    const rows = await this.prisma.parcelDelivery.findMany({
+      where: { driverId },
+      select: { status: true, createdAt: true, fare: true, driverEarning: true, updatedAt: true },
+    });
+    return rows.map((r) => ({
+      status: r.status as ParcelStatus,
+      createdAt: r.createdAt.toISOString(),
+      fare: r.fare,
+      driverEarning: r.driverEarning,
+      updatedAt: r.updatedAt.toISOString(),
+    }));
   }
 
   async findAvailable(): Promise<ParcelDelivery[]> {

@@ -6,6 +6,8 @@ import {
   FinalizeTaxiTrip,
   GeoPoint,
   NewTaxiTrip,
+  TaxiEarningsRow,
+  TaxiStatsRow,
   TaxiStatus,
   TaxiStatusEntry,
   TaxiTrip,
@@ -68,6 +70,33 @@ export class PrismaTaxiRepository extends TaxiRepository {
       orderBy: { createdAt: 'desc' },
     });
     return rows.map((t) => this.toTrip(t as Row));
+  }
+
+  async findAllForStats(): Promise<TaxiStatsRow[]> {
+    const rows = await this.prisma.taxiTrip.findMany({
+      select: { status: true, createdAt: true, fare: true, commission: true, driverId: true },
+    });
+    return rows.map((r) => ({
+      status: r.status as TaxiStatus,
+      createdAt: r.createdAt.toISOString(),
+      fare: r.fare,
+      commission: r.commission,
+      driverId: r.driverId ?? undefined,
+    }));
+  }
+
+  async findByDriverForEarnings(driverId: string): Promise<TaxiEarningsRow[]> {
+    const rows = await this.prisma.taxiTrip.findMany({
+      where: { driverId },
+      select: { status: true, createdAt: true, fare: true, driverEarning: true, updatedAt: true },
+    });
+    return rows.map((r) => ({
+      status: r.status as TaxiStatus,
+      createdAt: r.createdAt.toISOString(),
+      fare: r.fare,
+      driverEarning: r.driverEarning,
+      updatedAt: r.updatedAt.toISOString(),
+    }));
   }
 
   async findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<TaxiTrip | null> {

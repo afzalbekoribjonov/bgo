@@ -16,7 +16,7 @@ import { DriverInfoClient } from '../driver-client/driver-info.client';
 import { DriverLocationService } from '../tracking/driver-location.service';
 import { NotificationClient } from '../notification-client/notification.client';
 import { PromoService } from '../promo/promo.service';
-import { RestaurantClient } from '../restaurant-client/restaurant.client';
+import { RestaurantClient, RestaurantSummary } from '../restaurant-client/restaurant.client';
 import { Tariff, TariffService } from '../tariff/tariff.service';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import {
@@ -248,7 +248,8 @@ export class OrdersService implements OnModuleInit {
     this.logger.log(
       `Dispatch tiklanishi: ${stuck.length} ta ovqat buyurtmasi qayta yuborilmoqda`,
     );
-    await Promise.all(stuck.map((o) => this.offerToDrivers(o)));
+    const dir = await this.restaurant.getRestaurantDirectory();
+    await Promise.all(stuck.map((o) => this.offerToDrivers(o, dir)));
   }
 
   /** Har taom uchun xizmat haqi ustamasi (per dona) — chegaraga qarab. */
@@ -510,9 +511,16 @@ export class OrdersService implements OnModuleInit {
     return this.transition(id, ['ACCEPTED', 'PREPARING'], 'READY');
   }
 
-  /** Ovqat buyurtmasini eng yaqin haydovchiga taklif qiladi (oshxona = pickup). */
-  private async offerToDrivers(order: Order): Promise<void> {
-    const dir = await this.restaurant.getRestaurantDirectory();
+  /**
+   * Ovqat buyurtmasini eng yaqin haydovchiga taklif qiladi (oshxona = pickup).
+   * `directory` beriladigan bo'lsa (masalan ko'p buyurtma bir ketma-ketlikda
+   * qayta ishlanayotganda), oshxona katalogini qayta so'ramaydi.
+   */
+  private async offerToDrivers(
+    order: Order,
+    directory?: Map<string, RestaurantSummary>,
+  ): Promise<void> {
+    const dir = directory ?? (await this.restaurant.getRestaurantDirectory());
     const r = dir.get(order.restaurantId);
     if (!r) return;
     await this.dispatch.offer({
@@ -542,12 +550,12 @@ export class OrdersService implements OnModuleInit {
   // TODO(admin auth): admin roli JWT. Hozir ochiq (dev).
 
   /** Buyurtma foydasi = xizmat haqi − chegirma (yetkazishdan komissiya yo'q). */
-  private orderProfit(o: Order): number {
+  private orderProfit(o: { serviceFee: number; discount: number }): number {
     return o.serviceFee - o.discount;
   }
 
   async adminStats() {
-    const orders = await this.repo.findAll();
+    const orders = await this.repo.findAllForStats();
     const closed = [...TERMINAL_STATUSES, ...CANCELLED_STATUSES];
 
     const byStatus: Record<string, number> = {};
@@ -586,7 +594,7 @@ export class OrdersService implements OnModuleInit {
 
   /** Davr hisoboti (bugun/hafta/oy) — uchala vertikal jamlangan. */
   async adminReport(period: ReportPeriod) {
-    const orders = await this.repo.findAll();
+    const orders = await this.repo.findAllForStats();
     const food = buildVerticalReport(orders, period, {
       createdAtOf: (o) => o.createdAt,
       isDone: (o) => TERMINAL_STATUSES.includes(o.status),
@@ -628,7 +636,7 @@ export class OrdersService implements OnModuleInit {
   async adminReportRange(fromDate: string, toDate: string) {
     const from = new Date(`${fromDate}T00:00:00.000`);
     const to = new Date(`${toDate}T23:59:59.999`);
-    const orders = await this.repo.findAll();
+    const orders = await this.repo.findAllForStats();
     const food = buildVerticalReportRange(orders, from, to, {
       createdAtOf: (o) => o.createdAt,
       isDone: (o) => TERMINAL_STATUSES.includes(o.status),
@@ -829,8 +837,7 @@ export class OrdersService implements OnModuleInit {
       byDriver.set(f.driverId, arr);
     }
     const driverIds = Array.from(byDriver.keys());
-    const infos = await Promise.all(driverIds.map((id) => this.driverInfo.getPublic(id)));
-    const infoMap = new Map(driverIds.map((id, i) => [id, infos[i]]));
+    const infoMap = await this.driverInfo.getPublicBulk(driverIds);
 
     const speedFlagged = driverIds
       .map((driverId) => {
@@ -884,10 +891,7 @@ export class OrdersService implements OnModuleInit {
     const customerIds = Array.from(
       new Set([...food, ...trips, ...parcels].map((o) => o.customerId)),
     );
-    const customerInfos = await Promise.all(
-      customerIds.map((cid) => this.driverInfo.getUserInfo(cid)),
-    );
-    const customerMap = new Map(customerIds.map((cid, i) => [cid, customerInfos[i]]));
+    const customerMap = await this.driverInfo.getUsersInfo(customerIds);
 
     type Row = {
       id: string; publicNo: number; type: string; status: string;
@@ -1020,9 +1024,9 @@ export class OrdersService implements OnModuleInit {
 
     // Band haydovchilar — uchala vertikaldagi faol buyurtmalar bo'yicha.
     const [foodAll, trips, parcels] = await Promise.all([
-      this.repo.findAll(),
-      this.taxi.adminListTrips({}),
-      this.parcel.adminListDeliveries({}),
+      this.repo.findAllForStats(),
+      this.taxi.statsRows(),
+      this.parcel.statsRows(),
     ]);
     const busySet = new Set<string>();
     const activeFood = [
@@ -1046,18 +1050,16 @@ export class OrdersService implements OnModuleInit {
       }
     }
 
-    const infos = await Promise.all(
-      locs.map((l) => this.driverInfo.getPublic(l.driverId)),
-    );
-    const drivers = locs.map((l, i) => ({
+    const infoMap = await this.driverInfo.getPublicBulk(locs.map((l) => l.driverId));
+    const drivers = locs.map((l) => ({
       driverId: l.driverId,
       lat: l.lat,
       lng: l.lng,
       heading: l.heading ?? null,
       busy: busySet.has(l.driverId),
-      name: infos[i]?.fullName ?? null,
-      car: infos[i]?.carName ?? null,
-      plate: infos[i]?.plateNumber ?? null,
+      name: infoMap.get(l.driverId)?.fullName ?? null,
+      car: infoMap.get(l.driverId)?.carName ?? null,
+      plate: infoMap.get(l.driverId)?.plateNumber ?? null,
     }));
     const busy = drivers.filter((d) => d.busy).length;
     return {
@@ -1185,8 +1187,7 @@ export class OrdersService implements OnModuleInit {
     const ids = Array.from(
       new Set((history ?? []).map((h) => h.driverId).filter((v): v is string => !!v)),
     );
-    const infos = await Promise.all(ids.map((did) => this.driverInfo.getPublic(did)));
-    const map = new Map(ids.map((did, i) => [did, infos[i]]));
+    const map = await this.driverInfo.getPublicBulk(ids);
     return (history ?? []).map((h) => ({
       ...h,
       driverName: h.driverId ? map.get(h.driverId)?.fullName ?? null : undefined,
@@ -1257,7 +1258,7 @@ export class OrdersService implements OnModuleInit {
   /** Haydovchi daromadi — yetkazilgan buyurtmalar bo'yicha. */
   /** Haydovchi ovqat yetkazish daromadi (EarningsSummary). */
   async driverEarnings(driverId: string): Promise<EarningsSummary> {
-    const orders = await this.repo.findByDriver(driverId);
+    const orders = await this.repo.findByDriverForEarnings(driverId);
     return summarizeEarnings(
       orders,
       (o) => o.status === 'DELIVERED',
@@ -1274,9 +1275,9 @@ export class OrdersService implements OnModuleInit {
   async driverStats(driverId: string, period: ReportPeriod) {
     const start = periodStart(period).getTime();
     const [foodOrders, taxiTrips, parcels] = await Promise.all([
-      this.repo.findByDriver(driverId),
-      this.taxi.listDriverTrips(driverId),
-      this.parcel.listDriverParcels(driverId),
+      this.repo.findByDriverForEarnings(driverId),
+      this.taxi.driverEarningsRows(driverId),
+      this.parcel.driverEarningsRows(driverId),
     ]);
 
     type Done = {

@@ -78,6 +78,22 @@ export interface StoreOrderLive extends StoreOrder {
   customerPhone?: string | null;
 }
 
+/** Admin statistika/hisobot uchun qisqartirilgan qator (select — items/address/statusHistory'siz). */
+export interface StoreOrderStatsRow {
+  status: StoreOrderStatus;
+  createdAt: string;
+  total: number;
+}
+
+/** Kuryer daromadi/statistikasi uchun qisqartirilgan qator. */
+export interface StoreOrderEarningsRow {
+  status: StoreOrderStatus;
+  createdAt: string;
+  total: number;
+  courierEarning: number;
+  updatedAt: string;
+}
+
 export interface NewStoreOrder {
   customerId: string;
   pickupLocationId: string;

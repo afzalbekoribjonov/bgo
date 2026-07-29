@@ -301,6 +301,19 @@ export class DriversService {
     };
   }
 
+  /** Servislararo: bir nechta haydovchining ommaviy ma'lumoti (userId -> info) bitta so'rovda. */
+  async getPublicByUserIds(userIds: string[]) {
+    if (userIds.length === 0) return [];
+    const profiles = await this.repo.findByUserIds(userIds);
+    return profiles.map((profile) => ({
+      userId: profile.userId,
+      fullName: profile.fullName,
+      carName: profile.carName,
+      carYear: profile.carYear,
+      plateNumber: profile.plateNumber,
+    }));
+  }
+
   /**
    * Servislararo: foydalanuvchi telefon raqami (userId bo'yicha) — suhbatdagi
    * qo'ng'iroq tugmasi uchun (mijoz yoki haydovchi raqami). Topilmasa null.

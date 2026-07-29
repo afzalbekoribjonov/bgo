@@ -291,7 +291,7 @@ export class ParcelService implements OnModuleInit {
 
   /** Dostavka davr hisoboti (admin jamlash uchun). */
   async adminReport(period: ReportPeriod) {
-    const parcels = await this.repo.findAll();
+    const parcels = await this.repo.findAllForStats();
     return buildVerticalReport(parcels, period, {
       createdAtOf: (p) => p.createdAt,
       isDone: (p) => p.status === 'DELIVERED',
@@ -303,7 +303,7 @@ export class ParcelService implements OnModuleInit {
 
   /** Dostavka hisoboti — ixtiyoriy sana oralig'i (istalgan kun/oy). */
   async adminReportRange(from: Date, to: Date) {
-    const parcels = await this.repo.findAll();
+    const parcels = await this.repo.findAllForStats();
     return buildVerticalReportRange(parcels, from, to, {
       createdAtOf: (p) => p.createdAt,
       isDone: (p) => p.status === 'DELIVERED',
@@ -315,12 +315,17 @@ export class ParcelService implements OnModuleInit {
 
   /** Dostavka umumiy statistikasi (aylanma/foyda). */
   async adminStats() {
-    const parcels = await this.repo.findAll();
+    const parcels = await this.repo.findAllForStats();
     return buildVerticalStats(parcels, {
       isDone: (p) => p.status === 'DELIVERED',
       revenueOf: (p) => p.fare,
       profitOf: (p) => p.commission,
     });
+  }
+
+  /** Statistika-qatorlar (band-kuryer hisoblash kabi yengil ehtiyojlar uchun). */
+  statsRows() {
+    return this.repo.findAllForStats();
   }
 
   /** Admin: bitta dostavkani to'liq holida (barcha maydonlar). */
@@ -373,7 +378,7 @@ export class ParcelService implements OnModuleInit {
 
   /** Kuryer dostavka daromadi (EarningsSummary). */
   async driverEarnings(driverId: string): Promise<EarningsSummary> {
-    const parcels = await this.repo.findByDriver(driverId);
+    const parcels = await this.repo.findByDriverForEarnings(driverId);
     return summarizeEarnings(
       parcels,
       (p) => p.status === 'DELIVERED',
@@ -382,6 +387,11 @@ export class ParcelService implements OnModuleInit {
       (p) => p.driverEarning,
       (p) => p.updatedAt,
     );
+  }
+
+  /** Daromad-qatorlar (boshqa vertikal "Bugun" hisobotiga jamlash uchun — yengil select). */
+  driverEarningsRows(driverId: string) {
+    return this.repo.findByDriverForEarnings(driverId);
   }
 
   /** Kuryer qabul qiladi (PENDING -> ACCEPTED). */

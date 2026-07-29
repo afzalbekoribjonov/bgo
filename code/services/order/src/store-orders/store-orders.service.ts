@@ -420,7 +420,7 @@ export class StoreOrdersService implements OnModuleInit {
 
   /** Haydovchi Market yetkazish daromadi (EarningsSummary). */
   async driverEarnings(driverId: string): Promise<EarningsSummary> {
-    const orders = await this.repo.findByDriver(driverId);
+    const orders = await this.repo.findByDriverForEarnings(driverId);
     return summarizeEarnings(
       orders,
       (o) => o.status === 'DELIVERED',
@@ -590,7 +590,7 @@ export class StoreOrdersService implements OnModuleInit {
   }
 
   async adminReport(period: ReportPeriod) {
-    const orders = await this.repo.findAll();
+    const orders = await this.repo.findAllForStats();
     return buildVerticalReport(orders, period, {
       createdAtOf: (o) => o.createdAt,
       isDone: (o) => o.status === 'DELIVERED' || o.status === 'COMPLETED',
@@ -601,7 +601,7 @@ export class StoreOrdersService implements OnModuleInit {
   }
 
   async adminReportRange(from: Date, to: Date) {
-    const orders = await this.repo.findAll();
+    const orders = await this.repo.findAllForStats();
     return buildVerticalReportRange(orders, from, to, {
       createdAtOf: (o) => o.createdAt,
       isDone: (o) => o.status === 'DELIVERED' || o.status === 'COMPLETED',
@@ -612,7 +612,7 @@ export class StoreOrdersService implements OnModuleInit {
   }
 
   async adminStats() {
-    const orders = await this.repo.findAll();
+    const orders = await this.repo.findAllForStats();
     return buildVerticalStats(orders, {
       isDone: (o) => o.status === 'DELIVERED' || o.status === 'COMPLETED',
       revenueOf: (o) => o.total,
