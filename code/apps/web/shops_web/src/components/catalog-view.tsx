@@ -55,7 +55,7 @@ export default function CatalogView({
     } finally {
       setLoading(false);
     }
-  }, [sellerType, geo]);
+  }, [sellerType, geo, toast]);
 
   useEffect(() => {
     if (ready) load();

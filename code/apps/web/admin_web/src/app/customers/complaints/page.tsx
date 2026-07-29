@@ -100,7 +100,7 @@ function ComplaintsTab() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, toast]);
 
   useEffect(() => { load(); }, [load]);
 

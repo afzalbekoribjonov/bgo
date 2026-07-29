@@ -41,7 +41,7 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     load();

@@ -52,7 +52,7 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     if (ready) load();

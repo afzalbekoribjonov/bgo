@@ -118,7 +118,7 @@ export default function DriverDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -134,7 +134,7 @@ export default function DriverDetailPage() {
         .catch((e) => toast((e as Error).message, 'error'))
         .finally(() => setHistoryLoading(false));
     }
-  }, [tab, driverUserId]);
+  }, [tab, driverUserId, history.length, toast]);
 
   useEffect(() => {
     if (tab === 'stats' && driverUserId) {
@@ -144,7 +144,7 @@ export default function DriverDetailPage() {
         .catch((e) => toast((e as Error).message, 'error'))
         .finally(() => setStatsLoading(false));
     }
-  }, [tab, period, driverUserId]);
+  }, [tab, period, driverUserId, toast]);
 
   useEffect(() => {
     if (tab === 'control' && driverUserId) {
@@ -154,7 +154,7 @@ export default function DriverDetailPage() {
         .catch((e) => toast((e as Error).message, 'error'))
         .finally(() => setActiveLoading(false));
     }
-  }, [tab, id]);
+  }, [tab, id, driverUserId, toast]);
 
   async function save() {
     setSaving(true);

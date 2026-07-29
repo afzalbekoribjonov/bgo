@@ -176,33 +176,6 @@ export default function RoadMap({
     }),
   }), [places, selectedPlaceId]);
 
-  const markersGeoJSON = useMemo(() => ({
-    type: 'FeatureCollection' as const,
-    features: markers.map((m) => ({
-      type: 'Feature' as const,
-      id: m.id,
-      geometry: { type: 'Point' as const, coordinates: [m.lng, m.lat] },
-      properties: {
-        id: m.id,
-        emoji: MARKER_EMOJI[m.kind] ?? '📌',
-        label: m.label ?? '',
-        selected: m.id === selectedMarkerId,
-      },
-    })),
-  }), [markers, selectedMarkerId]);
-
-  const pendingGeoJSON = useMemo(() => ({
-    type: 'FeatureCollection' as const,
-    features: pendingMarker
-      ? [{
-          type: 'Feature' as const,
-          id: 'pending',
-          geometry: { type: 'Point' as const, coordinates: [pendingMarker[1], pendingMarker[0]] },
-          properties: { emoji: MARKER_EMOJI[pendingMarkerKind] ?? '📌' },
-        }]
-      : [],
-  }), [pendingMarker, pendingMarkerKind]);
-
   const placeDraftGeoJSON = useMemo(() => ({
     type: 'FeatureCollection' as const,
     features: placeDraft
@@ -261,7 +234,7 @@ export default function RoadMap({
       const id = f.properties?.id;
       if (id) onSelectPlace(id);
     }
-  }, [clickEnabled, onMapClick, onSelectRoad, onSelectPlace, onSelectMarker]);
+  }, [clickEnabled, onMapClick, onSelectRoad, onSelectPlace]);
 
   const handleMouseEnter = useCallback(() => {
     if (!clickEnabled) setCursor('pointer');

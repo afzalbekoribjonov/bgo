@@ -114,7 +114,7 @@ export default function TariffPage() {
       })
       .catch((e) => toast((e as Error).message, 'error'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [toast]);
 
   async function save() {
     setSaving(true);

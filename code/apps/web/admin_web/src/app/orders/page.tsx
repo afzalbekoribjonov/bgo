@@ -161,7 +161,7 @@ export default function OrdersPage() {
     } finally {
       setReportLoading(false);
     }
-  }, [from, to]);
+  }, [from, to, toast]);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -181,7 +181,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [type, status, from, to, q, sort, order]);
+  }, [type, status, from, to, q, sort, order, toast]);
 
   useEffect(() => { loadReport(); }, [loadReport]);
   useEffect(() => { loadOrders(); }, [loadOrders]);

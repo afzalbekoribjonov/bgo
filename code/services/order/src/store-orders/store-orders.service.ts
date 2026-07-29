@@ -596,7 +596,7 @@ export class StoreOrdersService implements OnModuleInit {
       isDone: (o) => o.status === 'DELIVERED' || o.status === 'COMPLETED',
       isCancelled: (o) => o.status === 'CANCELLED',
       revenueOf: (o) => o.total,
-      profitOf: (o) => 0, // Market yetkazishda komissiya yo'q; itemsTotal — mahsulot narxi (foyda emas)
+      profitOf: (_o) => 0, // Market yetkazishda komissiya yo'q; itemsTotal — mahsulot narxi (foyda emas)
     });
   }
 
@@ -607,7 +607,7 @@ export class StoreOrdersService implements OnModuleInit {
       isDone: (o) => o.status === 'DELIVERED' || o.status === 'COMPLETED',
       isCancelled: (o) => o.status === 'CANCELLED',
       revenueOf: (o) => o.total,
-      profitOf: (o) => 0,
+      profitOf: (_o) => 0,
     });
   }
 
@@ -616,7 +616,7 @@ export class StoreOrdersService implements OnModuleInit {
     return buildVerticalStats(orders, {
       isDone: (o) => o.status === 'DELIVERED' || o.status === 'COMPLETED',
       revenueOf: (o) => o.total,
-      profitOf: (o) => 0,
+      profitOf: (_o) => 0,
     });
   }
 

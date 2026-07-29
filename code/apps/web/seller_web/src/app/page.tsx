@@ -55,7 +55,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [sellerType]);
+  }, [sellerType, toast]);
 
   useEffect(() => { load(); }, [load]);
 

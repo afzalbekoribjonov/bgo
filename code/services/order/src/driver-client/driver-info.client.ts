@@ -280,7 +280,15 @@ export class DriverInfoClient {
         },
       );
       if (!res.ok) return [];
-      const json = (await res.json()) as { data: any[] };
+      const json = (await res.json()) as {
+        data: {
+          userId: string;
+          driverName: string;
+          carName: string | null;
+          plateNumber: string | null;
+          consecutiveCancellations: number;
+        }[];
+      };
       return json?.data ?? [];
     } catch (err) {
       this.logger.warn(`Yuqori bekor qilishlar ro'yxati olinmadi: ${(err as Error).message}`);

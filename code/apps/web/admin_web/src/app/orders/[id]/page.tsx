@@ -140,7 +140,7 @@ function OrderDetailContent() {
     } finally {
       setLoading(false);
     }
-  }, [id, type]);
+  }, [id, type, toast]);
 
   useEffect(() => { load(); }, [load]);
 

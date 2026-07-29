@@ -7,7 +7,6 @@ import {
   createGeoArea,
   deleteGeoArea,
   deleteGeoPlace,
-  deleteGeoRoad,
   getGeoAreas,
   importOsmPlaces,
   importOsmRoads,
@@ -76,7 +75,7 @@ export default function GeoPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 

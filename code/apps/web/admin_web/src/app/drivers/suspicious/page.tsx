@@ -60,7 +60,7 @@ export default function SuspiciousDriversPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 

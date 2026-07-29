@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "echo \"(i18n) lint skip\" && exit 0",
+    "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "test": "echo \"(i18n) test yo'q\" && exit 0"
   },
   "devDependencies": {

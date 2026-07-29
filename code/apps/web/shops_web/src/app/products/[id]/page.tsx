@@ -27,7 +27,7 @@ export default function ProductDetailPage() {
       .then(setProduct)
       .catch((e) => toast((e as Error).message, 'error'))
       .finally(() => setLoading(false));
-  }, [ready, id]);
+  }, [ready, id, toast]);
 
   function onGalleryScroll() {
     const el = galleryRef.current;

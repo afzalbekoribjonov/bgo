@@ -195,7 +195,7 @@ function ProductsTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -569,7 +569,7 @@ function CategoriesTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -739,7 +739,7 @@ function OrdersTab({ onOpenChat }: { onOpenChat: (customerId: string) => void })
     } finally {
       setLoading(false);
     }
-  }, [status, method, debouncedSearch]);
+  }, [status, method, debouncedSearch, toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -1241,7 +1241,7 @@ function PickupTab() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 

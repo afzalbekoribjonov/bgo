@@ -138,7 +138,7 @@ export default function RestaurantDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => { load(); }, [load]);
 

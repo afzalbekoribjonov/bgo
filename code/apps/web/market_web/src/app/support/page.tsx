@@ -20,7 +20,7 @@ export default function SupportPage() {
     } catch (e) {
       toast((e as Error).message, 'error');
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (ready && authed) {

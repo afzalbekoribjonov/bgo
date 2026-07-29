@@ -134,7 +134,7 @@ function SellersTab() {
     } finally {
       setLoading(false);
     }
-  }, [typeFilter]);
+  }, [typeFilter, toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -508,7 +508,7 @@ function CategoriesTab() {
     } finally {
       setLoading(false);
     }
-  }, [typeFilter]);
+  }, [typeFilter, toast]);
 
   useEffect(() => { load(); }, [load]);
 

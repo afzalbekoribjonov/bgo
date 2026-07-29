@@ -21,7 +21,7 @@ export default function MessagesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (!ready || !authed) { setLoading(false); return; }

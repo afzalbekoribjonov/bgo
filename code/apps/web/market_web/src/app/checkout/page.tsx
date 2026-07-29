@@ -38,7 +38,7 @@ export default function CheckoutPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (ready && authed) load();

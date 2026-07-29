@@ -24,7 +24,7 @@ export default function ChatConversationPage() {
     } finally {
       setLoading(false);
     }
-  }, [customerId]);
+  }, [customerId, toast]);
 
   useEffect(() => {
     load();

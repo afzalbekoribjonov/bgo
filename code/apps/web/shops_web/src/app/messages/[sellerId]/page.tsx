@@ -30,7 +30,7 @@ export default function ChatConversationPage() {
     } finally {
       setLoading(false);
     }
-  }, [sellerId]);
+  }, [sellerId, toast]);
 
   useEffect(() => {
     if (!ready || !authed) return;

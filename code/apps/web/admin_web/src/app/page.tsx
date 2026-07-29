@@ -26,7 +26,7 @@ export default function DashboardPage() {
       .then(setStats)
       .catch((e) => toast(e.message, 'error'))
       .finally(() => setLoadingStats(false));
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     setLoadingReport(true);
@@ -35,7 +35,7 @@ export default function DashboardPage() {
       .then(setReport)
       .catch((e) => toast(e.message, 'error'))
       .finally(() => setLoadingReport(false));
-  }, [period]);
+  }, [period, toast]);
 
   return (
     <div className="container">
