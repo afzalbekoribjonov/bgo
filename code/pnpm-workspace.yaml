@@ -1,8 +1,15 @@
 packages:
   - "services/*"
   - "packages/*"
-  - "apps/admin_web"
-  - "apps/restaurant_web"
+  - "apps/web/*"
 
-# Eslatma: apps/customer_app va apps/driver_app — Flutter (Dart) ilovalari,
-# pnpm workspace'iga kirmaydi. Ular alohida `flutter pub get` bilan boshqariladi.
+# Eslatma: apps/mobile/customer_app va apps/mobile/driver_app — Flutter (Dart)
+# ilovalari, pnpm workspace'iga kirmaydi. Ular alohida `flutter pub get` bilan
+# boshqariladi.
+#
+# Papka tuzilmasi (server joylashtirish va kelgusi microservice migratsiyasi
+# uchun tartibli):
+#   apps/web/*    — Next.js veb-ilovalar (har biri mustaqil deploy qilinadi)
+#   apps/mobile/* — Flutter mobil ilovalar (APK/store orqali tarqatiladi)
+#   services/*    — NestJS backend mikroservislar
+#   packages/*    — umumiy kod (TS turlar, auth, i18n, Flutter core)

@@ -13,32 +13,63 @@ const AndroidNotificationChannel kPushChannel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
+/// Yangi buyurtma signali kanali — MAX muhimlik, ovoz + vibratsiya, to'liq
+/// ekran (full screen intent). Haydovchi ilovasi uchun: telefon jiringlaydi va
+/// ekran boshqa ilova ustidan ham yonadi.
+const AndroidNotificationChannel kOfferChannel = AndroidNotificationChannel(
+  'beshariq_offer',
+  'Yangi buyurtmalar',
+  description: 'Yangi buyurtma takliflari (ovoz + ekran)',
+  importance: Importance.max,
+  playSound: true,
+  enableVibration: true,
+);
+
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
+bool _localInited = false;
 
-/// Push bannerlarini ko'rsatishni sozlaydi (kanal + foreground tinglovchi).
-/// main() da Firebase.initializeApp dan keyin bir marta chaqiriladi.
-Future<void> initPushNotifications() async {
+/// Local bildirishnoma plaginini va kanallarni tayyorlaydi (idempotent).
+/// Background isolate (yopiq ilova push'i) ham shu orqali init qiladi.
+Future<void> _ensureLocalInit() async {
+  if (_localInited) return;
   const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
   await _localNotifications.initialize(
     const InitializationSettings(android: androidInit),
   );
-  await _localNotifications
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(kPushChannel);
-  // Ilova ochiq (foreground) bo'lganda kelgan push'ni banner qilib ko'rsatamiz.
-  FirebaseMessaging.onMessage.listen(showLocalFromRemote);
+  final android = _localNotifications.resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>();
+  await android?.createNotificationChannel(kPushChannel);
+  await android?.createNotificationChannel(kOfferChannel);
+  _localInited = true;
 }
 
-/// FCM xabaridan local banner ko'rsatadi (notification qismi bo'lsa).
+/// Push bannerlarini ko'rsatishni sozlaydi (kanal + foreground tinglovchi).
+/// main() da Firebase.initializeApp dan keyin bir marta chaqiriladi.
+Future<void> initPushNotifications() async {
+  await _ensureLocalInit();
+  // Foreground: oddiy xabarlarni banner qilamiz. Yangi buyurtma (type==offer)
+  // foreground'da ilovaning O'ZI (bosh ekran poll + banner + ovoz) bilan
+  // ko'rsatiladi — bu yerda takror signal bermaymiz.
+  FirebaseMessaging.onMessage.listen((m) {
+    if (m.data['type'] == 'offer') return;
+    showLocalFromRemote(m);
+  });
+}
+
+/// FCM xabaridan local banner ko'rsatadi. Notification qismi bo'lmasa
+/// (data-only push) — data ichidagi title/body dan foydalanadi, shunda
+/// hech bir xabar foreground'da "jimgina yo'qolib" ketmaydi.
 Future<void> showLocalFromRemote(RemoteMessage message) async {
   final n = message.notification;
-  if (n == null) return;
+  final title = n?.title ?? (message.data['title'] as String?);
+  final body = n?.body ?? (message.data['body'] as String?);
+  if ((title ?? '').isEmpty && (body ?? '').isEmpty) return;
+  await _ensureLocalInit();
   await _localNotifications.show(
-    n.hashCode,
-    n.title,
-    n.body,
+    (title ?? body).hashCode,
+    title,
+    body,
     NotificationDetails(
       android: AndroidNotificationDetails(
         kPushChannel.id,
@@ -50,6 +81,44 @@ Future<void> showLocalFromRemote(RemoteMessage message) async {
       ),
     ),
     payload: message.data['type'] as String?,
+  );
+}
+
+/// Yangi buyurtma (type==offer) data-push'i uchun TO'LIQ EKRAN signal.
+/// Ilova fonda/yopiq bo'lsa ham background handler shuni chaqiradi: telefon
+/// jiringlaydi, vibratsiya, ekran yonadi va boshqa ilova/lock ustidan ko'rinadi.
+/// Bosilsa ilova ochiladi va bosh ekran taklifni ko'rsatadi.
+Future<void> showOfferAlert(RemoteMessage message) async {
+  final data = message.data;
+  if (data['type'] != 'offer') {
+    await showLocalFromRemote(message);
+    return;
+  }
+  await _ensureLocalInit();
+  final title = (data['title'] as String?) ?? 'Yangi buyurtma';
+  final body = (data['body'] as String?) ?? '';
+  await _localNotifications.show(
+    7711, // barqaror id — bir vaqtda bitta taklif signali
+    title,
+    body,
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        kOfferChannel.id,
+        kOfferChannel.name,
+        channelDescription: kOfferChannel.description,
+        importance: Importance.max,
+        priority: Priority.max,
+        category: AndroidNotificationCategory.call,
+        fullScreenIntent: true,
+        playSound: true,
+        enableVibration: true,
+        visibility: NotificationVisibility.public,
+        ticker: 'Yangi buyurtma',
+        autoCancel: true,
+        icon: '@mipmap/ic_launcher',
+      ),
+    ),
+    payload: 'offer:${data['orderId'] ?? ''}',
   );
 }
 

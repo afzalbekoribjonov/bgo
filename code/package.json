@@ -16,6 +16,9 @@
     "auth:dev": "pnpm --filter @beshariq/auth start:dev",
     "restaurant:dev": "pnpm --filter @beshariq/restaurant start:dev",
     "order:dev": "pnpm --filter @beshariq/order start:dev",
+    "market:dev": "pnpm --filter @beshariq/market start:dev",
+    "marketplace:dev": "pnpm --filter @beshariq/marketplace start:dev",
+    "support:dev": "pnpm --filter @beshariq/support start:dev",
     "infra:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker/docker-compose.yml down",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""

@@ -1,3 +1,6 @@
+# DB zaxiralari (katta fayllar — gitga kirmasin, lokal saqlansin)
+backups/
+
 # Dependencies
 node_modules/
 .pnpm-store/
@@ -25,6 +28,7 @@ out/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+*.stackdump
 
 # Flutter / Dart
 **/.dart_tool/
@@ -34,10 +38,10 @@ pnpm-debug.log*
 **/build/
 **/*.g.dart
 **/*.freezed.dart
-apps/*/android/.gradle/
-apps/*/android/app/debug
-apps/*/android/app/release
-apps/*/ios/Pods/
+apps/mobile/*/android/.gradle/
+apps/mobile/*/android/app/debug
+apps/mobile/*/android/app/release
+apps/mobile/*/ios/Pods/
 **/*.iml
 **/.idea/
 

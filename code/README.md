@@ -11,16 +11,28 @@ Beshariq tumani (Farg'ona viloyati) uchun yagona mobil super-ilova: **Taksi + Do
 beshariq_food/
 ├── plan/                # Loyiha rejasi (hujjatlar)
 └── code/                # ◀ SIZ SHU YERDASIZ (monorepo)
-    ├── apps/                # Frontend ilovalar
-    │   ├── customer_app/        # Flutter — mijoz (Android)
-    │   ├── driver_app/          # Flutter — haydovchi (Android)
-    │   ├── admin_web/           # Next.js — admin panel (keyin)
-    │   └── restaurant_web/      # Next.js — oshxona paneli (keyin)
-    ├── services/            # Backend microservislar
-    │   └── gateway/             # NestJS — API Gateway (✅ Faza 0)
+    ├── apps/
+    │   ├── mobile/              # Flutter ilovalar (APK/store orqali tarqatiladi)
+    │   │   ├── customer_app/        # Mijoz (Android)
+    │   │   └── driver_app/          # Haydovchi (Android)
+    │   └── web/                 # Next.js ilovalar (har biri mustaqil deploy qilinadi)
+    │       ├── admin_web/            # Admin panel
+    │       ├── restaurant_web/       # Oshxona paneli
+    │       ├── market_web/           # Beshariq Market — mijoz sayti
+    │       ├── shops_web/            # Do'konlar/Qurilish — mijoz sayti
+    │       └── seller_web/           # Sotuvchi paneli
+    ├── services/            # Backend mikroservislar (NestJS)
+    │   ├── gateway/             # API Gateway
+    │   ├── auth/                # Auth + foydalanuvchi/haydovchi profillari
+    │   ├── restaurant/          # Oshxona katalogi
+    │   ├── order/               # Buyurtma/taksi/dostavka/market buyurtmalari + dispatch
+    │   ├── market/              # Beshariq Market katalogi
+    │   └── marketplace/         # Do'konlar/Qurilish katalogi
     ├── packages/            # Umumiy paketlar
     │   ├── shared-types/        # TS umumiy tiplar/enum
-    │   └── i18n/                # Umumiy tarjimalar (uz, uz-Cyrl, ru)
+    │   ├── i18n/                # Umumiy tarjimalar (uz, uz-Cyrl, ru)
+    │   ├── nest-auth/           # Umumiy JWT/rol guard (backend)
+    │   └── beshariq_core/       # Umumiy Flutter data-layer (mobil)
     └── infra/               # Docker, DB, OSRM
 ```
 
@@ -63,8 +75,8 @@ pnpm gateway:dev
 
 ### Flutter ilovalar
 ```bash
-cd apps/customer_app && flutter pub get && flutter run
-cd apps/driver_app   && flutter pub get && flutter run
+cd apps/mobile/customer_app && flutter pub get && flutter run
+cd apps/mobile/driver_app   && flutter pub get && flutter run
 ```
 
 ## Holat
