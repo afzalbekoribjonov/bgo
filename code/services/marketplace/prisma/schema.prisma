@@ -1,0 +1,91 @@
+// Marketplace servisi — ma'lumot modeli (marketplace_db).
+// Do'konlar + Qurilishda foydali — uchinchi tomon sotuvchilar reklamasi.
+generator client {
+  provider = "prisma-client-js"
+  // Har servisga alohida output (pnpm monorepo'da client'lar to'qnashmasligi uchun)
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SellerType {
+  SHOP
+  CONSTRUCTION
+}
+
+enum ChatSenderRole {
+  CUSTOMER
+  SELLER
+}
+
+model Category {
+  id         String     @id @default(uuid())
+  name       Json
+  sellerType SellerType
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+  products   Product[]
+
+  @@index([sellerType])
+  @@map("categories")
+}
+
+model Seller {
+  id           String     @id @default(uuid())
+  name         String
+  description  String?
+  contactPhone String
+  sellerType   SellerType
+  /// Do'kon manzili (matn) — mijozga ko'rsatiladi
+  address      String?
+  /// Joylashuv — "eng yaqin do'kon birinchi" saralash uchun
+  lat          Float?
+  lng          Float?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  products     Product[]
+
+  @@index([sellerType])
+  @@map("sellers")
+}
+
+model Product {
+  id          String     @id @default(uuid())
+  sellerId    String
+  seller      Seller     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  sellerType  SellerType // denormalized — tez filtrlash (sellerId join'siz)
+  name        Json
+  description Json?
+  price       Int
+  imageUrls   String[]   @default([])
+  /// Mavjud o'lchamlar (masalan ["S","M","L"] yoki ["42","43"]). Bo'sh — o'lchamsiz mahsulot.
+  sizes       String[]   @default([])
+  ratingAvg   Float?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([sellerId])
+  @@index([sellerType])
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ChatMessage {
+  id         String         @id @default(uuid())
+  sellerId   String
+  customerId String
+  senderRole ChatSenderRole
+  text       String
+  seenAt     DateTime?
+  createdAt  DateTime       @default(now())
+
+  @@index([sellerId, customerId])
+  @@map("chat_messages")
+}

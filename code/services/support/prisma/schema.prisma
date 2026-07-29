@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SupportRole {
+  CUSTOMER
+  DRIVER
+}
+
+enum ConversationStatus {
+  OPEN
+  ESCALATED
+  RESOLVED
+}
+
+enum SupportSenderRole {
+  USER
+  BOT
+  AI
+  ADMIN
+  SYSTEM
+}
+
+enum ComplaintStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+/// Tayyor savol-javob tugmasi (admin tomonidan boshqariladi).
+model FaqItem {
+  id String @id @default(uuid())
+  /// Bo'sh massiv = mijoz VA haydovchi ikkalasiga ham ko'rsatiladi.
+  roles     SupportRole[] @default([])
+  label     Json // I18nString
+  answer    Json // I18nString
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("faq_items")
+}
+
+/// Bitta "yangi suhbat" (ticket) — foydalanuvchi hisobida sana-vaqti bilan
+/// alohida saqlanadi (Market support'dagi kabi bitta uzluksiz oqim EMAS).
+model SupportConversation {
+  id       String      @id @default(uuid())
+  userId   String
+  userRole SupportRole
+
+  /// FaqItem.id yoki 'ai' (Savolim bor — erkin suhbat).
+  topic String
+  /// Yaratilish vaqtidagi nom-snapshot — FaqItem keyin o'zgarsa/o'chsa ham
+  /// eski suhbat sarlavhasi buzilmaydi.
+  topicLabel String?
+
+  status ConversationStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages SupportChatMessage[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("support_conversations")
+}
+
+model SupportChatMessage {
+  id             String              @id @default(uuid())
+  conversationId String
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderRole SupportSenderRole
+  text       String
+  /// Faqat admin uchun ichki izoh (masalan, eskalatsiya sababi) — userga
+  /// hech qachon ko'rsatilmaydi.
+  internalNote String?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("support_chat_messages")
+}
+
+/// Haydovchi AI suhbatida mijoz haqida shikoyat bildirganda avtomatik
+/// yaratiladi (admin_web "E'tirozli mijozlar" bo'limi). customerId — order
+/// servisidan buyurtma raqami orqali aniqlanadi, topilmasa null (admin
+/// baribir haydovchi/xulosani ko'radi, lekin mijozga to'g'ridan-to'g'ri
+/// harakat qila olmaydi).
+model CustomerComplaint {
+  id             String   @id @default(uuid())
+  driverUserId   String
+  conversationId String
+  orderPublicNo  Int?
+  orderType      String? // FOOD | TAXI | PARCEL
+  customerId     String?
+
+  summary String
+  status  ComplaintStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([customerId])
+  @@map("customer_complaints")
+}

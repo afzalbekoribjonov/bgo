@@ -1,0 +1,97 @@
+// Market servisi — ma'lumot modeli (market_db). Beshariq Market katalogi.
+generator client {
+  provider = "prisma-client-js"
+  // Har servisga alohida output (pnpm monorepo'da client'lar to'qnashmasligi uchun)
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SupportSenderRole {
+  CUSTOMER
+  SUPPORT
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      Json
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name        Json
+  description Json?
+  price       Int
+  stockQty    Int       @default(0)
+  imageUrls   String[]  @default([])
+  /// Mavjud o'lchamlar (masalan ["S","M","L"]). Bo'sh — o'lchamsiz mahsulot.
+  sizes       String[]  @default([])
+  likesCount  Int       @default(0)
+  ratingAvg   Float?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  likes    ProductLike[]
+  comments ProductComment[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([productId, userId])
+  @@map("product_likes")
+}
+
+model ProductComment {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("product_comments")
+}
+
+model PickupLocation {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  lat       Float
+  lng       Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("pickup_locations")
+}
+
+model SupportMessage {
+  id         String            @id @default(uuid())
+  customerId String
+  senderRole SupportSenderRole
+  text       String
+  seenAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([customerId])
+  @@map("support_messages")
+}
