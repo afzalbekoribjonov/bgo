@@ -29,6 +29,8 @@ export class RestaurantOwnerGuard implements CanActivate {
 
     const restaurantId = request.params.restaurantId;
     if (!restaurantId) return true;
+    // Oshxona login/parol kirishi — JWT'da restaurantId claim'i.
+    if (user.restaurantId && user.restaurantId === restaurantId) return true;
     const owner = await this.service.isOwner(restaurantId, user.sub);
     if (!owner) {
       throw new ForbiddenException('Bu oshxona sizga tegishli emas');

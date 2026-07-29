@@ -1,4 +1,4 @@
-import { I18nString } from '../common/i18n';
+import { I18nString } from '@beshariq/i18n';
 
 export type RestaurantStatus = 'ACTIVE' | 'PENDING' | 'BLOCKED';
 

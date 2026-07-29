@@ -17,6 +17,8 @@ import {
   CreateMenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
+import { OpenDto } from './dto/open.dto';
+import { UpdateLogoDto } from './dto/logo.dto';
 import { RestaurantsService } from './restaurants.service';
 
 /**
@@ -28,6 +30,32 @@ import { RestaurantsService } from './restaurants.service';
 @Roles('restaurant', 'admin')
 export class ManagementController {
   constructor(private readonly service: RestaurantsService) {}
+
+  // ----- Holat (ochiq/yopiq) -----
+
+  /** "Hozir yopiq/ochiq" — oshxona bandligini boshqaradi. */
+  @Patch('open')
+  async setOpen(
+    @Param('restaurantId') restaurantId: string,
+    @Body() dto: OpenDto,
+  ) {
+    return {
+      success: true,
+      data: await this.service.setOpen(restaurantId, dto.isOpen),
+    };
+  }
+
+  /** Oshxona logotipi (profil rasmi) — o'rnatish/o'zgartirish. */
+  @Patch('logo')
+  async updateLogo(
+    @Param('restaurantId') restaurantId: string,
+    @Body() dto: UpdateLogoDto,
+  ) {
+    return {
+      success: true,
+      data: await this.service.updateLogo(restaurantId, dto.logoUrl),
+    };
+  }
 
   // ----- Kategoriyalar -----
 

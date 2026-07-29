@@ -1,6 +1,6 @@
 import { Controller, Get, Headers, Param, UseGuards } from '@nestjs/common';
 import { AccessTokenPayload, CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
-import { localeFromHeader } from '../common/i18n';
+import { localeFromHeader } from '@beshariq/i18n';
 import { RestaurantsService } from './restaurants.service';
 
 /** Public katalog (mijoz ilovasi uchun). plan/05-customer-app.md */
@@ -19,6 +19,17 @@ export class CatalogController {
   @Roles('restaurant')
   async mine(@CurrentUser() user: AccessTokenPayload) {
     return { success: true, data: await this.service.listForOwner(user.sub) };
+  }
+
+  /**
+   * "Mening oshxonam" — kirgan foydalanuvchi oshxona egasimi? Egasi bo'lsa
+   * WebView panelga avtomatik kirish uchun token qaytaradi. ':id' dan OLDIN.
+   * Rol talab qilinmaydi — egalik ownerUserId bo'yicha tekshiriladi.
+   */
+  @Get('my-kitchen')
+  @UseGuards(JwtAuthGuard)
+  async myKitchen(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.service.panelTokenForOwner(user.sub) };
   }
 
   /** Bosh ekran taomlar lentasi (barcha oshxonalardan). ':id' dan OLDIN. */

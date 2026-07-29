@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { pickLocale, SupportedLocale } from '../common/i18n';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { AuthClient } from '../auth-client/auth.client';
+import { pickLocale, SupportedLocale } from '@beshariq/i18n';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import { CreateMenuItemDto, UpdateMenuItemDto } from './dto/menu-item.dto';
 import { CreateRestaurantDto, UpdateRestaurantDto } from './dto/restaurant.dto';
@@ -8,7 +11,12 @@ import { RestaurantRepository } from './restaurant.repository';
 
 @Injectable()
 export class RestaurantsService {
-  constructor(private readonly repo: RestaurantRepository) {}
+  constructor(
+    private readonly repo: RestaurantRepository,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+    private readonly authClient: AuthClient,
+  ) {}
 
   // ---------- Public katalog (mijoz) ----------
 
@@ -58,10 +66,64 @@ export class RestaurantsService {
     return restaurants.map((r) => this.toPublicRestaurant(r));
   }
 
-  /** Egasini biriktirish (admin). */
+  /**
+   * "Mening oshxonam" — mijoz ilovasida allaqachon kirgan foydalanuvchi o'z
+   * oshxonasi panelini WebView orqali avtomatik ochishi uchun. Egalik
+   * `ownerUserId` bo'yicha SERVER tomonda tekshiriladi (rol talab qilinmaydi);
+   * topilsa oshxona paneliga mos JWT (role 'restaurant' + restaurantId) beriladi.
+   * Topilmasa `{ restaurantId: null }`.
+   */
+  async panelTokenForOwner(ownerUserId: string): Promise<{
+    restaurantId: string | null;
+    name?: string;
+    accessToken?: string;
+  }> {
+    const restaurants = await this.repo.findByOwner(ownerUserId);
+    const restaurant = restaurants[0];
+    if (!restaurant) return { restaurantId: null };
+    const accessToken = await this.jwt.signAsync(
+      {
+        sub: `kitchen:${restaurant.id}`,
+        phone: '',
+        roles: ['restaurant'],
+        restaurantId: restaurant.id,
+      },
+      {
+        secret: this.config.get<string>('JWT_ACCESS_SECRET'),
+        expiresIn: this.config.get<string>('JWT_ACCESS_TTL') ?? '30m',
+      },
+    );
+    return { restaurantId: restaurant.id, name: restaurant.name, accessToken };
+  }
+
+  /** Egasini biriktirish (admin) — xom UUID bilan (ichki/qo'lda ishlatish uchun). */
   async assignOwner(id: string, ownerUserId: string) {
     const restaurant = await this.repo.setOwner(id, ownerUserId);
     return this.toPublicRestaurant(restaurant);
+  }
+
+  /**
+   * Telefon raqami bo'yicha foydalanuvchini qidiradi — egani biriktirishdan
+   * oldin admin panelda ko'rsatish/tasdiqlash uchun. Topilmasa null.
+   */
+  async findOwnerCandidate(phone: string) {
+    return this.authClient.findUserByPhone(phone);
+  }
+
+  /**
+   * Egani telefon raqami bo'yicha biriktiradi — userId avtomatik auth
+   * servisidan topiladi (admin UUID kiritmaydi, xato ehtimoli yo'q).
+   */
+  async assignOwnerByPhone(id: string, phone: string) {
+    await this.requireRestaurant(id);
+    const user = await this.authClient.findUserByPhone(phone);
+    if (!user) {
+      throw new NotFoundException(
+        "Bu telefon raqami bilan ro'yxatdan o'tgan foydalanuvchi topilmadi. Foydalanuvchi avval Beshariq Go ilovasiga shu raqam bilan kirishi kerak.",
+      );
+    }
+    const restaurant = await this.repo.setOwner(id, user.id);
+    return this.toAdminRestaurant(restaurant);
   }
 
   // ---------- Admin onboarding ----------
@@ -69,9 +131,8 @@ export class RestaurantsService {
   /** Barcha oshxonalar (admin ko'rinishi — ega/status/komissiya bilan). */
   async adminListRestaurants() {
     const restaurants = await this.repo.listRestaurants();
-    return restaurants
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map((r) => this.toAdminRestaurant(r));
+    const sorted = restaurants.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return Promise.all(sorted.map((r) => this.toAdminRestaurant(r)));
   }
 
   /** Yangi oshxona yaratish (admin). */
@@ -84,6 +145,20 @@ export class RestaurantsService {
   async updateRestaurant(id: string, dto: UpdateRestaurantDto) {
     await this.requireRestaurant(id);
     const restaurant = await this.repo.updateRestaurant(id, dto);
+    return this.toAdminRestaurant(restaurant);
+  }
+
+  /** Oshxonani ochiq/yopiq (faol/faolsiz) qiladi — ega paneli yoki tizim. */
+  async setOpen(id: string, isOpen: boolean) {
+    await this.requireRestaurant(id);
+    const restaurant = await this.repo.updateRestaurant(id, { isOpen });
+    return this.toAdminRestaurant(restaurant);
+  }
+
+  /** Oshxona logotipini (profil rasmini) yangilaydi — ega paneli. */
+  async updateLogo(id: string, logoUrl: string) {
+    await this.requireRestaurant(id);
+    const restaurant = await this.repo.updateRestaurant(id, { logoUrl });
     return this.toAdminRestaurant(restaurant);
   }
 
@@ -187,7 +262,10 @@ export class RestaurantsService {
   }
 
   /** Admin ko'rinishi — to'liq (ega/status/telefon/komissiya). */
-  private toAdminRestaurant(r: Restaurant) {
+  private async toAdminRestaurant(r: Restaurant) {
+    const owner = r.ownerUserId
+      ? await this.authClient.getUserById(r.ownerUserId)
+      : null;
     return {
       id: r.id,
       name: r.name,
@@ -199,7 +277,10 @@ export class RestaurantsService {
       rating: r.rating,
       status: r.status,
       commissionPercent: r.commissionPercent,
+      logoUrl: r.logoUrl ?? null,
       ownerUserId: r.ownerUserId ?? null,
+      ownerPhone: owner?.phone ?? null,
+      ownerName: owner?.fullName ?? null,
       createdAt: r.createdAt,
     };
   }

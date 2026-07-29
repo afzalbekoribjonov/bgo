@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../prisma/generated/client';
-import { I18nString } from '../common/i18n';
+import { I18nString } from '@beshariq/i18n';
 import { PrismaService } from '../prisma/prisma.service';
 import { Category, MenuItem, Restaurant, RestaurantStatus } from './entities';
 import {

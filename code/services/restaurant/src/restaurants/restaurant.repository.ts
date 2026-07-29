@@ -20,6 +20,7 @@ export type UpdateRestaurantData = Partial<{
   commissionPercent: number;
   isOpen: boolean;
   status: RestaurantStatus;
+  logoUrl: string;
 }>;
 
 export interface CreateCategoryData {
