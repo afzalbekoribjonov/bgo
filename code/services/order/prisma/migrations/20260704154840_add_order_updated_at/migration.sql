@@ -1,8 +1,5 @@
-/*
-  Warnings:
-
-  - Added the required column `updatedAt` to the `orders` table without a default value. This is not possible if the table is not empty.
-
-*/
--- AlterTable
-ALTER TABLE "orders" ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
+-- No-op: bu migratsiya productionda hech qachon muvaffaqiyatli bajarilmagan
+-- (updatedAt keyingi 20260704204848_add_order_updated_at migratsiyasi orqali
+-- qo'shilgan va prod tarixida "resolved" deb belgilangan). Fayl faqat shadow
+-- DB replay tartibini (nom bo'yicha, bu migratsiya keyingisidan oldin keladi)
+-- ustunni ikki marta qo'shishdan saqlash uchun bo'shatildi.

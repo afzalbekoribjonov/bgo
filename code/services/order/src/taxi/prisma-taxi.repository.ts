@@ -70,6 +70,11 @@ export class PrismaTaxiRepository extends TaxiRepository {
     return rows.map((t) => this.toTrip(t as Row));
   }
 
+  async findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<TaxiTrip | null> {
+    const t = await this.prisma.taxiTrip.findFirst({ where: { driverId, publicNo } });
+    return t ? this.toTrip(t as Row) : null;
+  }
+
   async findAvailable(): Promise<TaxiTrip[]> {
     const rows = await this.prisma.taxiTrip.findMany({
       where: { status: 'PENDING', driverId: null },

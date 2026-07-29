@@ -1215,16 +1215,13 @@ export class OrdersService implements OnModuleInit {
     driverUserId: string,
     publicNo: number,
   ): Promise<{ type: 'FOOD' | 'TAXI' | 'PARCEL'; customerId: string } | null> {
-    const food = await this.repo.findByDriver(driverUserId);
-    const foodMatch = food.find((o) => o.publicNo === publicNo);
+    const foodMatch = await this.repo.findByDriverAndPublicNo(driverUserId, publicNo);
     if (foodMatch) return { type: 'FOOD', customerId: foodMatch.customerId };
 
-    const trips = await this.taxi.adminListTrips({ driverId: driverUserId });
-    const tripMatch = trips.find((t) => t.publicNo === publicNo);
+    const tripMatch = await this.taxi.findByDriverAndPublicNo(driverUserId, publicNo);
     if (tripMatch) return { type: 'TAXI', customerId: tripMatch.customerId };
 
-    const parcels = await this.parcel.adminListDeliveries({ driverId: driverUserId });
-    const parcelMatch = parcels.find((p) => p.publicNo === publicNo);
+    const parcelMatch = await this.parcel.findByDriverAndPublicNo(driverUserId, publicNo);
     if (parcelMatch) return { type: 'PARCEL', customerId: parcelMatch.customerId };
 
     return null;

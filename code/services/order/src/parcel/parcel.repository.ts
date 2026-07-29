@@ -19,6 +19,8 @@ export abstract class ParcelRepository {
   abstract findAll(): Promise<ParcelDelivery[]>;
   abstract findByCustomer(customerId: string): Promise<ParcelDelivery[]>;
   abstract findByDriver(driverId: string): Promise<ParcelDelivery[]>;
+  /** Bitta dostavka — kuryer + publicNo bo'yicha to'g'ridan-to'g'ri (AI shikoyat qidiruvi). */
+  abstract findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<ParcelDelivery | null>;
   /** Yangi (PENDING), hali kuryer biriktirilmagan dostavkalar. */
   abstract findAvailable(): Promise<ParcelDelivery[]>;
   abstract assignDriver(id: string, driverId: string): Promise<ParcelDelivery>;

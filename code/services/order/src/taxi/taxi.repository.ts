@@ -21,6 +21,8 @@ export abstract class TaxiRepository {
   abstract findAll(): Promise<TaxiTrip[]>;
   abstract findByCustomer(customerId: string): Promise<TaxiTrip[]>;
   abstract findByDriver(driverId: string): Promise<TaxiTrip[]>;
+  /** Bitta safar — haydovchi + publicNo bo'yicha to'g'ridan-to'g'ri (AI shikoyat qidiruvi). */
+  abstract findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<TaxiTrip | null>;
   /** Yangi (PENDING), hali haydovchi biriktirilmagan safarlar. */
   abstract findAvailable(): Promise<TaxiTrip[]>;
   /**

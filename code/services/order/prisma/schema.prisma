@@ -194,6 +194,7 @@ model TaxiTrip {
   @@index([customerId])
   @@index([driverId])
   @@index([status])
+  @@index([createdAt])
   @@map("taxi_trips")
 }
 
@@ -267,6 +268,8 @@ model Order {
   @@index([customerId])
   @@index([restaurantId])
   @@index([driverId])
+  @@index([status])
+  @@index([createdAt])
   @@map("orders")
 }
 
@@ -332,6 +335,7 @@ model ParcelDelivery {
   @@index([customerId])
   @@index([driverId])
   @@index([status])
+  @@index([createdAt])
   @@map("parcel_deliveries")
 }
 
@@ -377,6 +381,7 @@ model StoreOrder {
   @@index([customerId])
   @@index([driverId])
   @@index([status])
+  @@index([createdAt])
   @@map("store_orders")
 }
 

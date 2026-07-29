@@ -21,6 +21,12 @@ export class PrismaUserRepository extends UserRepository {
     return user ? this.toEntity(user) : null;
   }
 
+  async findByIds(ids: string[]): Promise<UserEntity[]> {
+    if (ids.length === 0) return [];
+    const users = await this.prisma.user.findMany({ where: { id: { in: ids } } });
+    return users.map((u) => this.toEntity(u));
+  }
+
   async findAll(): Promise<UserEntity[]> {
     const users = await this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' },

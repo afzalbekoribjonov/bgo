@@ -328,6 +328,11 @@ export class ParcelService implements OnModuleInit {
     return this.repo.findById(id);
   }
 
+  /** Bitta dostavka — kuryer + publicNo bo'yicha (AI shikoyat qidiruvi). */
+  findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<ParcelDelivery | null> {
+    return this.repo.findByDriverAndPublicNo(driverId, publicNo);
+  }
+
   /** Admin: dostavkalarni filtrlangan ro'yxat. */
   async adminListDeliveries(filter: {
     status?: string;

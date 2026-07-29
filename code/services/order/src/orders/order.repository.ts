@@ -25,6 +25,8 @@ export abstract class OrderRepository {
   /** Yetkazishga tayyor, hali haydovchi biriktirilmagan buyurtmalar (READY). */
   abstract findAvailableForDelivery(): Promise<Order[]>;
   abstract findByDriver(driverId: string): Promise<Order[]>;
+  /** Bitta buyurtma — haydovchi + publicNo bo'yicha to'g'ridan-to'g'ri (AI shikoyat qidiruvi). */
+  abstract findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<Order | null>;
   /** Haydovchini biriktiradi va ASSIGNED holatga o'tkazadi (eskirgan oqim). */
   abstract assignDriver(id: string, driverId: string): Promise<Order>;
   /** Haydovchi ovqat buyurtmasini qabul qildi — driverId + driverAcceptedAt (status o'zgармaydi). */

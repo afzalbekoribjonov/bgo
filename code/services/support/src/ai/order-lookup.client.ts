@@ -17,6 +17,8 @@ export class OrderLookupClient {
   private readonly logger = new Logger(OrderLookupClient.name);
   private readonly baseUrl: string;
   private readonly key?: string;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl = config.get<string>('ORDER_SERVICE_URL') ?? 'http://localhost:4004';
@@ -31,7 +33,10 @@ export class OrderLookupClient {
     try {
       const res = await fetch(
         `${this.baseUrl}/api/v1/internal/orders/lookup-by-driver?driverUserId=${encodeURIComponent(driverUserId)}&publicNo=${publicNo}`,
-        { headers: { 'x-internal-key': this.key } },
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(OrderLookupClient.FETCH_TIMEOUT_MS),
+        },
       );
       if (!res.ok) return null;
       const json = (await res.json()) as { data: OrderLookupResult | null };

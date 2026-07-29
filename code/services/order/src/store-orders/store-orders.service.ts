@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { DispatchService } from '../orders/dispatch.service';
-import { DriverInfoClient } from '../driver-client/driver-info.client';
+import { DriverInfoClient, UserBasicInfo } from '../driver-client/driver-info.client';
 import { EarningsSummary, summarizeEarnings } from '../common/earnings';
 import { GeoPoint, haversineKm } from '../common/geo';
 import { roundFare } from '../common/money';
@@ -569,17 +569,19 @@ export class StoreOrdersService implements OnModuleInit {
       }
       return true;
     });
-    return Promise.all(filtered.map((o) => this.toAdminView(o)));
+    const customers = await this.driverInfo.getUsersInfo(filtered.map((o) => o.customerId));
+    return filtered.map((o) => this.toAdminView(o, customers.get(o.customerId) ?? null));
   }
 
   async adminGetById(id: string): Promise<AdminStoreOrderView | null> {
     const order = await this.repo.findById(id);
-    return order ? this.toAdminView(order) : null;
+    if (!order) return null;
+    const customer = await this.driverInfo.getUserInfo(order.customerId);
+    return this.toAdminView(order, customer);
   }
 
   /** Buyurtma + ruxsat etilgan o'tishlar + mijoz ism/telefoni (best-effort). */
-  private async toAdminView(order: StoreOrder): Promise<AdminStoreOrderView> {
-    const customer = await this.driverInfo.getUserInfo(order.customerId);
+  private toAdminView(order: StoreOrder, customer: UserBasicInfo | null): AdminStoreOrderView {
     return {
       ...order,
       allowedTransitions: this.allowedAdminTransitions(order),

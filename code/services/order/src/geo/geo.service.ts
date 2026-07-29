@@ -44,6 +44,8 @@ interface OverpassNode {
 @Injectable()
 export class GeoService {
   private readonly logger = new Logger(GeoService.name);
+  /** Overpass so'rovi o'zi timeout:90 so'raydi — mijoz tomoni shundan uzunroq. */
+  private static readonly OVERPASS_TIMEOUT_MS = 120_000;
 
   constructor(private readonly repo: GeoRepository) {}
 
@@ -159,6 +161,7 @@ export class GeoService {
         'User-Agent': 'BeshariqSuperApp/1.0 (orifjonov0916@gmail.com)',
       },
       body: 'data=' + encodeURIComponent(query),
+      signal: AbortSignal.timeout(GeoService.OVERPASS_TIMEOUT_MS),
     });
     if (!res.ok) {
       throw new BadRequestException(`Overpass xatosi: ${res.status}`);
@@ -223,6 +226,7 @@ export class GeoService {
         'User-Agent': 'BeshariqSuperApp/1.0 (orifjonov0916@gmail.com)',
       },
       body: 'data=' + encodeURIComponent(query),
+      signal: AbortSignal.timeout(GeoService.OVERPASS_TIMEOUT_MS),
     });
     if (!res.ok) {
       throw new BadRequestException(`Overpass xatosi: ${res.status}`);

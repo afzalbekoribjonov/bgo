@@ -72,6 +72,7 @@ model SupportConversation {
 
   @@index([userId, createdAt])
   @@index([status])
+  @@index([status, updatedAt])
   @@map("support_conversations")
 }
 

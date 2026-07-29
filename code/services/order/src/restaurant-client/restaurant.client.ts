@@ -31,6 +31,8 @@ export class RestaurantClient {
   private readonly logger = new Logger(RestaurantClient.name);
   private readonly baseUrl: string;
   private readonly internalKey: string;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
@@ -48,6 +50,7 @@ export class RestaurantClient {
       await fetch(url, {
         method: 'POST',
         headers: { 'x-internal-key': this.internalKey },
+        signal: AbortSignal.timeout(RestaurantClient.FETCH_TIMEOUT_MS),
       });
     } catch (err) {
       this.logger.warn(
@@ -64,7 +67,10 @@ export class RestaurantClient {
     const url = `${this.baseUrl}/api/v1/restaurants/${restaurantId}/menu`;
     let response: Response;
     try {
-      response = await fetch(url, { headers: { 'Accept-Language': locale } });
+      response = await fetch(url, {
+        headers: { 'Accept-Language': locale },
+        signal: AbortSignal.timeout(RestaurantClient.FETCH_TIMEOUT_MS),
+      });
     } catch (err) {
       this.logger.error(`Katalogga ulanib bo'lmadi: ${(err as Error).message}`);
       throw new ServiceUnavailableException('Katalog xizmati ishlamayapti');
@@ -110,7 +116,9 @@ export class RestaurantClient {
     const url = `${this.baseUrl}/api/v1/restaurants`;
     const map = new Map<string, RestaurantSummary>();
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(RestaurantClient.FETCH_TIMEOUT_MS),
+      });
       if (!response.ok) return map;
       const body = (await response.json()) as {
         data: Array<{
@@ -148,6 +156,7 @@ export class RestaurantClient {
     try {
       response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(RestaurantClient.FETCH_TIMEOUT_MS),
       });
     } catch (err) {
       this.logger.error(`Egalik so'rovida xato: ${(err as Error).message}`);

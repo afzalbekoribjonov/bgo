@@ -34,6 +34,8 @@ export class MarketClient {
   private readonly logger = new Logger(MarketClient.name);
   private readonly baseUrl: string;
   private readonly internalKey: string;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
@@ -53,7 +55,10 @@ export class MarketClient {
     try {
       response = await fetch(
         `${this.baseUrl}/api/v1/market/internal/products/${id}`,
-        { headers: this.headers() },
+        {
+          headers: this.headers(),
+          signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
+        },
       );
     } catch (err) {
       this.logger.error(`Market servisiga ulanib bo'lmadi: ${(err as Error).message}`);
@@ -72,7 +77,10 @@ export class MarketClient {
     try {
       response = await fetch(
         `${this.baseUrl}/api/v1/market/internal/pickup-locations/${id}`,
-        { headers: this.headers() },
+        {
+          headers: this.headers(),
+          signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
+        },
       );
     } catch (err) {
       this.logger.error(`Market servisiga ulanib bo'lmadi: ${(err as Error).message}`);
@@ -96,6 +104,7 @@ export class MarketClient {
         method: 'POST',
         headers: this.headers(true),
         body: JSON.stringify({ qty }),
+        signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
       },
     ).catch((err: Error) => {
       this.logger.error(`Zaxira band qilishda ulanish xatosi: ${err.message}`);
@@ -117,6 +126,7 @@ export class MarketClient {
           method: 'POST',
           headers: this.headers(true),
           body: JSON.stringify({ qty }),
+          signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
         },
       );
     } catch (err) {

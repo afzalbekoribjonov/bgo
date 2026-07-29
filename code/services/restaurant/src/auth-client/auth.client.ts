@@ -20,6 +20,8 @@ export class AuthClient {
   private readonly key?: string;
   private readonly byIdCache = new Map<string, { user: AuthUserLookup | null; at: number }>();
   private static readonly TTL_MS = 60_000;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl = config.get<string>('AUTH_SERVICE_URL') ?? 'http://localhost:4001';
@@ -32,7 +34,10 @@ export class AuthClient {
     try {
       const res = await fetch(
         `${this.baseUrl}/api/v1/internal/users/by-phone/${encodeURIComponent(phone)}`,
-        { headers: { 'x-internal-key': this.key } },
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(AuthClient.FETCH_TIMEOUT_MS),
+        },
       );
       if (!res.ok) return null;
       const json = (await res.json()) as { data: AuthUserLookup | null };
@@ -51,6 +56,7 @@ export class AuthClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/v1/internal/users/${userId}`, {
         headers: { 'x-internal-key': this.key },
+        signal: AbortSignal.timeout(AuthClient.FETCH_TIMEOUT_MS),
       });
       if (!res.ok) return null;
       const json = (await res.json()) as { data: AuthUserLookup | null };

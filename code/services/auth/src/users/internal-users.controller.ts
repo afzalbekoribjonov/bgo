@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { InternalKeyGuard } from '../notifications/internal-key.guard';
 import { UserRepository } from './user.repository';
 
@@ -29,6 +29,21 @@ export class InternalUsersController {
   async byPhone(@Param('phone') phone: string) {
     const user = await this.users.findByPhone(phone);
     return { success: true, data: toPublic(user) };
+  }
+
+  /**
+   * GET /api/v1/internal/users/batch?ids=a,b,c -> {id,phone,fullName}[]
+   * Bir nechta foydalanuvchini bitta so'rovda oladi — admin ro'yxatlarni
+   * boyitishda har qator uchun alohida chaqiruv (N+1) o'rniga.
+   */
+  @Get('batch')
+  async batch(@Query('ids') ids?: string) {
+    const idList = (ids ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const users = idList.length ? await this.users.findByIds(idList) : [];
+    return { success: true, data: users.map((u) => toPublic(u)) };
   }
 
   /** GET /api/v1/internal/users/:id -> {id,phone,fullName} | null */

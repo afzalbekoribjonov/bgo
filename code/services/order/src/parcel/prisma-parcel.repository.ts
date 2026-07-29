@@ -71,6 +71,11 @@ export class PrismaParcelRepository extends ParcelRepository {
     return rows.map((p) => this.toParcel(p as Row));
   }
 
+  async findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<ParcelDelivery | null> {
+    const p = await this.prisma.parcelDelivery.findFirst({ where: { driverId, publicNo } });
+    return p ? this.toParcel(p as Row) : null;
+  }
+
   async findAvailable(): Promise<ParcelDelivery[]> {
     const rows = await this.prisma.parcelDelivery.findMany({
       where: { status: 'PENDING', driverId: null },

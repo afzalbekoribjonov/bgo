@@ -41,6 +41,8 @@ export class DriverInfoClient {
   private comfortCache: { ids: Set<string>; at: number } | null = null;
   private static readonly TTL_MS = 60_000;
   private static readonly COMFORT_TTL_MS = 20_000;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
@@ -56,7 +58,10 @@ export class DriverInfoClient {
     try {
       const res = await fetch(
         `${this.baseUrl}/api/v1/internal/drivers/${userId}/phone`,
-        { headers: { 'x-internal-key': this.key } },
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
       );
       if (!res.ok) return null;
       const json = (await res.json()) as { data: { phone: string | null } };
@@ -81,6 +86,7 @@ export class DriverInfoClient {
             'x-internal-key': this.key,
           },
           body: JSON.stringify({ amount, note }),
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
         },
       );
       if (!res.ok) this.logger.warn(`Komissiya yechilmadi: ${res.status}`);
@@ -106,6 +112,7 @@ export class DriverInfoClient {
             'x-internal-key': this.key,
           },
           body: JSON.stringify({ amount, note }),
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
         },
       );
       if (!res.ok) this.logger.warn(`Sezdirmasdan qaytarish muvaffaqiyatsiz: ${res.status}`);
@@ -125,6 +132,7 @@ export class DriverInfoClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/v1/internal/users/${userId}`, {
         headers: { 'x-internal-key': this.key },
+        signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
       });
       if (!res.ok) return null;
       const json = (await res.json()) as { data: UserBasicInfo | null };
@@ -135,6 +143,53 @@ export class DriverInfoClient {
       this.logger.warn(`Foydalanuvchi ma'lumoti olinmadi: ${(err as Error).message}`);
       return null;
     }
+  }
+
+  /**
+   * Bir nechta foydalanuvchining ma'lumotini bitta so'rovda oladi (id -> info)
+   * — admin ro'yxatlarni boyitishda har qator uchun alohida chaqiruv (N+1)
+   * o'rniga. `getUserInfo`bilan bir xil keshni ishlatadi/to'ldiradi.
+   */
+  async getUsersInfo(userIds: string[]): Promise<Map<string, UserBasicInfo | null>> {
+    const result = new Map<string, UserBasicInfo | null>();
+    const uniqueIds = [...new Set(userIds.filter(Boolean))];
+    if (!this.key || uniqueIds.length === 0) return result;
+
+    const toFetch: string[] = [];
+    for (const id of uniqueIds) {
+      const cached = this.userInfoCache.get(id);
+      if (cached && Date.now() - cached.at < DriverInfoClient.TTL_MS) {
+        result.set(id, cached.info);
+      } else {
+        toFetch.push(id);
+      }
+    }
+    if (toFetch.length === 0) return result;
+
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/api/v1/internal/users/batch?ids=${toFetch.map(encodeURIComponent).join(',')}`,
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
+      );
+      if (!res.ok) {
+        for (const id of toFetch) result.set(id, null);
+        return result;
+      }
+      const json = (await res.json()) as { data: UserBasicInfo[] };
+      const found = new Map((json?.data ?? []).map((u) => [u.id, u] as const));
+      for (const id of toFetch) {
+        const info = found.get(id) ?? null;
+        this.userInfoCache.set(id, { info, at: Date.now() });
+        result.set(id, info);
+      }
+    } catch (err) {
+      this.logger.warn(`Ko'p foydalanuvchi ma'lumoti olinmadi: ${(err as Error).message}`);
+      for (const id of toFetch) result.set(id, null);
+    }
+    return result;
   }
 
   /**
@@ -153,7 +208,10 @@ export class DriverInfoClient {
     try {
       const res = await fetch(
         `${this.baseUrl}/api/v1/internal/drivers/comfort-ids`,
-        { headers: { 'x-internal-key': this.key } },
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
       );
       if (!res.ok) return this.comfortCache?.ids ?? new Set();
       const json = (await res.json()) as { data: string[] };
@@ -180,7 +238,11 @@ export class DriverInfoClient {
     try {
       await fetch(
         `${this.baseUrl}/api/v1/internal/drivers/${userId}/record-cancellation`,
-        { method: 'POST', headers: { 'x-internal-key': this.key } },
+        {
+          method: 'POST',
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
       );
     } catch (err) {
       this.logger.warn(`Bekor qilish hisoblagichi yangilanmadi: ${(err as Error).message}`);
@@ -193,7 +255,11 @@ export class DriverInfoClient {
     try {
       await fetch(
         `${this.baseUrl}/api/v1/internal/drivers/${userId}/record-completion`,
-        { method: 'POST', headers: { 'x-internal-key': this.key } },
+        {
+          method: 'POST',
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
       );
     } catch (err) {
       this.logger.warn(`Bekor qilish hisoblagichi tozalanmadi: ${(err as Error).message}`);
@@ -208,7 +274,10 @@ export class DriverInfoClient {
     try {
       const res = await fetch(
         `${this.baseUrl}/api/v1/internal/drivers/high-cancellations?threshold=${threshold}`,
-        { headers: { 'x-internal-key': this.key } },
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
       );
       if (!res.ok) return [];
       const json = (await res.json()) as { data: any[] };
@@ -228,7 +297,10 @@ export class DriverInfoClient {
     try {
       const res = await fetch(
         `${this.baseUrl}/api/v1/internal/drivers/${userId}`,
-        { headers: { 'x-internal-key': this.key } },
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
       );
       if (!res.ok) return null;
       const json = (await res.json()) as { data: DriverPublicInfo | null };

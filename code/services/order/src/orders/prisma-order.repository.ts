@@ -91,6 +91,11 @@ export class PrismaOrderRepository extends OrderRepository {
     return rows.map((o) => this.toOrder(o as Row));
   }
 
+  async findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<Order | null> {
+    const o = await this.prisma.order.findFirst({ where: { driverId, publicNo } });
+    return o ? this.toOrder(o as Row) : null;
+  }
+
   async assignDriver(id: string, driverId: string): Promise<Order> {
     const existing = await this.prisma.order.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Buyurtma topilmadi');

@@ -18,6 +18,8 @@ export class NotificationClient {
   private readonly logger = new Logger(NotificationClient.name);
   private readonly baseUrl: string;
   private readonly key?: string;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
@@ -48,6 +50,7 @@ export class NotificationClient {
             'x-internal-key': this.key,
           },
           body: JSON.stringify({ userId, title, body, data, android }),
+          signal: AbortSignal.timeout(NotificationClient.FETCH_TIMEOUT_MS),
         },
       );
       if (!res.ok) this.logger.warn(`Push yuborilmadi: ${res.status}`);

@@ -35,6 +35,8 @@ export class TelegramService {
   private readonly webhookSecret?: string;
   private readonly live: boolean;
   private readonly devMode: boolean;
+  /** Osilib qolgan tashqi chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(
     private readonly config: ConfigService,
@@ -140,6 +142,7 @@ export class TelegramService {
             text,
             reply_markup: replyMarkup,
           }),
+          signal: AbortSignal.timeout(TelegramService.FETCH_TIMEOUT_MS),
         },
       );
       if (!res.ok) {

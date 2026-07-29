@@ -526,6 +526,11 @@ export class TaxiService implements OnModuleInit {
     return this.repo.findById(id);
   }
 
+  /** Bitta safar — haydovchi + publicNo bo'yicha (AI shikoyat qidiruvi). */
+  findByDriverAndPublicNo(driverId: string, publicNo: number): Promise<TaxiTrip | null> {
+    return this.repo.findByDriverAndPublicNo(driverId, publicNo);
+  }
+
   /** Admin: taksi safarlarini filtrlangan ro'yxat. */
   async adminListTrips(filter: {
     status?: string;

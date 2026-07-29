@@ -32,6 +32,8 @@ export class TariffKnowledgeClient {
   private readonly key?: string;
   private cache?: { text: string; at: number };
   private static readonly TTL_MS = 60_000;
+  /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
+  private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl = config.get<string>('ORDER_SERVICE_URL') ?? 'http://localhost:4004';
@@ -46,6 +48,7 @@ export class TariffKnowledgeClient {
     try {
       const res = await fetch(`${this.baseUrl}/api/v1/internal/tariff`, {
         headers: { 'x-internal-key': this.key },
+        signal: AbortSignal.timeout(TariffKnowledgeClient.FETCH_TIMEOUT_MS),
       });
       if (!res.ok) return FALLBACK_CONTEXT;
       const json = (await res.json()) as { data: TariffData };

@@ -93,5 +93,6 @@ model SupportMessage {
   createdAt  DateTime          @default(now())
 
   @@index([customerId])
+  @@index([customerId, createdAt])
   @@map("support_messages")
 }
