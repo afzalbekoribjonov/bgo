@@ -28,6 +28,12 @@ const ROUTES: RouteDef[] = [
   { prefix: '/api/v1/parcel', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/geo', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
   { prefix: '/api/v1/admin', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
+  // MUHIM: '/api/v1/marketplace' '/api/v1/market'ning superstring'i — pathFilter
+  // oddiy startsWith bilan ishlagani uchun UZUNROQ/to'qnashuvchi prefiks OLDIN turishi shart.
+  { prefix: '/api/v1/marketplace', envKey: 'MARKETPLACE_SERVICE_URL', fallback: 'http://localhost:4006' },
+  { prefix: '/api/v1/market', envKey: 'MARKET_SERVICE_URL', fallback: 'http://localhost:4005' },
+  { prefix: '/api/v1/store', envKey: 'ORDER_SERVICE_URL', fallback: 'http://localhost:4004' },
+  { prefix: '/api/v1/support', envKey: 'SUPPORT_SERVICE_URL', fallback: 'http://localhost:4007' },
   // Keyingi fazalarda:
   // { prefix: '/api/v1/users', envKey: 'USER_SERVICE_URL', fallback: 'http://localhost:3002' },
 ];
