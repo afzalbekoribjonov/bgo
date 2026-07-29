@@ -8,7 +8,7 @@ Reja: [`../../../plan/07-restaurant-app.md`](../../../plan/07-restaurant-app.md)
 cd code/services/restaurant
 cp .env.example .env      # birinchi marta
 # repo ildizidan:  pnpm restaurant:dev
-pnpm start:dev            # http://localhost:3003/api/v1
+pnpm start:dev            # http://localhost:4003/api/v1
 ```
 Ishga tushganda namunaviy katalog (2 oshxona) yuklanadi (`SEED_ON_START=true`).
 
@@ -34,6 +34,6 @@ Ishga tushganda namunaviy katalog (2 oshxona) yuklanadi (`SEED_ON_START=true`).
 - Narx — so'mda butun son.
 
 ## Hozirgi cheklovlar (TODO)
-- **Saqlash:** in-memory (server qayta yuklansa seed qayta tiklanadi). → Docker: PostgreSQL (Prisma).
-- **Boshqaruv auth:** hozir ochiq (egalik tekshiruvi yo'q). → Restaurant paneli JWT (restaurant roli) ulanganda.
-- **Rasm yuklash:** Media servisi (R2) keyin.
+- **Saqlash:** PostgreSQL (Prisma).
+- **Boshqaruv auth:** JWT + rol + egalik tekshiruvi (`RestaurantOwnerGuard`) ulangan.
+- **Rasm yuklash:** lokal diskka saqlanadi (`uploads/`); tashqi CDN/media servisiga o'tish keyingi bosqichda.

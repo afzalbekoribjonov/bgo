@@ -55,7 +55,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.RESTAURANT_PORT ?? 3003;
+  const port = process.env.RESTAURANT_PORT ?? 4003;
   await app.listen(port);
 
   Logger.log(`🍽  Restaurant servisi: http://localhost:${port}/api/v1`, 'Bootstrap');

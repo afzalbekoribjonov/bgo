@@ -46,7 +46,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.ORDER_PORT ?? 3004;
+  const port = process.env.ORDER_PORT ?? 4004;
   await app.listen(port);
 
   Logger.log(`🧾 Order servisi: http://localhost:${port}/api/v1`, 'Bootstrap');

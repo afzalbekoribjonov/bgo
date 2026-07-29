@@ -24,6 +24,9 @@ out/
 .env.*.local
 !.env.example
 
+# Lokal yuklangan rasmlar (market/marketplace/restaurant — dev/test uchun)
+services/*/uploads/
+
 # Loglar
 *.log
 npm-debug.log*

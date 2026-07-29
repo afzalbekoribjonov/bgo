@@ -27,9 +27,9 @@ beshariq_food/
     │   ├── restaurant/          # Oshxona katalogi
     │   ├── order/               # Buyurtma/taksi/dostavka/market buyurtmalari + dispatch
     │   ├── market/              # Beshariq Market katalogi
-    │   └── marketplace/         # Do'konlar/Qurilish katalogi
+    │   ├── marketplace/         # Do'konlar/Qurilish katalogi
+    │   └── support/             # Yordam chati (FAQ + AI)
     ├── packages/            # Umumiy paketlar
-    │   ├── shared-types/        # TS umumiy tiplar/enum
     │   ├── i18n/                # Umumiy tarjimalar (uz, uz-Cyrl, ru)
     │   ├── nest-auth/           # Umumiy JWT/rol guard (backend)
     │   └── beshariq_core/       # Umumiy Flutter data-layer (mobil)
@@ -41,10 +41,9 @@ beshariq_food/
 | Qatlam | Texnologiya |
 |--------|-------------|
 | Mobil | Flutter (Android avval) |
-| Backend | NestJS (+ Go: location) |
+| Backend | NestJS |
 | Veb | Next.js + TypeScript |
-| DB | PostgreSQL + PostGIS, Redis |
-| Event bus | NATS |
+| DB | PostgreSQL + PostGIS |
 | Xarita | OpenStreetMap + MapLibre + OSRM |
 | Monorepo | pnpm workspaces + Turborepo |
 
@@ -65,12 +64,12 @@ pnpm install
 # 2. Muhit faylini tayyorlash
 cp .env.example .env
 
-# 3. Infratuzilma (Postgres/Redis/NATS) — Docker kerak
+# 3. Infratuzilma (Postgres + OSRM) — Docker kerak
 pnpm infra:up
 
 # 4. API Gateway'ni ishga tushirish
 pnpm gateway:dev
-# -> http://localhost:3000/api/v1/health
+# -> http://localhost:4000/api/v1/health
 ```
 
 ### Flutter ilovalar
@@ -80,4 +79,4 @@ cd apps/mobile/driver_app   && flutter pub get && flutter run
 ```
 
 ## Holat
-Hozir: **Faza 0 — Monorepo skeleti** (bajarildi). Keyingi qadamlar: [`../plan/15-roadmap-mvp.md`](../plan/15-roadmap-mvp.md).
+Barcha asosiy vertikallar (ovqat, taksi, dostavka, market, marketplace) va admin/oshxona/sotuvchi panellari ishlab chiqilgan, aktiv rivojlantirilmoqda. Har bir servisning batafsil holati: [`services/README.md`](services/README.md).

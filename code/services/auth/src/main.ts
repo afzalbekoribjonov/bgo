@@ -65,7 +65,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.AUTH_PORT ?? 3001;
+  const port = process.env.AUTH_PORT ?? 4001;
   await app.listen(port);
 
   Logger.log(`🔐 Auth servisi: http://localhost:${port}/api/v1`, 'Bootstrap');

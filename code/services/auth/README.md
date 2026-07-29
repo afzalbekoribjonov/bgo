@@ -8,7 +8,7 @@ Reja: [`../../../plan/10-auth-security.md`](../../../plan/10-auth-security.md)
 cd code/services/auth
 cp .env.example .env      # birinchi marta
 # repo ildizidan:  pnpm auth:dev
-pnpm start:dev            # http://localhost:3001/api/v1
+pnpm start:dev            # http://localhost:4001/api/v1
 ```
 > **Muhim:** servisni o'z papkasidan ishga tushiring (`.env` cwd'ga nisbatan yuklanadi).
 
@@ -27,6 +27,6 @@ pnpm start:dev            # http://localhost:3001/api/v1
 - **Dev rejim** (`SMS_DEV_MODE=true`): OTP haqiqiy SMS o'rniga logga chiqadi va `otp/request` javobida `devCode` sifatida qaytadi.
 
 ## Hozirgi cheklovlar (TODO)
-- **Saqlash:** in-memory (server qayta yuklansa yo'qoladi). → `Faza 1B + Docker`: PostgreSQL (Prisma) + Redis (OTP).
-- **SMS:** Eskiz.uz hali ulanmagan (dev rejim). → `Faza 1D`.
-- **Refresh token:** JWT verify (rotation/revocation yo'q). → Redis bilan rotation.
+- **Saqlash:** PostgreSQL (Prisma) — foydalanuvchi/haydovchi profillari va boshqa modellar. OTP kodlari xotirada (TTL bilan) saqlanadi.
+- **SMS:** Eskiz.uz hali ulanmagan; hozircha Telegram bot orqali yoki dev rejimda (`SMS_DEV_MODE=true`) logga/javobga chiqadi.
+- **Refresh token:** JWT verify (rotation/revocation yo'q).

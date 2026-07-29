@@ -36,7 +36,7 @@ export class RestaurantClient {
 
   constructor(config: ConfigService) {
     this.baseUrl =
-      config.get<string>('RESTAURANT_SERVICE_URL') ?? 'http://localhost:3003';
+      config.get<string>('RESTAURANT_SERVICE_URL') ?? 'http://localhost:4003';
     this.internalKey = config.get<string>('INTERNAL_API_KEY') ?? 'dev-internal-key';
   }
 

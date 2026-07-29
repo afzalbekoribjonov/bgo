@@ -69,10 +69,6 @@ dependencies:
   # Fonda online turish: foreground service (joylashuvni muntazam yuboradi)
   flutter_foreground_task: ^8.10.0
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
