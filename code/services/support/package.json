@@ -18,6 +18,7 @@
   "dependencies": {
     "@beshariq/i18n": "workspace:*",
     "@beshariq/nest-auth": "workspace:*",
+    "@beshariq/nest-bootstrap": "workspace:*",
     "@google/genai": "latest",
     "@nestjs/common": "^10.4.15",
     "@nestjs/config": "^3.3.0",

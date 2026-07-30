@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { InternalKeyGuard } from '../notifications/internal-key.guard';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { InternalUsersController } from './internal-users.controller';
 import { PrismaUserRepository } from './prisma-user.repository';
 import { UserRepository } from './user.repository';

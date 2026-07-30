@@ -1,5 +1,11 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { INTERNAL_KEY_HEADER, matchesInternalKey } from '@beshariq/nest-auth';
+import {
+  buildCorsOptions,
+  resolveCorsOrigins,
+  VALIDATION_PIPE_OPTIONS,
+} from '@beshariq/nest-bootstrap';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { AppModule } from './app.module';
@@ -11,7 +17,8 @@ async function bootstrap() {
   app.use(helmet());
 
   // OTP so'rov — eng qattiq limit (SMS spam oldini olish)
-  // 5 daqiqada faqat 5 ta OTP so'rovi ruxsat etiladi
+  // 5 daqiqada faqat 5 ta OTP so'rovi ruxsat etiladi.
+  // ATAYLAB skip'siz: bu foydalanuvchi oqimi, ichki chaqiruv emas.
   app.use(
     '/api/v1/auth/otp/request',
     rateLimit({
@@ -23,7 +30,7 @@ async function bootstrap() {
     }),
   );
 
-  // Auth endpointlari — o'rta limit (brute-force himoyasi)
+  // Auth endpointlari — o'rta limit (brute-force himoyasi). Bu ham skip'siz.
   app.use(
     '/api/v1/auth',
     rateLimit({
@@ -33,7 +40,9 @@ async function bootstrap() {
     }),
   );
 
-  // Umumiy limit
+  // Umumiy limit. Ichki servis so'rovlari (/internal/users/batch,
+  // /internal/drivers/batch, push) limitlanmaydi — ular bulk chaqiriladi va
+  // yuk ostida o'z servislarimizga 429 berib qo'ymasligi kerak.
   app.use(
     rateLimit({
       windowMs: 60 * 1000,
@@ -41,29 +50,20 @@ async function bootstrap() {
       standardHeaders: true,
       legacyHeaders: false,
       message: { message: "Juda ko'p so'rov yuborildi. Keyinroq urinib ko'ring." },
+      skip: (req) => matchesInternalKey(req.headers[INTERNAL_KEY_HEADER]),
     }),
   );
 
   app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 
   // Ichki servis — CORS faqat gateway va local
-  const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
-    : ['http://localhost:4000', 'http://localhost:3000', 'http://localhost:3100'];
-
-  app.enableCors({
-    origin: corsOrigins,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-Key'],
-    credentials: true,
-  });
+  const corsOrigins = resolveCorsOrigins([
+    'http://localhost:4000',
+    'http://localhost:3000',
+    'http://localhost:3100',
+  ]);
+  app.enableCors(buildCorsOptions(corsOrigins));
 
   const port = process.env.AUTH_PORT ?? 4001;
   await app.listen(port);

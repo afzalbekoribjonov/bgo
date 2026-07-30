@@ -30,14 +30,15 @@ export interface RestaurantSummary {
 export class RestaurantClient {
   private readonly logger = new Logger(RestaurantClient.name);
   private readonly baseUrl: string;
-  private readonly internalKey: string;
+  /** Zaxira ("default") kalit ATAYLAB yo'q — sozlanmagan bo'lsa yuborilmaydi. */
+  private readonly internalKey?: string;
   /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
   private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
       config.get<string>('RESTAURANT_SERVICE_URL') ?? 'http://localhost:4003';
-    this.internalKey = config.get<string>('INTERNAL_API_KEY') ?? 'dev-internal-key';
+    this.internalKey = config.get<string>('INTERNAL_API_KEY');
   }
 
   /**
@@ -45,6 +46,12 @@ export class RestaurantClient {
    * bo'lganda (haydovchi/oshxona rad etsa). Best-effort; internal endpoint.
    */
   async setInactive(restaurantId: string): Promise<void> {
+    if (!this.internalKey) {
+      this.logger.warn(
+        "INTERNAL_API_KEY yo'q — oshxonani faolsiz qilish o'tkazib yuborildi",
+      );
+      return;
+    }
     const url = `${this.baseUrl}/api/v1/internal/restaurants/${restaurantId}/inactive`;
     try {
       await fetch(url, {

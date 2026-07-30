@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { InternalKeyGuard } from '../notifications/internal-key.guard';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { UserRepository } from './user.repository';
 
 /** Servislararo javob shakli — foydalanuvchining ommaviy ma'lumoti. */

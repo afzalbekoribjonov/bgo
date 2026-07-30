@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
+import { InternalKeyGuard, JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 import { NotificationClientModule } from '../notification-client/notification-client.module';
 import { ParcelModule } from '../parcel/parcel.module';
 import { DriverInfoClient } from '../driver-client/driver-info.client';
@@ -47,6 +47,7 @@ import { PromoService } from '../promo/promo.service';
     PromoService,
     JwtAuthGuard,
     RolesGuard,
+    InternalKeyGuard,
     { provide: OrderRepository, useClass: PrismaOrderRepository },
     {
       provide: OrderMessageRepository,

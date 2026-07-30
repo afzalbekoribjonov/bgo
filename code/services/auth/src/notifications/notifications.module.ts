@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DeviceTokenRepository } from './device-token.repository';
 import { InternalNotificationsController } from './internal-notifications.controller';
-import { InternalKeyGuard } from './internal-key.guard';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { NotificationService } from './notification.service';
 import { PrismaDeviceTokenRepository } from './prisma-device-token.repository';
 

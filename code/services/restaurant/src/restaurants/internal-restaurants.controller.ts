@@ -1,37 +1,21 @@
-import {
-  Controller,
-  ForbiddenException,
-  Headers,
-  HttpCode,
-  Param,
-  Post,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { RestaurantsService } from './restaurants.service';
 
 /**
  * Servislararo (internal) endpoint — order servisi buyurtma bekor bo'lganda
- * oshxonani faolsiz qiladi. x-internal-key bilan himoyalangan (JWT emas).
+ * oshxonani faolsiz qiladi. x-internal-key bilan himoyalangan (JWT emas)
+ * — @beshariq/nest-auth guard'i.
  */
 @Controller('internal/restaurants')
+@UseGuards(InternalKeyGuard)
 export class InternalRestaurantsController {
-  constructor(
-    private readonly service: RestaurantsService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly service: RestaurantsService) {}
 
   /** Oshxonani faolsiz (isOpen=false) qiladi. */
   @Post(':id/inactive')
   @HttpCode(200)
-  async inactive(
-    @Param('id') id: string,
-    @Headers('x-internal-key') key?: string,
-  ) {
-    const expected =
-      this.config.get<string>('INTERNAL_API_KEY') ?? 'dev-internal-key';
-    if (key !== expected) {
-      throw new ForbiddenException("Internal kalit noto'g'ri");
-    }
+  async inactive(@Param('id') id: string) {
     await this.service.setOpen(id, false);
     return { success: true };
   }

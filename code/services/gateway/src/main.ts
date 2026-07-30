@@ -1,5 +1,11 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { INTERNAL_KEY_HEADER, matchesInternalKey } from '@beshariq/nest-auth';
+import {
+  buildCorsOptions,
+  resolveCorsOrigins,
+  VALIDATION_PIPE_OPTIONS,
+} from '@beshariq/nest-bootstrap';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { AppModule } from './app.module';
@@ -27,47 +33,30 @@ async function bootstrap() {
       standardHeaders: true,
       legacyHeaders: false,
       message: { message: "Juda ko'p so'rov yuborildi. Bir daqiqa kutib ko'ring." },
-      skip: (req) => {
-        // Ichki servis so'rovlari limitlanmaydi
-        const key = req.headers['x-internal-key'] as string | undefined;
-        return !!key && key === process.env.INTERNAL_API_KEY;
-      },
+      // Ichki servis so'rovlari limitlanmaydi
+      skip: (req) => matchesInternalKey(req.headers[INTERNAL_KEY_HEADER]),
     }),
   );
 
   // CORS: faqat ruxsat etilgan manzillar (brauzer xavfsizligi)
   // MUHIM: CORS proxy'dan OLDIN ro'yxatdan o'tishi kerak, aks holda
   // preflight OPTIONS so'rovlari proxy tomonidan ushlанади va ACAO sarlavhasi bo'lmaydi.
-  const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
-    : [
-        'http://localhost:3200', // admin_web (dev)
-        'http://localhost:3100', // restaurant_web (dev)
-        'http://localhost:3300', // market_web (dev)
-        'http://localhost:3400', // shops_web (dev)
-        'http://localhost:3500', // seller_web (dev)
-        'http://localhost:3000', // backup
-        'http://localhost:3001', // backup
-      ];
-
-  app.enableCors({
-    origin: corsOrigins,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-Key'],
-    credentials: true,
-  });
+  const corsOrigins = resolveCorsOrigins([
+    'http://localhost:3200', // admin_web (dev)
+    'http://localhost:3100', // restaurant_web (dev)
+    'http://localhost:3300', // market_web (dev)
+    'http://localhost:3400', // shops_web (dev)
+    'http://localhost:3500', // seller_web (dev)
+    'http://localhost:3000', // backup
+    'http://localhost:3001', // backup
+  ]);
+  app.enableCors(buildCorsOptions(corsOrigins));
 
   // Proxy: barcha API so'rovlarini tegishli servislarga yo'naltiradi
   setupProxies(app);
 
   app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 
   const port = process.env.GATEWAY_PORT ?? 4000;
   await app.listen(port);

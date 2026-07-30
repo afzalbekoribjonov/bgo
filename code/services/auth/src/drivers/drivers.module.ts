@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
+import { InternalKeyGuard, JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { InternalKeyGuard } from '../notifications/internal-key.guard';
 import { AdminDriversController } from './admin-drivers.controller';
 import { DriverAuthController } from './driver-auth.controller';
 import { InternalDriversController } from './internal-drivers.controller';

@@ -1,28 +1,19 @@
-import { Controller, ForbiddenException, Get, Headers } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { TariffService } from './tariff.service';
 
 /**
  * Servislararo (internal) endpoint — services/support AI yordamchisi joriy
  * narxlarni promptga qo'shish uchun so'raydi. x-internal-key bilan
- * himoyalangan (JWT emas), services/market/src/market/internal.controller.ts
- * bilan bir xil naqsh.
+ * himoyalangan (JWT emas) — @beshariq/nest-auth guard'i.
  */
 @Controller('internal/tariff')
+@UseGuards(InternalKeyGuard)
 export class InternalTariffController {
-  constructor(
-    private readonly service: TariffService,
-    private readonly config: ConfigService,
-  ) {}
-
-  private checkKey(key?: string): void {
-    const expected = this.config.get<string>('INTERNAL_API_KEY') ?? 'dev_internal_key';
-    if (key !== expected) throw new ForbiddenException("Internal kalit noto'g'ri");
-  }
+  constructor(private readonly service: TariffService) {}
 
   @Get()
-  async get(@Headers('x-internal-key') key?: string) {
-    this.checkKey(key);
+  async get() {
     return { success: true, data: await this.service.getTariff() };
   }
 }

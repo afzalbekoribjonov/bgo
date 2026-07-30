@@ -33,17 +33,28 @@ export interface MarketPickupLocation {
 export class MarketClient {
   private readonly logger = new Logger(MarketClient.name);
   private readonly baseUrl: string;
-  private readonly internalKey: string;
+  /** Zaxira ("default") kalit ATAYLAB yo'q — sozlanmagan bo'lsa xato beriladi. */
+  private readonly internalKey?: string;
   /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
   private static readonly FETCH_TIMEOUT_MS = 5_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
       config.get<string>('MARKET_SERVICE_URL') ?? 'http://localhost:4005';
-    this.internalKey = config.get<string>('INTERNAL_API_KEY') ?? 'dev_internal_key';
+    this.internalKey = config.get<string>('INTERNAL_API_KEY');
   }
 
-  private headers(json = false) {
+  /**
+   * Market chaqiruvlari (narx/zaxira) buyurtma yaratishning majburiy qismi —
+   * kalit yo'q bo'lsa jimgina davom etib bo'lmaydi, aniq xato beramiz.
+   */
+  private headers(json = false): Record<string, string> {
+    if (!this.internalKey) {
+      this.logger.error(
+        "INTERNAL_API_KEY sozlanmagan — market servisiga ichki so'rov yuborib bo'lmaydi",
+      );
+      throw new ServiceUnavailableException('Market xizmati vaqtincha ishlamayapti');
+    }
     return {
       'x-internal-key': this.internalKey,
       ...(json ? { 'Content-Type': 'application/json' } : {}),
@@ -51,12 +62,15 @@ export class MarketClient {
   }
 
   async getProduct(id: string): Promise<MarketProductSnapshot> {
+    // Sarlavhalar try'dan TASHQARIDA tayyorlanadi — kalit yo'qligi "ulanib
+    // bo'lmadi" deb noto'g'ri yorliqlanmasligi uchun.
+    const headers = this.headers();
     let response: Response;
     try {
       response = await fetch(
         `${this.baseUrl}/api/v1/market/internal/products/${id}`,
         {
-          headers: this.headers(),
+          headers,
           signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
         },
       );
@@ -73,12 +87,13 @@ export class MarketClient {
   }
 
   async getPickupLocation(id: string): Promise<MarketPickupLocation> {
+    const headers = this.headers();
     let response: Response;
     try {
       response = await fetch(
         `${this.baseUrl}/api/v1/market/internal/pickup-locations/${id}`,
         {
-          headers: this.headers(),
+          headers,
           signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
         },
       );

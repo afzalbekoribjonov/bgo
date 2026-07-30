@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { InternalKeyGuard } from '../notifications/internal-key.guard';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { DriversService } from './drivers.service';
 
 /** Servislararo: komissiya yechish so'rovi. */

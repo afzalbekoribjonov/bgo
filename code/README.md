@@ -30,8 +30,9 @@ beshariq_food/
     │   ├── marketplace/         # Do'konlar/Qurilish katalogi
     │   └── support/             # Yordam chati (FAQ + AI)
     ├── packages/            # Umumiy paketlar
-    │   ├── i18n/                # Umumiy tarjimalar (uz, uz-Cyrl, ru)
-    │   ├── nest-auth/           # Umumiy JWT/rol guard (backend)
+    │   ├── i18n/                # Ko'p tilli DB kontenti uchun yordamchilar
+    │   ├── nest-auth/           # Umumiy JWT/rol/internal-key guard (backend)
+    │   ├── nest-bootstrap/      # Umumiy HTTP sozlamalari (CORS, validatsiya)
     │   └── beshariq_core/       # Umumiy Flutter data-layer (mobil)
     └── infra/               # Docker, DB, OSRM
 ```

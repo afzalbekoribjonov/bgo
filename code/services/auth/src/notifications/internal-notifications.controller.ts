@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SendNotificationDto } from './dto/send-notification.dto';
-import { InternalKeyGuard } from './internal-key.guard';
+import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { NotificationService } from './notification.service';
 
 /**
