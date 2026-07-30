@@ -124,6 +124,30 @@ export class DriverStatusDto {
   isOnline!: boolean;
 }
 
+/** Haydovchi ilovasi: uy manzilini belgilash/o'zgartirish ("Uyga" rejimi). */
+export class SetDriverHomeDto {
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat!: number;
+
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng!: number;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(300)
+  address!: string;
+}
+
+/** Haydovchi ilovasi: "Uyga" rejimini yoqish/o'chirish. */
+export class SetHomeModeDto {
+  @IsBoolean()
+  active!: boolean;
+}
+
 /** Admin: haydovchi hisobini to'ldirish. */
 export class TopupDto {
   @IsInt()

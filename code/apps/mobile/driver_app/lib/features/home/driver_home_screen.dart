@@ -14,9 +14,11 @@ import '../../core/driver_geo.dart';
 import '../../core/nav_support.dart';
 import '../../core/online_service.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 import '../../widgets/car_marker.dart';
 import '../../widgets/slide_to_confirm.dart';
 import '../auth/auth_api.dart';
+import '../auth/driver_profile.dart';
 import '../delivery/delivery_api.dart';
 import '../messages/messages_api.dart';
 import '../messages/messages_screen.dart';
@@ -29,9 +31,10 @@ import '../profile/driver_profile_screen.dart';
 import '../stats/today_screen.dart';
 import 'balance_screen.dart';
 import 'driver_blocked_screen.dart';
+import 'home_address_picker_screen.dart';
 
-const _gold = Color(0xFFD4AF37);
-const _offlineNav = Color(0xFF263238);
+const _gold = DriverColors.gold;
+const _offlineNav = DriverColors.offlineNav;
 
 /// Haydovchi bosh ekrani — xarita + navigator + tortiluvchi panel +
 /// yangi buyurtma (taklif) oqimi. plan/06-driver-app.md
@@ -98,6 +101,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
   Timer? _chatTimer;
   int _chatOther = 0;
   int _chatSeen = 0;
+
+  // Ketma-ket poll (taklif/safar) muvaffaqiyatsizliklari — uzoq davom etsa
+  // (miltillashning oldini olish uchun bitta xatoda emas) "qayta
+  // ulanmoqda" indikatori ko'rsatiladi.
+  int _pollFailStreak = 0;
+  static const _reconnectThreshold = 3;
+
+  // "Uyga" rejimi — tugma bosilganda server chaqiruvi tugaguncha kichik
+  // spinner ko'rsatiladi (haqiqiy holat har doim driverProfileProvider'dan).
+  bool _homeModeBusy = false;
 
   @override
   void initState() {
@@ -170,6 +183,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     try {
       final offer = await ref.read(offerApiProvider).current();
       if (!mounted) return;
+      if (_pollFailStreak != 0) setState(() => _pollFailStreak = 0);
       if (offer != null) {
         final isNew = _offer?.orderId != offer.orderId;
         setState(() {
@@ -185,7 +199,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
         _clearOffer(notTaken: true);
       }
       ref.invalidate(poolProvider);
-    } catch (_) {/* tarmoq — jim */}
+    } catch (_) {
+      if (mounted) setState(() => _pollFailStreak++);
+    }
   }
 
   void _alertOn() {
@@ -317,6 +333,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     try {
       final trip = await ref.read(tripApiProvider).get(t.vertical, t.id);
       if (!mounted) return;
+      if (_pollFailStreak != 0) setState(() => _pollFailStreak = 0);
       if (trip.status == 'CANCELLED' || trip.status == 'FAILED') {
         _exitTrip();
         final loc = AppLocalizations.of(context)!;
@@ -326,7 +343,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
       final changedTarget = trip.status != t.status;
       setState(() => _activeTrip = trip);
       if (changedTarget) _loadTripRoute(trip);
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => _pollFailStreak++);
+    }
   }
 
   /// Marshrut: olib ketishga yo'lda -> pickup; manzilga yo'lda -> dropoff.
@@ -448,6 +467,23 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
   // ---------------- Online ----------------
 
   Future<void> _setOnline(bool value) async {
+    if (value) {
+      // GPS'siz onlayn bo'lish — haydovchi tizimga ko'rinmas/topilmas bo'lib
+      // qoladi (jim, aniqlanmaydigan xato). Kesh eskirgan bo'lishi mumkin —
+      // avval yangi o'qish urinamiz, faqat haqiqatan topilmasa bloklaymiz.
+      var fix = _fix;
+      fix ??= await driverCurrentFix();
+      if (fix == null) {
+        if (!mounted) return;
+        final t = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t.homeGpsRequired)),
+        );
+        return;
+      }
+      if (!mounted) return;
+      if (_fix == null) setState(() => _fix = fix);
+    }
     ref.read(onlineProvider.notifier).state = value;
     if (value) {
       // Fonda online turish: GPS'ni muntazam yuboruvchi foreground service.
@@ -456,6 +492,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
       ref.read(alertSoundProvider).stop();
       _clearOffer();
       OnlineService.stop();
+      _pollFailStreak = 0;
     }
     HapticFeedback.mediumImpact();
     try {
@@ -497,6 +534,97 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     setState(() => _panelHidden = false);
   }
 
+  // ---------------- "Uyga" rejimi ----------------
+
+  /// Uy tugmasi bosilganda: manzil hali yo'q bo'lsa — avval tanlash ekrani
+  /// (rejim manzilsiz yoqilolmaydi, bu ikkinchi himoya qatlami — server ham
+  /// tekshiradi). Manzil bor bo'lsa — rejimni yoqadi/o'chiradi.
+  Future<void> _onHomeModeTap(DriverProfile? profile) async {
+    if (_homeModeBusy) return;
+    final t = AppLocalizations.of(context)!;
+    if (profile == null) return;
+    if (!profile.hasHomeAddress) {
+      final picked = await Navigator.of(context).push<PickedHome>(
+        MaterialPageRoute(builder: (_) => const HomeAddressPickerScreen()),
+      );
+      if (picked == null || !mounted) return;
+      setState(() => _homeModeBusy = true);
+      try {
+        await ref.read(authApiProvider).setHome(picked.lat, picked.lng, picked.address);
+        ref.invalidate(driverProfileProvider);
+      } catch (e) {
+        if (mounted) {
+          _toast(isNetworkError(e) ? 'Tarmoq xatosi' : t.homeModeToggleFailed);
+        }
+      } finally {
+        if (mounted) setState(() => _homeModeBusy = false);
+      }
+      return;
+    }
+    setState(() => _homeModeBusy = true);
+    try {
+      await ref.read(authApiProvider).setHomeModeActive(!profile.isHomeModeActive);
+      ref.invalidate(driverProfileProvider);
+    } catch (e) {
+      if (mounted) {
+        _toast(isNetworkError(e) ? 'Tarmoq xatosi' : t.homeModeToggleFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _homeModeBusy = false);
+    }
+  }
+
+  /// Uy manzilini o'zgartirish (allaqachon belgilangan bo'lsa) — panel
+  /// ichidagi tahrirlash ikonkasi bosilganda ham shu chaqiriladi.
+  Future<void> _editHomeAddress(DriverProfile? profile) async {
+    if (_homeModeBusy) return;
+    final t = AppLocalizations.of(context)!;
+    final picked = await Navigator.of(context).push<PickedHome>(
+      MaterialPageRoute(
+        builder: (_) => HomeAddressPickerScreen(
+          initialLat: profile?.homeLat,
+          initialLng: profile?.homeLng,
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _homeModeBusy = true);
+    try {
+      await ref.read(authApiProvider).setHome(picked.lat, picked.lng, picked.address);
+      ref.invalidate(driverProfileProvider);
+    } catch (e) {
+      if (mounted) {
+        _toast(isNetworkError(e) ? 'Tarmoq xatosi' : t.homeModeToggleFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _homeModeBusy = false);
+    }
+  }
+
+  Widget _homeModeButton(DriverProfile? profile) {
+    final active = profile?.isHomeModeActive ?? false;
+    return GestureDetector(
+      onTap: () => _onHomeModeTap(profile),
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: active ? _gold : Colors.transparent, width: 2.5),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
+        ),
+        child: Center(
+          child: _homeModeBusy
+              ? const SizedBox(
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : Icon(Icons.home_rounded,
+                  color: active ? _gold : Colors.grey.shade500, size: 24),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -520,6 +648,11 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
             left: 18,
             child: _SpeedBadge(_fix?.speedKmh ?? 0),
           ),
+          Positioned(
+            top: top + (hasOffer ? 204 : 146),
+            left: 20,
+            child: _homeModeButton(ref.watch(driverProfileProvider).valueOrNull),
+          ),
           Positioned(top: top + 10, right: 16, child: _avatar()),
           Positioned(top: top + 72, right: 20, child: _poolBadge()),
           // Xabarlar (qo'ng'iroqcha) — admin e'lonlari, o'qilmagan soni bilan
@@ -537,6 +670,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
           // Yangi buyurtma banneri (yuqorida)
           if (hasOffer)
             Positioned(top: 0, left: 0, right: 0, child: _orderBanner(top, t)),
+          // Uzoq davom etgan tarmoq uzilishi — bitta xatoda emas, faqat
+          // ketma-ket bir necha muvaffaqiyatsizlikdan keyin (miltillamasin).
+          if (!hasOffer &&
+              (online || hasTrip) &&
+              _pollFailStreak >= _reconnectThreshold)
+            Positioned(
+              top: top + 10,
+              left: 0,
+              right: 0,
+              child: Center(child: _reconnectingPill(t)),
+            ),
           // Pastki panel: faol safar > qabul > oddiy
           if (hasTrip)
             _activeTripPanel(t)
@@ -855,6 +999,39 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _reconnectingPill(AppLocalizations t) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: Colors.white70),
+          ),
+          const SizedBox(width: 8),
+          Text(t.homeReconnecting,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
@@ -1256,6 +1433,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
   /// pastga yashirinadi (AnimatedSlide).
   Widget _bottomPanel(bool online, AppLocalizations t) {
     final scheme = Theme.of(context).colorScheme;
+    final profile = ref.watch(driverProfileProvider).valueOrNull;
+    final homeActive = profile?.isHomeModeActive ?? false;
     return Align(
       alignment: Alignment.bottomCenter,
       child: AnimatedSlide(
@@ -1293,7 +1472,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
                   ),
                 ),
               ),
-              Row(
+              homeActive ? _homeModeCard(t, profile!) : Row(
                 children: [
                   Expanded(child: _walletCard(t)),
                   const SizedBox(width: 12),
@@ -1301,7 +1480,20 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
                 ],
               ),
               // Liniyaga chiqish / Ishni yakunlash — DOIM ko'rinadi.
-              const SizedBox(height: 16),
+              if (homeActive) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.home_rounded, size: 14, color: _gold),
+                    const SizedBox(width: 5),
+                    Text(t.homeModeLabel,
+                        style: TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.w700, color: _gold)),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 12),
               SlideToConfirm(
                 key: ValueKey('slider_$online'),
                 reverse: online,
@@ -1342,6 +1534,67 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
       value: t.homeTodayCount(todayCount),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const TodayScreen()),
+      ),
+    );
+  }
+
+  /// "Uyga" rejimi faol bo'lganda Hisobim/Bugun o'rniga: uy manzili +
+  /// tahrirlash + "Yo'l-yo'lakay buyurtma olish" (pool, uyga mos buyurtmalar
+  /// tepada belgilangan).
+  Widget _homeModeCard(AppLocalizations t, DriverProfile profile) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _gold.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _gold.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.home_rounded, size: 18, color: _gold),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  profile.homeAddress ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _editHomeAddress(profile),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(Icons.edit_rounded, size: 18, color: scheme.outline),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _gold,
+                foregroundColor: Colors.black87,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () async {
+                final taken = await Navigator.of(context).push<DriverOffer>(
+                  MaterialPageRoute(builder: (_) => const PoolScreen()),
+                );
+                if (taken != null) await _enterTrip(taken.vertical, taken.orderId);
+              },
+              icon: const Icon(Icons.route_rounded, size: 19),
+              label: Text(t.homeModePoolButton,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
       ),
     );
   }

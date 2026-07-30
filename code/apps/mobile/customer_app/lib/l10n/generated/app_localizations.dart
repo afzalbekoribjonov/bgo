@@ -102,6 +102,12 @@ abstract class AppLocalizations {
   /// **'Beshariq'**
   String get appName;
 
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In uz, this message translates to:
+  /// **'Internet aloqasi yo\'q'**
+  String get noInternetConnection;
+
   /// No description provided for @welcome.
   ///
   /// In uz, this message translates to:

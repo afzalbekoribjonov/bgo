@@ -130,6 +130,15 @@ model DriverProfile {
   // Xabarlar oxirgi o'qilgan payt (badge: shundan keyingilar "yangi")
   messagesReadAt DateTime?
 
+  // "Uyga" rejimi — haydovchi uy manzilini belgilasa, tizim uyi tomon
+  // boruvchi buyurtmalarni tavsiya qiladi (taksi/dostavka). homeLat
+  // o'rnatilmagan holda isHomeModeActive=true bo'la olmaydi (servis
+  // darajasida tekshiriladi). Holat doimiy saqlanadi (isOnline'dan farqli).
+  homeLat          Float?
+  homeLng          Float?
+  homeAddress      String?
+  isHomeModeActive Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

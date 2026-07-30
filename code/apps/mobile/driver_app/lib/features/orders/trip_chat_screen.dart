@@ -7,9 +7,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 import '../../widgets/async_error.dart';
 
-const _green = Color(0xFF2E7D32);
+const _green = DriverColors.green;
 
 /// Haydovchi ↔ mijoz/oshxona suhbati (haydovchi tomoni). 3s polling.
 /// Professional: sana ajratgichlar, quyruqli pufaklar, oflayn banner,

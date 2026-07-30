@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { OsrmRouteClient } from '../common/osrm-route.client';
 import { DriverInfoClient } from '../driver-client/driver-info.client';
 import { NotificationClientModule } from '../notification-client/notification-client.module';
+import { TariffService } from '../tariff/tariff.service';
 import { TrackingModule } from '../tracking/tracking.module';
 import { DispatchService } from './dispatch.service';
 
@@ -10,7 +12,7 @@ import { DispatchService } from './dispatch.service';
  */
 @Module({
   imports: [TrackingModule, NotificationClientModule],
-  providers: [DispatchService, DriverInfoClient],
+  providers: [DispatchService, DriverInfoClient, OsrmRouteClient, TariffService],
   exports: [DispatchService],
 })
 export class DispatchModule {}

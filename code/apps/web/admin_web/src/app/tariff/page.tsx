@@ -86,6 +86,11 @@ export default function TariffPage() {
   const [parcelMin, setParcelMin] = useState('');
   const [parcelPct, setParcelPct] = useState('');
 
+  // ----- "Uyga" rejimi (taksi + dostavka) -----
+  const [homeModeTaxiPct, setHomeModeTaxiPct] = useState('');
+  const [homeModeParcelPct, setHomeModeParcelPct] = useState('');
+  const [homeModeDetourPct, setHomeModeDetourPct] = useState('');
+
   useEffect(() => {
     setLoading(true);
     getTariff()
@@ -111,6 +116,9 @@ export default function TariffPage() {
         setParcelPerKm(String(t.parcelPerKm));
         setParcelMin(String(t.parcelMinFare));
         setParcelPct(String(t.parcelCommissionPercent));
+        setHomeModeTaxiPct(String(t.homeModeTaxiCommissionPercent ?? 20));
+        setHomeModeParcelPct(String(t.homeModeParcelCommissionPercent ?? 20));
+        setHomeModeDetourPct(String(t.homeModeMaxDetourPercent ?? 30));
       })
       .catch((e) => toast((e as Error).message, 'error'))
       .finally(() => setLoading(false));
@@ -140,6 +148,9 @@ export default function TariffPage() {
         parcelPerKm: parseInt(parcelPerKm, 10) || 0,
         parcelMinFare: parseInt(parcelMin, 10) || 0,
         parcelCommissionPercent: parseInt(parcelPct, 10) || 0,
+        homeModeTaxiCommissionPercent: parseInt(homeModeTaxiPct, 10) || 0,
+        homeModeParcelCommissionPercent: parseInt(homeModeParcelPct, 10) || 0,
+        homeModeMaxDetourPercent: parseInt(homeModeDetourPct, 10) || 0,
       });
       setTariff(updated);
       toast('Tariflar saqlandi ✓', 'success');
@@ -168,6 +179,11 @@ export default function TariffPage() {
   const parcelBaseN = parseInt(parcelBase, 10) || 0;
   const parcelPerKmN = parseInt(parcelPerKm, 10) || 0;
   const sampleParcel = Math.max(parseInt(parcelMin, 10) || 0, parcelBaseN + parcelPerKmN * sampleKm);
+
+  const homeModeTaxiPctN = parseInt(homeModeTaxiPct, 10) || 0;
+  const homeModeTaxiCommission = Math.round((sampleFare * homeModeTaxiPctN) / 100);
+  const homeModeParcelPctN = parseInt(homeModeParcelPct, 10) || 0;
+  const homeModeParcelCommission = Math.round((sampleParcel * homeModeParcelPctN) / 100);
 
   if (loading) {
     return (
@@ -486,6 +502,64 @@ export default function TariffPage() {
               </div>
             </div>
           </div>
+
+          {/* "Uyga" rejimi */}
+          <div className="card" style={{ flex: 1, minWidth: 280 }}>
+            <div className="card-header">
+              <span className="card-title">🏠 Uyga rejimi</span>
+            </div>
+            <div className="card-body">
+              <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 14 }}>
+                Haydovchi uy manzilini belgilab, uyga boruvchi buyurtmalarga
+                ustuvorlik olishi mumkin (OSRM marshrut orqali tekshiriladi).
+                Server xarajati ko&apos;proq bo&apos;lgani uchun komissiya biroz
+                yuqoriroq. Ovqat yetkazishga bu tegmaydi.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <NumInput
+                  label="Taksi komissiyasi"
+                  value={homeModeTaxiPct}
+                  onChange={setHomeModeTaxiPct}
+                  suffix="%"
+                  hint="Uyga mos safar qabul qilinganda oddiy komissiya o'rniga qo'llanadi."
+                />
+                <NumInput
+                  label="Yo'l chetlanishi chegarasi"
+                  value={homeModeDetourPct}
+                  onChange={setHomeModeDetourPct}
+                  suffix="%"
+                  hint="Uyga bevosita yo'ldan shu foizdan ko'p chetlansa — 'mos' hisoblanmaydi. Taksi va dostavka uchun umumiy."
+                />
+              </div>
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: '12px 14px',
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  lineHeight: 1.8,
+                }}
+              >
+                <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--text-2)' }}>
+                  {sampleKm} km misolda ({sampleFare.toLocaleString('ru-RU')} so&lsquo;m safar)
+                </div>
+                <div style={{ color: 'var(--text-3)' }}>
+                  Uyga mos bo&lsquo;lsa komissiya:{' '}
+                  <b style={{ color: 'var(--primary)' }}>
+                    {homeModeTaxiCommission.toLocaleString('ru-RU')} so&lsquo;m
+                  </b>
+                </div>
+                <div style={{ color: 'var(--text-3)' }}>
+                  Haydovchi oladi:{' '}
+                  <b style={{ color: 'var(--green)' }}>
+                    {(sampleFare - homeModeTaxiCommission).toLocaleString('ru-RU')} so&lsquo;m
+                  </b>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -522,6 +596,49 @@ export default function TariffPage() {
                 </div>
                 <div style={{ color: 'var(--text-3)', marginTop: 4, fontSize: 12 }}>
                   O&lsquo;lcham koefitsienti: kichik &times;1 &middot; o&lsquo;rta &times;1.3 &middot; katta &times;1.6
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* "Uyga" rejimi */}
+          <div className="card" style={{ flex: 1, minWidth: 280, maxWidth: 400 }}>
+            <div className="card-header">
+              <span className="card-title">🏠 Uyga rejimi</span>
+            </div>
+            <div className="card-body">
+              <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 14 }}>
+                Kuryer uyga boruvchi dostavkaga ustuvorlik olganda qo&apos;llanadigan
+                komissiya. Chetlanish chegarasi Taksi bo&apos;limida (taksi va
+                dostavka uchun umumiy).
+              </p>
+              <NumInput
+                label="Dostavka komissiyasi"
+                value={homeModeParcelPct}
+                onChange={setHomeModeParcelPct}
+                suffix="%"
+              />
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: '12px 14px',
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  lineHeight: 1.8,
+                }}
+              >
+                <div style={{ color: 'var(--text-3)' }}>
+                  Uyga mos bo&lsquo;lsa komissiya:{' '}
+                  <b style={{ color: 'var(--primary)' }}>
+                    {homeModeParcelCommission.toLocaleString('ru-RU')} so&lsquo;m
+                  </b>
+                </div>
+                <div style={{ color: 'var(--text-3)' }}>
+                  Kuryer oladi:{' '}
+                  <b style={{ color: 'var(--green)' }}>
+                    {(sampleParcel - homeModeParcelCommission).toLocaleString('ru-RU')} so&lsquo;m
+                  </b>
                 </div>
               </div>
             </div>

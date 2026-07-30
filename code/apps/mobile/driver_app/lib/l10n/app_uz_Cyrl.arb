@@ -1,6 +1,18 @@
 {
   "@@locale": "uz_Cyrl",
   "appName": "Бешариқ Ҳайдовчи",
+  "noInternetConnection": "Интернет алоқаси йўқ",
+  "homeGpsRequired": "Линияга чиқиш учун GPS ёқилган бўлиши керак. Жойлашув рухсатини текширинг.",
+  "homeReconnecting": "Қайта уланмоқда...",
+  "homeAddressSearchHint": "Манзил қидириш...",
+  "homeAddressPinHint": "Харитада уй манзилингизни белгиланг",
+  "homeAddressConfirm": "Манзилни тасдиқлаш",
+  "homeModeTitle": "Уйга режими",
+  "homeModeSetAddressFirst": "Аввал уй манзилини белгиланг",
+  "homeModeLabel": "Уйга",
+  "homeModeEditAddress": "Манзилни ўзгартириш",
+  "homeModePoolButton": "Йўл-йўлакай буюртма олиш",
+  "homeModeToggleFailed": "Режимни ўзгартириб бўлмади",
   "language": "Тил",
   "logout": "Чиқиш",
 

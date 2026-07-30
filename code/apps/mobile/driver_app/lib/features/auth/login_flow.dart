@@ -7,12 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../core/uz_phone.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 import '../../widgets/language_button.dart';
 import 'auth_controller.dart';
 
-const _deepGreen = Color(0xFF1B5E20);
+const _deepGreen = DriverColors.deepGreen;
 const _darkGreen = Color(0xFF0D3311);
-const _gold = Color(0xFFD4AF37);
+const _gold = DriverColors.gold;
 
 /// Haydovchi kirishi: telefon -> administrator bergan 8 xonali kod.
 /// Brend qahramon (to'q yashil gradient + oltin uchqunlar + pulsli logo)

@@ -50,6 +50,8 @@ export interface TaxiTrip {
   fare: number;
   commission: number;
   driverEarning: number;
+  /** "Uyga" rejimi mos kelib biriktirilganmi — complete()da komissiya shu asosda qayta hisoblanadi. */
+  homeModeMatch: boolean;
   status: TaxiStatus;
   paymentType: 'CASH';
   statusHistory: TaxiStatusEntry[];
@@ -105,6 +107,15 @@ export interface FinalizeTaxiTrip {
 export interface AssignPricing {
   pickupDistanceKm: number;
   pickupSurcharge: number;
+  /**
+   * "Uyga" rejimi mos kelsa qayta hisoblangan komissiya/haydovchi ulushi
+   * (fare o'zgarmaydi — faqat platforma/haydovchi taqsimoti). Bo'lmasa
+   * yaratilishdagi oddiy komissiya o'zgarishsiz qoladi.
+   */
+  commission?: number;
+  driverEarning?: number;
+  /** Qotirilib saqlanadi — complete()da komissiya shu asosda qayta hisoblanadi. */
+  homeModeMatch?: boolean;
 }
 
 /** Admin statistika/hisobot uchun qisqartirilgan qator (select — pickup/destination/statusHistory'siz). */

@@ -28,4 +28,13 @@ class AuthUser {
       hasConsent: (json['hasConsent'] as bool?) ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'phone': phone,
+        'fullName': fullName,
+        'locale': locale,
+        'roles': roles,
+        'hasConsent': hasConsent,
+      };
 }

@@ -23,6 +23,11 @@ export interface DriverProfileEntity {
   blockReason?: string | null;
   /** Ketma-ket bekor qilingan buyurtmalar — muvaffaqiyatli yakunda 0'ga tushadi. */
   consecutiveCancellations: number;
+  /** "Uyga" rejimi — uy manzili (belgilanmagan bo'lsa null). */
+  homeLat?: number | null;
+  homeLng?: number | null;
+  homeAddress?: string | null;
+  isHomeModeActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,4 +82,8 @@ export type DriverProfilePatch = Partial<
   blockedUntil?: Date | null;
   blockReason?: string | null;
   consecutiveCancellations?: number;
+  homeLat?: number | null;
+  homeLng?: number | null;
+  homeAddress?: string | null;
+  isHomeModeActive?: boolean;
 };

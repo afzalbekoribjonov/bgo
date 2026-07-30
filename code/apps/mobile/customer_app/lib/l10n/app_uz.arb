@@ -1,6 +1,7 @@
 {
   "@@locale": "uz",
   "appName": "Beshariq",
+  "noInternetConnection": "Internet aloqasi yo'q",
   "welcome": "Xush kelibsiz!",
   "chooseService": "Xizmatni tanlang",
   "serviceFood": "Ovqat",

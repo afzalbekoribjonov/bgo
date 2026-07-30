@@ -29,7 +29,15 @@ export abstract class ParcelRepository {
   abstract findByDriverForEarnings(driverId: string): Promise<ParcelEarningsRow[]>;
   /** Yangi (PENDING), hali kuryer biriktirilmagan dostavkalar. */
   abstract findAvailable(): Promise<ParcelDelivery[]>;
-  abstract assignDriver(id: string, driverId: string): Promise<ParcelDelivery>;
+  /**
+   * `pricing` berilsa — "uyga" rejimi mos kelganda qayta hisoblangan
+   * komissiya/kuryer ulushi ham yoziladi (fare o'zgarmaydi).
+   */
+  abstract assignDriver(
+    id: string,
+    driverId: string,
+    pricing?: { commission: number; driverEarning: number },
+  ): Promise<ParcelDelivery>;
   abstract updateStatus(
     id: string,
     status: ParcelStatus,

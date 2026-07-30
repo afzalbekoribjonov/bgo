@@ -46,6 +46,10 @@ class DriverApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => ConnectivityBanner(
+        message: AppLocalizations.of(context)!.noInternetConnection,
+        child: child!,
+      ),
       home: const AuthGate(),
     );
   }

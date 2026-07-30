@@ -11,6 +11,11 @@ class DriverProfile {
   final bool isActive;
   final bool isOnline;
   final int balance;
+  /// "Uyga" rejimi — uy manzili (belgilanmagan bo'lsa null).
+  final double? homeLat;
+  final double? homeLng;
+  final String? homeAddress;
+  final bool isHomeModeActive;
 
   const DriverProfile({
     required this.id,
@@ -24,7 +29,13 @@ class DriverProfile {
     this.plateNumber,
     this.licenseInfo,
     this.balance = 0,
+    this.homeLat,
+    this.homeLng,
+    this.homeAddress,
+    this.isHomeModeActive = false,
   });
+
+  bool get hasHomeAddress => homeLat != null && homeLng != null;
 
   /// Avatar uchun ism bosh harfi.
   String get initial {
@@ -45,6 +56,10 @@ class DriverProfile {
       isActive: (json['isActive'] as bool?) ?? true,
       isOnline: (json['isOnline'] as bool?) ?? false,
       balance: (json['balance'] as num?)?.toInt() ?? 0,
+      homeLat: (json['homeLat'] as num?)?.toDouble(),
+      homeLng: (json['homeLng'] as num?)?.toDouble(),
+      homeAddress: json['homeAddress'] as String?,
+      isHomeModeActive: (json['isHomeModeActive'] as bool?) ?? false,
     );
   }
 }

@@ -24,6 +24,9 @@ export interface Tariff {
   foodServiceFeeUnder: number;
   foodServiceFeeOver: number;
   driverCancelPenalty: number;
+  homeModeTaxiCommissionPercent: number;
+  homeModeParcelCommissionPercent: number;
+  homeModeMaxDetourPercent: number;
 }
 
 export type TariffPatch = Partial<Omit<Tariff, 'id'>>;
@@ -78,6 +81,9 @@ export class TariffService {
     foodServiceFeeUnder: number;
     foodServiceFeeOver: number;
     driverCancelPenalty: number;
+    homeModeTaxiCommissionPercent: number;
+    homeModeParcelCommissionPercent: number;
+    homeModeMaxDetourPercent: number;
   }): Tariff {
     return {
       id: t.id,
@@ -102,6 +108,9 @@ export class TariffService {
       foodServiceFeeUnder: t.foodServiceFeeUnder,
       foodServiceFeeOver: t.foodServiceFeeOver,
       driverCancelPenalty: t.driverCancelPenalty,
+      homeModeTaxiCommissionPercent: t.homeModeTaxiCommissionPercent,
+      homeModeParcelCommissionPercent: t.homeModeParcelCommissionPercent,
+      homeModeMaxDetourPercent: t.homeModeMaxDetourPercent,
     };
   }
 }

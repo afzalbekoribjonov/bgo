@@ -39,8 +39,13 @@ export class DriverInfoClient {
     { info: UserBasicInfo | null; at: number }
   >();
   private comfortCache: { ids: Set<string>; at: number } | null = null;
+  private homeModeCache: {
+    map: Map<string, { lat: number; lng: number }>;
+    at: number;
+  } | null = null;
   private static readonly TTL_MS = 60_000;
   private static readonly COMFORT_TTL_MS = 20_000;
+  private static readonly HOME_MODE_TTL_MS = 20_000;
   /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
   private static readonly FETCH_TIMEOUT_MS = 5_000;
 
@@ -227,6 +232,43 @@ export class DriverInfoClient {
   async isComfortDriver(userId: string): Promise<boolean> {
     const ids = await this.getComfortIds();
     return ids.has(userId);
+  }
+
+  /**
+   * "Uyga" rejimi faol haydovchilar (userId -> uy koordinatasi) — dispatch
+   * uyga mos buyurtmalarni tavsiya qilishi uchun. Qisqa kesh; xato bo'lsa
+   * bo'sh xarita (xavfsiz standart: hech kimga ustuvorlik berilmaydi).
+   */
+  async getHomeModeDrivers(): Promise<Map<string, { lat: number; lng: number }>> {
+    if (
+      this.homeModeCache &&
+      Date.now() - this.homeModeCache.at < DriverInfoClient.HOME_MODE_TTL_MS
+    ) {
+      return this.homeModeCache.map;
+    }
+    if (!this.key) return new Map();
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/api/v1/internal/drivers/home-mode-active`,
+        {
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
+      );
+      if (!res.ok) return this.homeModeCache?.map ?? new Map();
+      const json = (await res.json()) as {
+        data: { userId: string; lat: number; lng: number }[];
+      };
+      const map = new Map(
+        (json?.data ?? []).map(
+          (d) => [d.userId, { lat: d.lat, lng: d.lng }] as const,
+        ),
+      );
+      this.homeModeCache = { map, at: Date.now() };
+      return map;
+    } catch {
+      return this.homeModeCache?.map ?? new Map();
+    }
   }
 
   /**

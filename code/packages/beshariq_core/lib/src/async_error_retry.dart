@@ -1,0 +1,122 @@
+import 'package:flutter/material.dart';
+
+import 'error_text.dart';
+
+/// Professional xato holati: yumshoq doiradagi ikonka + sarlavha + izoh +
+/// gradient RETRY tugmasi. Tarmoq xatosida wifi-off, boshqasida ogohlantirish.
+///
+/// Rang/matn ilova-xos (har ilova o'z brend rangini va lokalizatsiya qilingan
+/// `retryLabel`ni beradi) — shu sabab bu widget hech qanday ilovaning
+/// generatsiya qilingan `AppLocalizations`iga bog'liq emas.
+class AsyncErrorRetry extends StatelessWidget {
+  final Object error;
+  final VoidCallback onRetry;
+  final String retryLabel;
+  final Color networkColor;
+  final List<Color> retryGradient;
+  /// ListView/RefreshIndicator ichida ishlatish uchun scroll o'rab beradi.
+  final bool scrollable;
+
+  const AsyncErrorRetry({
+    super.key,
+    required this.error,
+    required this.onRetry,
+    required this.retryLabel,
+    required this.networkColor,
+    required this.retryGradient,
+    this.scrollable = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final network = isNetworkError(error);
+    final color = network ? networkColor : scheme.error;
+
+    final content = Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                network ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
+                size: 40,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              network ? 'Internet aloqasi yo\'q' : 'Xatolik yuz berdi',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              network
+                  ? 'Aloqani tekshirib, qayta urining — ma\'lumotlaringiz saqlanadi.'
+                  : 'Kutilmagan xatolik. Bir ozdan so\'ng qayta urining.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: scheme.outline, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: retryGradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: retryGradient.first.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: onRetry,
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.refresh_rounded,
+                            color: Colors.white, size: 19),
+                        const SizedBox(width: 8),
+                        Text(retryLabel,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!scrollable) return content;
+    return LayoutBuilder(
+      builder: (_, c) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(height: c.maxHeight, child: content),
+      ),
+    );
+  }
+}

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 
-const _gold = Color(0xFFD4AF37);
+const _gold = DriverColors.gold;
 
 /// Haydovchi liniyaga chiqishga uringanda backend `DRIVER_BLOCKED` qaytarsa
 /// ko'rsatiladigan to'liq ekranli holat: sabab + qolgan vaqt + ofisga kelish

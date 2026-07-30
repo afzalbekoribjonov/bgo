@@ -217,6 +217,56 @@ export class DriversService {
     return this.toApp(updated);
   }
 
+  /** "Uyga" rejimi: uy manzilini belgilash/o'zgartirish. */
+  async setHome(phone: string, lat: number, lng: number, address: string) {
+    const profile = await this.repo.findByPhone(phone);
+    if (!profile) throw new NotFoundException('Haydovchi topilmadi');
+    const updated = await this.repo.update(profile.id, {
+      homeLat: lat,
+      homeLng: lng,
+      homeAddress: address.trim(),
+    });
+    return this.toApp(updated);
+  }
+
+  /**
+   * "Uyga" rejimini yoqish/o'chirish. Yoqish uchun uy manzili oldindan
+   * belgilangan bo'lishi shart (ilova buni oldindan tekshiradi, lekin
+   * server ham himoyalangan bo'lishi kerak).
+   */
+  async setHomeMode(phone: string, active: boolean) {
+    const profile = await this.repo.findByPhone(phone);
+    if (!profile) throw new NotFoundException('Haydovchi topilmadi');
+    if (active && (profile.homeLat == null || profile.homeLng == null)) {
+      throw new BadRequestException(
+        "Avval uy manzilini belgilang, keyin rejimni yoqing",
+      );
+    }
+    const updated = await this.repo.update(profile.id, {
+      isHomeModeActive: active,
+    });
+    return this.toApp(updated);
+  }
+
+  /**
+   * Servislararo: "Uyga" rejimi faol bo'lgan haydovchilar (uy koordinatasi
+   * bilan) — order servisi dispatch mosligini hisoblashi uchun.
+   */
+  async homeModeActiveDrivers(): Promise<
+    { userId: string; lat: number; lng: number }[]
+  > {
+    const all = await this.repo.findAll();
+    return all
+      .filter(
+        (d) =>
+          d.isActive &&
+          d.isHomeModeActive &&
+          d.homeLat != null &&
+          d.homeLng != null,
+      )
+      .map((d) => ({ userId: d.userId, lat: d.homeLat as number, lng: d.homeLng as number }));
+  }
+
   private isCurrentlyBlocked(profile: DriverProfileEntity): boolean {
     return !!profile.blockedUntil && new Date(profile.blockedUntil) > new Date();
   }

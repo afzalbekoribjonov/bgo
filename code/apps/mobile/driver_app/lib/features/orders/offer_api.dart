@@ -21,6 +21,9 @@ class DriverOffer {
   // Ovqat: naqd taqsimot (qabul qilishdan oldin ko'rsatiladi)
   final int foodItemsTotal; // oshxonaga naqd to'lanadi
   final int foodServiceFee; // xizmat haqi (balansdan yechiladi)
+  /// "Uyga" rejimi mosligi (menga tavsiya qilinganmi) — pool'da har bir
+  /// so'rovda jonli hisoblanadi, taklifda bergan paytdagi qiymat.
+  final bool homeModeMatch;
 
   const DriverOffer({
     required this.orderId,
@@ -37,6 +40,7 @@ class DriverOffer {
     this.dropoffText,
     this.foodItemsTotal = 0,
     this.foodServiceFee = 0,
+    this.homeModeMatch = false,
   });
 
   bool get isFood => vertical == 'food';
@@ -60,6 +64,7 @@ class DriverOffer {
         secondsLeft: (j['secondsLeft'] as num?)?.toInt() ?? 0,
         foodItemsTotal: (j['foodItemsTotal'] as num?)?.toInt() ?? 0,
         foodServiceFee: (j['foodServiceFee'] as num?)?.toInt() ?? 0,
+        homeModeMatch: (j['homeModeMatch'] as bool?) ?? false,
       );
 }
 

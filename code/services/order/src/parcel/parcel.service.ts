@@ -404,7 +404,20 @@ export class ParcelService implements OnModuleInit {
     if (parcel.driverId) {
       throw new BadRequestException('Dostavka allaqachon biriktirilgan');
     }
-    const updated = await this.repo.assignDriver(id, driverId);
+    // Komissiya har doim ANIQ (mos/mos emas) qayta hisoblanadi va yoziladi —
+    // faqat mos kelganda emas. Aks holda: dostavka avval boshqa (uyga mos)
+    // kuryerga biriktirilib bekor qilingan bo'lsa, `releaseToPending()` eski
+    // commission/driverEarning qiymatlarini TOZALAMAYDI — shu kuryerda
+    // yozilmasa, keyingi (mos kelmagan) kuryerda ESKI qiymatlar qolib
+    // ketardi. `clear()`dan OLDIN so'raladi.
+    const homeModeMatch = await this.dispatch.homeModeMatchFor(driverId, id);
+    const t = await this.tariff.getTariff();
+    const commissionPercent = homeModeMatch
+      ? t.homeModeParcelCommissionPercent
+      : t.parcelCommissionPercent;
+    const commission = Math.round((parcel.fare * commissionPercent) / 100);
+    const pricing = { commission, driverEarning: parcel.fare - commission };
+    const updated = await this.repo.assignDriver(id, driverId, pricing);
     this.dispatch.clear(id);
     await this.notifyCustomer(updated, 'Kuryer dostavkani qabul qildi');
     return updated;

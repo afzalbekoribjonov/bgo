@@ -10,6 +10,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appName => 'Бешарык Водитель';
 
   @override
+  String get noInternetConnection => 'Нет подключения к интернету';
+
+  @override
+  String get homeGpsRequired => 'Для выхода на линию должен быть включён GPS. Проверьте разрешение геолокации.';
+
+  @override
+  String get homeReconnecting => 'Переподключение...';
+
+  @override
+  String get homeAddressSearchHint => 'Поиск адреса...';
+
+  @override
+  String get homeAddressPinHint => 'Отметьте свой домашний адрес на карте';
+
+  @override
+  String get homeAddressConfirm => 'Подтвердить адрес';
+
+  @override
+  String get homeModeTitle => 'Режим \"Домой\"';
+
+  @override
+  String get homeModeSetAddressFirst => 'Сначала укажите домашний адрес';
+
+  @override
+  String get homeModeLabel => 'Домой';
+
+  @override
+  String get homeModeEditAddress => 'Изменить адрес';
+
+  @override
+  String get homeModePoolButton => 'Принимать заказы по пути';
+
+  @override
+  String get homeModeToggleFailed => 'Не удалось изменить режим';
+
+  @override
   String get language => 'Язык';
 
   @override

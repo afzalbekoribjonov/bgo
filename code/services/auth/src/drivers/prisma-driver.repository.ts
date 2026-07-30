@@ -89,6 +89,12 @@ export class PrismaDriverRepository extends DriverRepository {
     if (patch.consecutiveCancellations !== undefined) {
       data.consecutiveCancellations = patch.consecutiveCancellations;
     }
+    if (patch.homeLat !== undefined) data.homeLat = patch.homeLat;
+    if (patch.homeLng !== undefined) data.homeLng = patch.homeLng;
+    if (patch.homeAddress !== undefined) data.homeAddress = patch.homeAddress;
+    if (patch.isHomeModeActive !== undefined) {
+      data.isHomeModeActive = patch.isHomeModeActive;
+    }
     const row = await this.prisma.driverProfile.update({ where: { id }, data });
     return this.toEntity(row);
   }
@@ -218,6 +224,10 @@ export class PrismaDriverRepository extends DriverRepository {
       blockedUntil: d.blockedUntil?.toISOString() ?? null,
       blockReason: d.blockReason,
       consecutiveCancellations: d.consecutiveCancellations,
+      homeLat: d.homeLat,
+      homeLng: d.homeLng,
+      homeAddress: d.homeAddress,
+      isHomeModeActive: d.isHomeModeActive,
       createdAt: d.createdAt.toISOString(),
       updatedAt: d.updatedAt.toISOString(),
     };

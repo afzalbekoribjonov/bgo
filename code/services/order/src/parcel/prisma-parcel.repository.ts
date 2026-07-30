@@ -113,7 +113,11 @@ export class PrismaParcelRepository extends ParcelRepository {
     return rows.map((p) => this.toParcel(p as Row));
   }
 
-  async assignDriver(id: string, driverId: string): Promise<ParcelDelivery> {
+  async assignDriver(
+    id: string,
+    driverId: string,
+    pricing?: { commission: number; driverEarning: number },
+  ): Promise<ParcelDelivery> {
     const existing = await this.prisma.parcelDelivery.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Dostavka topilmadi');
     const history = [
@@ -126,6 +130,9 @@ export class PrismaParcelRepository extends ParcelRepository {
         driverId,
         status: 'ACCEPTED',
         statusHistory: history as unknown as Prisma.InputJsonValue,
+        ...(pricing
+          ? { commission: pricing.commission, driverEarning: pricing.driverEarning }
+          : {}),
       },
     });
     return this.toParcel(updated as Row);

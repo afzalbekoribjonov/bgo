@@ -1,6 +1,7 @@
 {
   "@@locale": "uz_Cyrl",
   "appName": "Бешариқ",
+  "noInternetConnection": "Интернет алоқаси йўқ",
   "welcome": "Хуш келибсиз!",
   "chooseService": "Хизматни танланг",
   "serviceFood": "Овқат",

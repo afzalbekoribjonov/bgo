@@ -61,6 +61,22 @@ class AuthApi {
     return DriverProfile.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
+  /// "Uyga" rejimi: uy manzilini belgilash/o'zgartirish.
+  Future<DriverProfile> setHome(double lat, double lng, String address) async {
+    final res = await _dio.patch('/auth/driver/home', data: {
+      'lat': lat,
+      'lng': lng,
+      'address': address,
+    });
+    return DriverProfile.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
+  /// "Uyga" rejimini yoqish/o'chirish.
+  Future<DriverProfile> setHomeModeActive(bool active) async {
+    final res = await _dio.patch('/auth/driver/home-mode', data: {'active': active});
+    return DriverProfile.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
   /// Hisob balansi + to'ldirish tarixi (Hisobim).
   Future<DriverBalance> balance() async {
     final res = await _dio.get('/auth/driver/balance');

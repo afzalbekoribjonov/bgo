@@ -82,6 +82,16 @@ export class InternalDriversController {
     return { success: true, data: await this.drivers.getPublicByUserIds(idList) };
   }
 
+  /**
+   * GET /api/v1/internal/drivers/home-mode-active -> {userId,lat,lng}[]
+   * "Uyga" rejimi faol haydovchilar — order servisi dispatch mosligini
+   * hisoblashi uchun (OSRM marshrut chetlanishi).
+   */
+  @Get('home-mode-active')
+  async homeModeActive() {
+    return { success: true, data: await this.drivers.homeModeActiveDrivers() };
+  }
+
   /** GET /api/v1/internal/drivers/:userId -> { fullName, carName, ... } | null */
   @Get(':userId')
   async byUserId(@Param('userId') userId: string) {

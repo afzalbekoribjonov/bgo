@@ -5,12 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 import '../../widgets/async_error.dart';
 import 'support_api.dart';
 import 'support_models.dart';
 
-const Color _supportBrand = Color(0xFF2E7D32);
-const Color _supportBrandDark = Color(0xFF1B5E20);
+const Color _supportBrand = DriverColors.green;
+const Color _supportBrandDark = DriverColors.deepGreen;
 
 /// Yordam suhbat ekrani — ikki holat bir ekranda:
 /// [conversationId] null bo'lsa FAQ_MENU (tayyor savollar + "Savolim bor"),

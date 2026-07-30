@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 import '../../widgets/async_error.dart';
 import 'messages_api.dart';
 
-const _gold = Color(0xFFD4AF37);
+const _gold = DriverColors.gold;
 
 /// Xabarlar — admin yuborgan e'lonlar/xabarlar (faqat o'qish, chat ko'rinishida).
 /// Ochilganda hammasi o'qilgan deb belgilanadi (badge tozalanadi).

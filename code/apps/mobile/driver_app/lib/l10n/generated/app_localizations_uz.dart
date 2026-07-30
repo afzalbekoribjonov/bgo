@@ -10,6 +10,42 @@ class AppLocalizationsUz extends AppLocalizations {
   String get appName => 'Beshariq Haydovchi';
 
   @override
+  String get noInternetConnection => 'Internet aloqasi yo\'q';
+
+  @override
+  String get homeGpsRequired => 'Liniyaga chiqish uchun GPS yoqilgan bo\'lishi kerak. Joylashuv ruxsatini tekshiring.';
+
+  @override
+  String get homeReconnecting => 'Qayta ulanmoqda...';
+
+  @override
+  String get homeAddressSearchHint => 'Manzil qidirish...';
+
+  @override
+  String get homeAddressPinHint => 'Xaritada uy manzilingizni belgilang';
+
+  @override
+  String get homeAddressConfirm => 'Manzilni tasdiqlash';
+
+  @override
+  String get homeModeTitle => 'Uyga rejimi';
+
+  @override
+  String get homeModeSetAddressFirst => 'Avval uy manzilini belgilang';
+
+  @override
+  String get homeModeLabel => 'Uyga';
+
+  @override
+  String get homeModeEditAddress => 'Manzilni o\'zgartirish';
+
+  @override
+  String get homeModePoolButton => 'Yo\'l-yo\'lakay buyurtma olish';
+
+  @override
+  String get homeModeToggleFailed => 'Rejimni o\'zgartirib bo\'lmadi';
+
+  @override
   String get language => 'Til';
 
   @override
@@ -872,6 +908,42 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get appName => 'Бешариқ Ҳайдовчи';
+
+  @override
+  String get noInternetConnection => 'Интернет алоқаси йўқ';
+
+  @override
+  String get homeGpsRequired => 'Линияга чиқиш учун GPS ёқилган бўлиши керак. Жойлашув рухсатини текширинг.';
+
+  @override
+  String get homeReconnecting => 'Қайта уланмоқда...';
+
+  @override
+  String get homeAddressSearchHint => 'Манзил қидириш...';
+
+  @override
+  String get homeAddressPinHint => 'Харитада уй манзилингизни белгиланг';
+
+  @override
+  String get homeAddressConfirm => 'Манзилни тасдиқлаш';
+
+  @override
+  String get homeModeTitle => 'Уйга режими';
+
+  @override
+  String get homeModeSetAddressFirst => 'Аввал уй манзилини белгиланг';
+
+  @override
+  String get homeModeLabel => 'Уйга';
+
+  @override
+  String get homeModeEditAddress => 'Манзилни ўзгартириш';
+
+  @override
+  String get homeModePoolButton => 'Йўл-йўлакай буюртма олиш';
+
+  @override
+  String get homeModeToggleFailed => 'Режимни ўзгартириб бўлмади';
 
   @override
   String get language => 'Тил';

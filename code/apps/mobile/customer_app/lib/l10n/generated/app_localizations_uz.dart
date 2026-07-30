@@ -10,6 +10,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get appName => 'Beshariq';
 
   @override
+  String get noInternetConnection => 'Internet aloqasi yo\'q';
+
+  @override
   String get welcome => 'Xush kelibsiz!';
 
   @override
@@ -761,6 +764,9 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get appName => 'Бешариқ';
+
+  @override
+  String get noInternetConnection => 'Интернет алоқаси йўқ';
 
   @override
   String get welcome => 'Хуш келибсиз!';

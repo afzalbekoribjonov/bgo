@@ -341,6 +341,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ));
   }
 
+  /// Karta ro'yxati yuklanayotganda joy egallovchi skeletonlar — bo'sh
+  /// spinner o'rniga kelayotgan kontent shaklini oldindan ko'rsatadi.
+  Widget _horizontalSkeletonRow({required double height, required double cardWidth}) {
+    return SizedBox(
+      height: height,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 3,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, __) => SizedBox(
+          width: cardWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(
+                height: height - 54,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              const SizedBox(height: 10),
+              SkeletonBox(height: 14, width: cardWidth * 0.75, borderRadius: BorderRadius.circular(6)),
+              const SizedBox(height: 8),
+              SkeletonBox(height: 12, width: cardWidth * 0.5, borderRadius: BorderRadius.circular(6)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _foodSection(AppLocalizations t, AsyncValue<List<Dish>> async) {
     final scheme = Theme.of(context).colorScheme;
     return Column(
@@ -369,10 +400,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         async.when(
-          loading: () => const SizedBox(
-            height: 210,
-            child: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () => _horizontalSkeletonRow(height: 210, cardWidth: 150),
           error: (e, _) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AsyncErrorRetry(
@@ -401,7 +429,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// bilan); GPS yo'q/joylashuvsiz oshxonalar reyting bo'yicha oxirida.
   Widget _popularSection(
       AppLocalizations t, AsyncValue<List<RestaurantSummary>> async) {
-    return async.maybeWhen(
+    return async.when(
+      loading: () => _horizontalSkeletonRow(height: 172, cardWidth: 140),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: AsyncErrorRetry(
+          error: e,
+          onRetry: () => ref.invalidate(restaurantsProvider),
+        ),
+      ),
       data: (list) {
         if (list.isEmpty) return const SizedBox.shrink();
         final me = _myLoc;
@@ -470,7 +506,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         );
       },
-      orElse: () => const SizedBox.shrink(),
     );
   }
 }

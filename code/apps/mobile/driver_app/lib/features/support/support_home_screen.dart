@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../theme/driver_colors.dart';
 import '../../widgets/async_error.dart';
 import 'support_api.dart';
 import 'support_chat_screen.dart';
 import 'support_models.dart';
 
-const Color _supportBrand = Color(0xFF2E7D32);
+const Color _supportBrand = DriverColors.green;
 
 /// Yordam bo'limi bosh ekrani — o'tgan murojaatlar tarixi + yangi murojaat.
 class SupportHomeScreen extends ConsumerWidget {

@@ -4,9 +4,11 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { haversineKm } from '../common/geo';
+import { GeoPoint, haversineKm } from '../common/geo';
+import { OsrmRouteClient } from '../common/osrm-route.client';
 import { DriverInfoClient } from '../driver-client/driver-info.client';
 import { NotificationClient } from '../notification-client/notification.client';
+import { TariffService } from '../tariff/tariff.service';
 import { DriverLocationService } from '../tracking/driver-location.service';
 
 /** Yangi buyurtma signali — local bildirishnoma kanali (ilova tomonda). */
@@ -38,6 +40,12 @@ export interface DispatchOffer {
   foodServiceFee?: number; // ovqat: xizmat haqi (balansdan)
   /** Taksi tarif klassi — 'comfort' bo'lsa faqat Comfort haydovchilarga. */
   tariffClass?: 'start' | 'comfort';
+  /**
+   * "Uyga" rejimi mosligi — hozir taklif qilingan (yoki so'ragan) haydovchi
+   * uchun uyga boruvchi yo'lga mos keladimi (tavsiya/ustuvorlik, qattiq
+   * filtr emas). Taxi/Parcel'da B6 komissiya qayta hisoblashda ishlatiladi.
+   */
+  homeModeMatch?: boolean;
 }
 
 interface OfferState extends DispatchOffer {
@@ -79,6 +87,8 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     private readonly tracking: DriverLocationService,
     private readonly notifications: NotificationClient,
     private readonly driverInfo: DriverInfoClient,
+    private readonly osrm: OsrmRouteClient,
+    private readonly tariff: TariffService,
   ) {}
 
   /** "Haydovchi topilmadi" fail callback qo'shadi (bir nechta vertikal mustaqil ro'yxatdan o'tishi mumkin). */
@@ -111,6 +121,7 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
       attempt: 0,
       status: 'offering',
       createdAt: Date.now(),
+      homeModeMatch: false,
     };
     this.offers.set(data.orderId, state);
     await this.assignNext(state);
@@ -139,9 +150,18 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     if (ids.length === 0) {
       state.status = 'pool';
       state.offeredTo = null;
+      state.homeModeMatch = false;
       return;
     }
+    // "Uyga" rejimi — mos keluvchi haydovchi(lar) ro'yxat BOSHIGA ko'chiriladi
+    // (ustuvorlik, qattiq filtr emas — boshqalar ham navbatda qoladi).
+    const { ids: prioritized, matches } = await this.applyHomeModePriority(
+      state,
+      ids,
+    );
+    ids = prioritized;
     state.offeredTo = ids[0];
+    state.homeModeMatch = matches.has(ids[0]);
     state.attempt += 1;
     state.expiresAt = Date.now() + DispatchService.OFFER_SEC * 1000;
     state.status = 'offering';
@@ -230,6 +250,8 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
   /**
    * Pool (qabul qilinmagan) buyurtmalar — haydovchiga ko'ra: Comfort
    * buyurtmalar faqat Comfort tarifi yoqilgan haydovchilarga ko'rinadi.
+   * `homeModeMatch` — SO'RAGAN haydovchining o'z uyiga nisbatan mosligi
+   * (jonli hisoblanadi, saqlanmaydi — pool ko'p haydovchiga ochiq).
    */
   async poolFor(driverId: string): Promise<DispatchOffer[]> {
     const all = [...this.offers.values()]
@@ -239,9 +261,104 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     const comfort = hasComfortOffers
       ? await this.driverInfo.getComfortIds()
       : new Set<string>();
-    return all
-      .filter((s) => s.tariffClass !== 'comfort' || comfort.has(driverId))
-      .map((s) => this.toOffer(s));
+    const filtered = all.filter(
+      (s) => s.tariffClass !== 'comfort' || comfort.has(driverId),
+    );
+    if (filtered.length === 0) return [];
+
+    const homeModeDrivers = await this.driverInfo.getHomeModeDrivers();
+    const home = homeModeDrivers.get(driverId);
+    if (!home) return filtered.map((s) => this.toOffer(s));
+    const loc = await this.tracking.get(driverId);
+    if (!loc) return filtered.map((s) => this.toOffer(s));
+
+    const maxDetour = (await this.tariff.getTariff()).homeModeMaxDetourPercent;
+    const driverPoint: GeoPoint = { text: '', lat: loc.lat, lng: loc.lng };
+    const homePoint: GeoPoint = { text: '', lat: home.lat, lng: home.lng };
+    return Promise.all(
+      filtered.map(async (s) => {
+        const detour = await this.osrm.detourPercent(
+          driverPoint,
+          this.orderWaypoints(s),
+          homePoint,
+        );
+        const match = detour != null && detour <= maxDetour;
+        return { ...this.toOffer(s), homeModeMatch: match };
+      }),
+    );
+  }
+
+  /**
+   * Qabul qilayotgan aniq haydovchi uchun "uyga mos"lik (B6: komissiya
+   * qayta hisoblash). 'offering' holatida taklif paytida hisoblangan qiymat
+   * qayta ishlatiladi (izchillik — nima ko'rsatilgan bo'lsa, shu hisoblanadi);
+   * 'pool'da har bir qabul qiluvchi uchun jonli hisoblanadi (ko'pga ochiq).
+   */
+  async homeModeMatchFor(driverId: string, orderId: string): Promise<boolean> {
+    const s = this.offers.get(orderId);
+    if (!s) return false;
+    if (s.status === 'offering') {
+      return s.offeredTo === driverId ? (s.homeModeMatch ?? false) : false;
+    }
+    const homeModeDrivers = await this.driverInfo.getHomeModeDrivers();
+    const home = homeModeDrivers.get(driverId);
+    if (!home) return false;
+    const loc = await this.tracking.get(driverId);
+    if (!loc) return false;
+    const maxDetour = (await this.tariff.getTariff()).homeModeMaxDetourPercent;
+    const detour = await this.osrm.detourPercent(
+      { text: '', lat: loc.lat, lng: loc.lng },
+      this.orderWaypoints(s),
+      { text: '', lat: home.lat, lng: home.lng },
+    );
+    return detour != null && detour <= maxDetour;
+  }
+
+  /** Buyurtma nuqtalari (pickup + bo'lsa dropoff) — OSRM marshrut uchun. */
+  private orderWaypoints(s: OfferState): GeoPoint[] {
+    const points: GeoPoint[] = [{ text: '', lat: s.pickupLat, lng: s.pickupLng }];
+    if (s.dropoffLat != null && s.dropoffLng != null) {
+      points.push({ text: '', lat: s.dropoffLat, lng: s.dropoffLng });
+    }
+    return points;
+  }
+
+  /**
+   * `ids` ichidan "uyga rejimi" faol VA uy yo'liga mos (chetlanish
+   * `homeModeMaxDetourPercent`dan kam) haydovchilarni ro'yxat boshiga
+   * ko'chiradi. Hech kim mos kelmasa (yoki OSRM ishlamasa) — ro'yxat
+   * o'zgarishsiz qoladi, dispatch oddiy tartibda davom etadi.
+   */
+  private async applyHomeModePriority(
+    state: OfferState,
+    ids: string[],
+  ): Promise<{ ids: string[]; matches: Set<string> }> {
+    const matches = new Set<string>();
+    const homeModeDrivers = await this.driverInfo.getHomeModeDrivers();
+    if (homeModeDrivers.size === 0) return { ids, matches };
+    const candidates = ids.filter((id) => homeModeDrivers.has(id));
+    if (candidates.length === 0) return { ids, matches };
+
+    const maxDetour = (await this.tariff.getTariff()).homeModeMaxDetourPercent;
+    const waypoints = this.orderWaypoints(state);
+    await Promise.all(
+      candidates.map(async (id) => {
+        const home = homeModeDrivers.get(id)!;
+        const loc = await this.tracking.get(id);
+        if (!loc) return;
+        const detour = await this.osrm.detourPercent(
+          { text: '', lat: loc.lat, lng: loc.lng },
+          waypoints,
+          { text: '', lat: home.lat, lng: home.lng },
+        );
+        if (detour != null && detour <= maxDetour) matches.add(id);
+      }),
+    );
+    if (matches.size === 0) return { ids, matches };
+    return {
+      ids: [...ids.filter((id) => matches.has(id)), ...ids.filter((id) => !matches.has(id))],
+      matches,
+    };
   }
 
   /** Buyurtma taklifi (vertikalni bilish uchun). */
@@ -291,6 +408,7 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
       foodItemsTotal: s.foodItemsTotal,
       foodServiceFee: s.foodServiceFee,
       tariffClass: s.tariffClass,
+      homeModeMatch: s.homeModeMatch,
     };
   }
 }

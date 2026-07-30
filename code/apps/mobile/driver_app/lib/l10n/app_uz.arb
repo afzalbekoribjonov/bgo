@@ -1,6 +1,18 @@
 {
   "@@locale": "uz",
   "appName": "Beshariq Haydovchi",
+  "noInternetConnection": "Internet aloqasi yo'q",
+  "homeGpsRequired": "Liniyaga chiqish uchun GPS yoqilgan bo'lishi kerak. Joylashuv ruxsatini tekshiring.",
+  "homeReconnecting": "Qayta ulanmoqda...",
+  "homeAddressSearchHint": "Manzil qidirish...",
+  "homeAddressPinHint": "Xaritada uy manzilingizni belgilang",
+  "homeAddressConfirm": "Manzilni tasdiqlash",
+  "homeModeTitle": "Uyga rejimi",
+  "homeModeSetAddressFirst": "Avval uy manzilini belgilang",
+  "homeModeLabel": "Uyga",
+  "homeModeEditAddress": "Manzilni o'zgartirish",
+  "homeModePoolButton": "Yo'l-yo'lakay buyurtma olish",
+  "homeModeToggleFailed": "Rejimni o'zgartirib bo'lmadi",
   "language": "Til",
   "logout": "Chiqish",
 

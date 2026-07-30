@@ -144,6 +144,13 @@ model Tariff {
   foodServiceFeeUnder   Int      @default(1000) // chegaragacha taom uchun xizmat haqi (per dona)
   foodServiceFeeOver    Int      @default(1500) // chegaradan yuqori taom uchun xizmat haqi (per dona)
   driverCancelPenalty   Int      @default(5000) // haydovchi/kuryer bekor qilsa balansdan yechiladigan jarima, so'm
+  // "Uyga" rejimi — uyga mos taksi/dostavka buyurtmalarida oddiy komissiya
+  // o'rniga qo'llanadi (server xarajati ko'proq bo'lgani uchun yuqoriroq).
+  // Ovqat vertikaliga PUL jihatidan tegmaydi (kuryer komissiyasiz qoladi).
+  homeModeTaxiCommissionPercent   Int @default(20)
+  homeModeParcelCommissionPercent Int @default(20)
+  // Uyga borish yo'lidan shu foizdan ko'p chetlanish — "uyga mos" hisoblanmaydi.
+  homeModeMaxDetourPercent        Int @default(30)
   updatedAt             DateTime @updatedAt
 
   @@map("tariffs")
@@ -181,6 +188,10 @@ model TaxiTrip {
   fare          Int         @default(0) // umumiy haq (so'm)
   commission    Int         @default(0) // platforma ulushi
   driverEarning Int         @default(0) // haydovchiga
+  // "Uyga" rejimi mos kelib biriktirilganmi (accept vaqtida qotiriladi) —
+  // complete()'da komissiyani standart o'rniga homeMode foizidan qayta
+  // hisoblash uchun (fare o'zgarmaydi, faqat taqsimot).
+  homeModeMatch Boolean     @default(false)
   status        TaxiStatus  @default(PENDING)
   paymentType   PaymentType @default(CASH)
   statusHistory Json

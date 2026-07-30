@@ -108,4 +108,24 @@ export class UpdateTariffDto {
   @IsInt()
   @Min(0)
   foodServiceFeeOver?: number;
+
+  // "Uyga" rejimi — uyga mos taksi/dostavka buyurtmalarida oddiy komissiya
+  // o'rniga qo'llanadi. Ovqatga tegishli emas (kuryer komissiyasiz qoladi).
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  homeModeTaxiCommissionPercent?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  homeModeParcelCommissionPercent?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  homeModeMaxDetourPercent?: number;
 }

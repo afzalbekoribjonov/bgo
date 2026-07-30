@@ -133,6 +133,15 @@ export class PrismaTaxiRepository extends TaxiRepository {
           ? {
               pickupDistanceKm: pricing.pickupDistanceKm,
               pickupSurcharge: pricing.pickupSurcharge,
+              ...(pricing.commission !== undefined
+                ? { commission: pricing.commission }
+                : {}),
+              ...(pricing.driverEarning !== undefined
+                ? { driverEarning: pricing.driverEarning }
+                : {}),
+              ...(pricing.homeModeMatch !== undefined
+                ? { homeModeMatch: pricing.homeModeMatch }
+                : {}),
             }
           : {}),
       },
@@ -316,6 +325,7 @@ export class PrismaTaxiRepository extends TaxiRepository {
       fare: t.fare as number,
       commission: (t.commission as number) ?? 0,
       driverEarning: (t.driverEarning as number) ?? 0,
+      homeModeMatch: (t.homeModeMatch as boolean) ?? false,
       status: t.status as TaxiStatus,
       paymentType: 'CASH',
       statusHistory: t.statusHistory as unknown as TaxiStatusEntry[],

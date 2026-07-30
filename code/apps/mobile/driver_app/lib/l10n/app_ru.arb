@@ -1,6 +1,18 @@
 {
   "@@locale": "ru",
   "appName": "Бешарык Водитель",
+  "noInternetConnection": "Нет подключения к интернету",
+  "homeGpsRequired": "Для выхода на линию должен быть включён GPS. Проверьте разрешение геолокации.",
+  "homeReconnecting": "Переподключение...",
+  "homeAddressSearchHint": "Поиск адреса...",
+  "homeAddressPinHint": "Отметьте свой домашний адрес на карте",
+  "homeAddressConfirm": "Подтвердить адрес",
+  "homeModeTitle": "Режим \"Домой\"",
+  "homeModeSetAddressFirst": "Сначала укажите домашний адрес",
+  "homeModeLabel": "Домой",
+  "homeModeEditAddress": "Изменить адрес",
+  "homeModePoolButton": "Принимать заказы по пути",
+  "homeModeToggleFailed": "Не удалось изменить режим",
   "language": "Язык",
   "logout": "Выход",
 

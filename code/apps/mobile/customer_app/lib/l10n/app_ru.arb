@@ -1,6 +1,7 @@
 {
   "@@locale": "ru",
   "appName": "Бешарык",
+  "noInternetConnection": "Нет подключения к интернету",
   "welcome": "Добро пожаловать!",
   "chooseService": "Выберите услугу",
   "serviceFood": "Еда",

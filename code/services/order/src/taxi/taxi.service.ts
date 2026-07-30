@@ -614,6 +614,24 @@ export class TaxiService implements OnModuleInit {
       );
     }
     const pricing = await this.pickupPricing(driverId, trip.pickup);
+    // Komissiya har doim ANIQ (true/false) qayta hisoblanadi va yoziladi —
+    // faqat mos kelganda emas. Aks holda: safar avval boshqa (uyga mos)
+    // haydovchiga biriktirilib bekor qilingan bo'lsa, `releaseToPending()`
+    // eski commission/homeModeMatch qiymatlarini TOZALAMAYDI — shu
+    // haydovchiga yozilmasa, keyingi (mos kelmagan) haydovchida ESKI
+    // (noto'g'ri) qiymatlar qolib ketardi. `clear()`dan OLDIN so'raladi —
+    // shundan keyin dispatch holati o'chadi.
+    const homeModeMatch = await this.dispatch.homeModeMatchFor(driverId, id);
+    const t = await this.tariff.getTariff();
+    const commissionPercent = homeModeMatch
+      ? t.homeModeTaxiCommissionPercent
+      : t.taxiCommissionPercent;
+    const commission = Math.round((trip.fare * commissionPercent) / 100);
+    pricing.commission = commission;
+    pricing.driverEarning = trip.fare - commission;
+    // Qotirilib saqlanadi: complete() yakuniy narxdan komissiyani QAYTA
+    // hisoblaganda ham shu holat (mos/mos emas) qo'llanishi uchun.
+    pricing.homeModeMatch = homeModeMatch;
     const updated = await this.repo.assignDriver(id, driverId, pricing);
     this.dispatch.clear(id);
     await this.notifications.notify(
@@ -801,7 +819,13 @@ export class TaxiService implements OnModuleInit {
     const waitFee = Math.round(t.taxiWaitPerMin * waitMinutes);
     const surcharge = trip.pickupSurcharge ?? 0;
     const fare = baseFare + surcharge + waitFee;
-    const commission = Math.round((fare * t.taxiCommissionPercent) / 100);
+    // "Uyga" rejimi mos bo'lib biriktirilgan bo'lsa — accept() paytida
+    // qo'llangan yuqoriroq komissiya yakunda ham saqlanadi (aks holda
+    // standart foizga qaytib qolar edi).
+    const commissionPercent = trip.homeModeMatch
+      ? t.homeModeTaxiCommissionPercent
+      : t.taxiCommissionPercent;
+    const commission = Math.round((fare * commissionPercent) / 100);
 
     const updated = await this.repo.finalize(id, {
       distanceKm,

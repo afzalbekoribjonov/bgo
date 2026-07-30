@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +19,8 @@ import {
   DriverCheckDto,
   DriverLoginDto,
   DriverStatusDto,
+  SetDriverHomeDto,
+  SetHomeModeDto,
 } from './dto/driver.dto';
 
 /**
@@ -71,6 +74,36 @@ export class DriverAuthController {
     return {
       success: true,
       data: await this.drivers.setOnline(user.phone, dto.isOnline),
+    };
+  }
+
+  /** "Uyga" rejimi: uy manzilini belgilash/o'zgartirish. */
+  @Patch('home')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  async setHome(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: SetDriverHomeDto,
+  ) {
+    return {
+      success: true,
+      data: await this.drivers.setHome(user.phone, dto.lat, dto.lng, dto.address),
+    };
+  }
+
+  /** "Uyga" rejimini yoqish/o'chirish. */
+  @Patch('home-mode')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  async setHomeMode(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: SetHomeModeDto,
+  ) {
+    return {
+      success: true,
+      data: await this.drivers.setHomeMode(user.phone, dto.active),
     };
   }
 

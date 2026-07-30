@@ -10,6 +10,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appName => 'Бешарык';
 
   @override
+  String get noInternetConnection => 'Нет подключения к интернету';
+
+  @override
   String get welcome => 'Добро пожаловать!';
 
   @override

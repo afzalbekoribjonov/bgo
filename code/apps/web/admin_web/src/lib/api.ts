@@ -240,6 +240,9 @@ export const updateTariff = (body: {
   foodServiceThreshold: number;
   foodServiceFeeUnder: number;
   foodServiceFeeOver: number;
+  homeModeTaxiCommissionPercent: number;
+  homeModeParcelCommissionPercent: number;
+  homeModeMaxDetourPercent: number;
 }) =>
   api<Tariff>('/admin/tariff', {
     method: 'PUT',

@@ -84,11 +84,16 @@ class _PoolScreenState extends ConsumerState<PoolScreen> {
                 ),
               ]);
             }
+            // "Uyga" rejimi mos kelganlar (bo'lsa) ro'yxat boshida — tavsiya,
+            // qolganlari ham ko'rinishda davom etadi (qattiq filtr emas).
+            final matches = list.where((o) => o.homeModeMatch).toList();
+            final others = list.where((o) => !o.homeModeMatch).toList();
+            final sorted = [...matches, ...others];
             return ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: list.length,
+              itemCount: sorted.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _card(t, list[i]),
+              itemBuilder: (_, i) => _card(t, sorted[i]),
             );
           },
         ),
@@ -151,6 +156,27 @@ class _PoolScreenState extends ConsumerState<PoolScreen> {
                         color: Color(0xFF2E7D32), fontWeight: FontWeight.w800, fontSize: 14)),
               ],
             ),
+            if (o.homeModeMatch) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.home_rounded, size: 13, color: Color(0xFFB8860B)),
+                    const SizedBox(width: 4),
+                    Text(t.homeModeLabel,
+                        style: const TextStyle(
+                            fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             Row(
               children: [

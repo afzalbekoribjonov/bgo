@@ -102,6 +102,78 @@ abstract class AppLocalizations {
   /// **'Beshariq Haydovchi'**
   String get appName;
 
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In uz, this message translates to:
+  /// **'Internet aloqasi yo\'q'**
+  String get noInternetConnection;
+
+  /// No description provided for @homeGpsRequired.
+  ///
+  /// In uz, this message translates to:
+  /// **'Liniyaga chiqish uchun GPS yoqilgan bo\'lishi kerak. Joylashuv ruxsatini tekshiring.'**
+  String get homeGpsRequired;
+
+  /// No description provided for @homeReconnecting.
+  ///
+  /// In uz, this message translates to:
+  /// **'Qayta ulanmoqda...'**
+  String get homeReconnecting;
+
+  /// No description provided for @homeAddressSearchHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzil qidirish...'**
+  String get homeAddressSearchHint;
+
+  /// No description provided for @homeAddressPinHint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Xaritada uy manzilingizni belgilang'**
+  String get homeAddressPinHint;
+
+  /// No description provided for @homeAddressConfirm.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilni tasdiqlash'**
+  String get homeAddressConfirm;
+
+  /// No description provided for @homeModeTitle.
+  ///
+  /// In uz, this message translates to:
+  /// **'Uyga rejimi'**
+  String get homeModeTitle;
+
+  /// No description provided for @homeModeSetAddressFirst.
+  ///
+  /// In uz, this message translates to:
+  /// **'Avval uy manzilini belgilang'**
+  String get homeModeSetAddressFirst;
+
+  /// No description provided for @homeModeLabel.
+  ///
+  /// In uz, this message translates to:
+  /// **'Uyga'**
+  String get homeModeLabel;
+
+  /// No description provided for @homeModeEditAddress.
+  ///
+  /// In uz, this message translates to:
+  /// **'Manzilni o\'zgartirish'**
+  String get homeModeEditAddress;
+
+  /// No description provided for @homeModePoolButton.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yo\'l-yo\'lakay buyurtma olish'**
+  String get homeModePoolButton;
+
+  /// No description provided for @homeModeToggleFailed.
+  ///
+  /// In uz, this message translates to:
+  /// **'Rejimni o\'zgartirib bo\'lmadi'**
+  String get homeModeToggleFailed;
+
   /// No description provided for @language.
   ///
   /// In uz, this message translates to:
