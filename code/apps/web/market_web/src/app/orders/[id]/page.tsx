@@ -16,12 +16,13 @@ const DELIVERY_STEPS: { statuses: StoreOrder['status'][]; label: string }[] = [
 ];
 
 const PICKUP_STEPS: { statuses: StoreOrder['status'][]; label: string }[] = [
-  { statuses: ['PENDING'], label: 'Tayyorlanmoqda' },
+  { statuses: ['PENDING'], label: 'Qabul qilindi' },
+  { statuses: ['PREPARING'], label: "Yig'ilmoqda" },
   { statuses: ['READY_FOR_PICKUP'], label: 'Tayyor' },
-  { statuses: ['COMPLETED'], label: 'Olib ketildi' },
+  { statuses: ['COMPLETED'], label: 'Topshirildi' },
 ];
 
-const CANCELLABLE: StoreOrder['status'][] = ['PENDING', 'ACCEPTED', 'ARRIVED', 'READY_FOR_PICKUP'];
+const CANCELLABLE: StoreOrder['status'][] = ['PENDING', 'ACCEPTED', 'ARRIVED', 'PREPARING', 'READY_FOR_PICKUP'];
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();

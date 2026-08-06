@@ -348,6 +348,7 @@ export class DriversService {
       carName: profile.carName,
       carYear: profile.carYear,
       plateNumber: profile.plateNumber,
+      rating: profile.rating,
     };
   }
 
@@ -361,7 +362,19 @@ export class DriversService {
       carName: profile.carName,
       carYear: profile.carYear,
       plateNumber: profile.plateNumber,
+      rating: profile.rating,
     }));
+  }
+
+  /**
+   * Servislararo: mijoz safar/buyurtmani baholadi (1-5) — haydovchining
+   * umumiy reytingiga og'irlik-o'rtacha sifatida qo'shiladi (atomar,
+   * `PrismaDriverRepository.applyCustomerRating`). Topilmasa jim o'tkaziladi.
+   */
+  async applyCustomerRating(userId: string, score: number): Promise<void> {
+    const profile = await this.repo.findByUserId(userId);
+    if (!profile) return;
+    await this.repo.applyCustomerRating(profile.id, score);
   }
 
   /**

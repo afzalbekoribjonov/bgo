@@ -124,8 +124,13 @@ model DriverProfile {
   // Hisob (komissiya shu balansdan olinadi — haydovchida pul bo'lishi shart)
   balance Int @default(0)
 
-  // Reyting (admin yoki mijoz bahosi asosida — 0-5)
-  rating Float @default(0)
+  // Reyting (admin yoki mijoz bahosi asosida — 0-5). Har safar mijoz safar/
+  // buyurtmani baholaganda `ratingCount` bilan og'irlik-o'rtacha sifatida
+  // yangilanadi (applyCustomerRating); admin PATCH orqali qo'lda ham
+  // o'zgartira oladi (ratingCount o'zgarmaydi, keyingi mijoz baholari
+  // shu yangi qiymatdan davom etadi).
+  rating      Float @default(0)
+  ratingCount Int   @default(0)
 
   // Xabarlar oxirgi o'qilgan payt (badge: shundan keyingilar "yangi")
   messagesReadAt DateTime?

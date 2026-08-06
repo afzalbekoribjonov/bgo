@@ -128,4 +128,11 @@ export class UpdateTariffDto {
   @Min(0)
   @Max(100)
   homeModeMaxDetourPercent?: number;
+
+  // Buyurtmaning oxirgi nuqtasi uydan shu masofadan yaqin bo'lsa — "uyga mos".
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(50)
+  homeModeMaxHomeDistanceKm?: number;
 }

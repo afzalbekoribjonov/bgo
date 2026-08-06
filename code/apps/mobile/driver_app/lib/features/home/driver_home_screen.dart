@@ -9,13 +9,18 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/alert_sound.dart';
 import '../../core/driver_geo.dart';
+import '../../core/nav_alert_state.dart';
+import '../../core/nav_engine.dart';
 import '../../core/nav_support.dart';
+import '../../core/nav_tts.dart';
 import '../../core/online_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../theme/driver_colors.dart';
 import '../../widgets/car_marker.dart';
+import '../../widgets/maneuver_banner.dart';
 import '../../widgets/slide_to_confirm.dart';
 import '../auth/auth_api.dart';
 import '../auth/driver_profile.dart';
@@ -74,6 +79,32 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
           from.longitude + (to.longitude - from.longitude) * v,
         ));
   }
+
+  /// Burchakni silliq o'zgartirish — 359°→1° o'tishda uzun yo'ldan
+  /// aylanmasligi uchun ENG QISQA yo'l bilan interpolyatsiya qilinadi.
+  void _onHeadingAnimTick() {
+    final from = _headingFrom;
+    final to = _headingTo;
+    if (from == null || to == null) return;
+    final v = Curves.easeOut.transform(_headingAnimCtrl.value);
+    final next = lerpAngle(from, to, v);
+    setState(() => _animHeading = next);
+    if (_followMode) _rotateMapThrottled(next);
+  }
+
+  /// Xaritani burish — har animatsiya kadrida emas, cheklangan tezlikda
+  /// (o'rtacha telefonlarda silliq ishlashi uchun).
+  void _rotateMapThrottled(double deg) {
+    final now = DateTime.now();
+    final last = _lastRotateAt;
+    if (last != null && now.difference(last) < _rotateThrottle) return;
+    _lastRotateAt = now;
+    try {
+      // flutter_map: kamera "yuqoriga qaragan" yo'nalish = -bearing.
+      _map.rotate(-deg);
+      _mapRotationDeg = -deg;
+    } catch (_) {/* xarita hali tayyor emas */}
+  }
   Timer? _offerTimer;
   Timer? _tick;
   Timer? _msgTimer;
@@ -112,6 +143,55 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
   // spinner ko'rsatiladi (haqiqiy holat har doim driverProfileProvider'dan).
   bool _homeModeBusy = false;
 
+  // "Uyga" tomon tavsiya marshruti — mavjud GPS (3s) timeridan ALOHIDA, 30s
+  // davriylikda yangilanadi (tashqi OSRM serveriga ortiqcha yuk bermaslik
+  // uchun ataylab kamroq tez-tez). Faqat rejim faol VA taklif/safar yo'q
+  // bo'lganda ko'rsatiladi.
+  List<LatLng> _homeRoute = const [];
+  Timer? _homeRouteTimer;
+
+  // ---------------- Turn-by-turn navigatsiya ----------------
+
+  /// Marshrut bo'ylab hisob-kitob (proyeksiya, burilishgacha masofa, ...).
+  final NavEngine _navEngine = NavEngine();
+
+  /// Ogohlantirishlarni BIR MARTA berish holati (200m/2km/svetofor).
+  final NavAlertTracker _alertTracker = NavAlertTracker();
+
+  /// Faol navigatsiya paytidagi tezkor GPS oqimi (bo'sh turganda — yo'q).
+  StreamSubscription<Position>? _navPosStream;
+
+  /// Xaritaning joriy burilish burchagi (gradus) va uni kuzatish rejimi.
+  double _mapRotationDeg = 0;
+  bool _followMode = false;
+
+  /// Silliq burchak animatsiyasi (0/360 chegarasidan qisqa yo'l bilan o'tadi).
+  late final AnimationController _headingAnimCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  )..addListener(_onHeadingAnimTick);
+  double _animHeading = 0;
+  double? _headingFrom;
+  double? _headingTo;
+
+  /// `_map.rotate()` ni har kadrda emas, chekланган tezlikda chaqiramiz.
+  DateTime? _lastRotateAt;
+  static const _rotateThrottle = Duration(milliseconds: 160);
+
+  /// Ko'rinib turgan ogohlantirish + uni yashirish taymeri.
+  NavAlertEvent? _activeAlert;
+  Timer? _alertDismissTimer;
+
+  /// Marshrutdan chetlanish: ketma-ket necha tik chetda + oxirgi qayta
+  /// marshrutlash vaqti (spam qilmaslik uchun).
+  int _offRouteStreak = 0;
+  DateTime? _lastRerouteAt;
+  static const _rerouteCooldown = Duration(seconds: 15);
+
+  /// TTS matni uchun dvigatel tiliga mos lokalizatsiya (ilova tilidan
+  /// mustaqil) — bir marta yuklanadi.
+  AppLocalizations? _ttsL10n;
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +214,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     _msgTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       if (mounted) ref.invalidate(unreadMessagesProvider);
     });
+    _homeRouteTimer =
+        Timer.periodic(const Duration(seconds: 30), (_) => _loadHomeRoute());
   }
 
   @override
@@ -144,8 +226,13 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     _tick?.cancel();
     _msgTimer?.cancel();
     _chatTimer?.cancel();
+    _homeRouteTimer?.cancel();
+    _alertDismissTimer?.cancel();
+    _navPosStream?.cancel();
     _posAnimCtrl.dispose();
+    _headingAnimCtrl.dispose();
     ref.read(alertSoundProvider).stop();
+    ref.read(navTtsProvider).stop();
     _map.dispose();
     super.dispose();
   }
@@ -164,6 +251,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     final fix = await driverCurrentFix();
     if (!mounted || fix == null) return;
     final prevAnim = _animPos ?? _fix?.pos ?? fix.pos;
+    final firstFix = _fix == null;
     setState(() {
       _fix = fix;
       _animFrom = prevAnim;
@@ -171,6 +259,211 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     });
     _posAnimCtrl.forward(from: 0);
     _map.move(fix.pos, _zoom < 11 ? 16 : _zoom);
+    // Birinchi GPS o'qish kelganda darhol hisoblanadi — keyingilari 30s
+    // davriy taймerga qoldiriladi (har 3s GPS yangilanishida EMAS).
+    if (firstFix) _loadHomeRoute();
+  }
+
+  /// "Uyga" tomon tavsiya marshruti — faqat rejim faol, uy manzili
+  /// belgilangan, GPS mavjud VA taklif/safar yo'q bo'lganda hisoblanadi.
+  /// Boshqa har qanday holatda (rejim o'chiq, taklif/safar bor) chiziq
+  /// tozalanadi.
+  Future<void> _loadHomeRoute() async {
+    if (!mounted) return;
+    final profile = ref.read(driverProfileProvider).valueOrNull;
+    final lat = profile?.homeLat;
+    final lng = profile?.homeLng;
+    final me = _fix?.pos;
+    final active = profile?.isHomeModeActive ?? false;
+    if (!active || lat == null || lng == null || me == null ||
+        _offer != null || _activeTrip != null) {
+      if (_homeRoute.isNotEmpty) setState(() => _homeRoute = const []);
+      return;
+    }
+    final dir =
+        await ref.read(driverRoutingServiceProvider).directions(me, LatLng(lat, lng));
+    if (!mounted) return;
+    setState(() => _homeRoute = dir?.points ?? const []);
+    // Uyga rejimi ham to'liq navigatsiya — boshqa stsenariylar bilan bir xil.
+    _startNavigation(dir?.points ?? const [], dir?.steps ?? const []);
+  }
+
+  // ---------------- Turn-by-turn navigatsiya ----------------
+
+  /// Hozir navigatsiya faolmi (uch stsenariyning birortasida marshrut bor).
+  bool get _isNavigating => _navEngine.hasRoute;
+
+  /// Yangi marshrut yuklanganda navigatsiyani (qayta) boshlaydi.
+  /// [points] bo'sh/qisqa bo'lsa — navigatsiya to'xtatiladi.
+  void _startNavigation(List<LatLng> points, List<RouteStep> steps) {
+    if (points.length < 2) {
+      _stopNavigation();
+      return;
+    }
+    _navEngine.load(points, steps);
+    // Yangi marshrut — eski ogohlantirishlar tarixi ahamiyatsiz.
+    _alertTracker.reset();
+    _offRouteStreak = 0;
+    _startNavStream();
+    // TTS dvigatelini fon rejimida tayyorlaymiz (birinchi ogohlantirishda
+    // kechikmasligi uchun).
+    ref.read(navTtsProvider).init().then((_) => _loadTtsL10n());
+  }
+
+  /// Navigatsiyani to'xtatadi: oqim, aylanish, ogohlantirishlar tozalanadi.
+  void _stopNavigation() {
+    _navPosStream?.cancel();
+    _navPosStream = null;
+    _navEngine.clear();
+    _alertTracker.reset();
+    _offRouteStreak = 0;
+    _alertDismissTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _activeAlert = null;
+      _followMode = false;
+      _mapRotationDeg = 0;
+    });
+    // Xaritani shimolga qaytaramiz — navigatsiya tugagach burilgan holda
+    // qolib ketmasin.
+    try {
+      _map.rotate(0);
+    } catch (_) {}
+  }
+
+  /// Faol navigatsiya paytida tezkor GPS oqimi. Mavjud 3s taймer ham ishlab
+  /// turaveradi (tezlik ko'rsatkichi va h.k. shunga tayanadi) — Android/iOS
+  /// bir jarayondagi joylashuv so'rovlarini o'zi birlashtiradi.
+  void _startNavStream() {
+    if (_navPosStream != null) return;
+    try {
+      _navPosStream = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 5,
+        ),
+      ).listen(_onNavPosition, onError: (_) {/* GPS uzildi — jim */});
+    } catch (_) {
+      // Ruxsat/qurilma muammosi — oddiy 3s taймer bilan davom etamiz.
+    }
+  }
+
+  /// TTS dvigateli tiliga mos lokalizatsiyani yuklaydi (ilova tilidan
+  /// mustaqil — dvigatel ruscha bo'lsa, ruscha jumla aytiladi).
+  Future<void> _loadTtsL10n() async {
+    if (_ttsL10n != null) return;
+    final lang = ref.read(navTtsProvider).language;
+    if (lang == null) return;
+    try {
+      final loaded = await AppLocalizations.delegate.load(Locale(lang));
+      if (mounted) _ttsL10n = loaded;
+    } catch (_) {/* ovozsiz davom etamiz */}
+  }
+
+  /// Navigatsiya GPS oqimidan har bir yangi nuqta.
+  void _onNavPosition(Position p) {
+    if (!mounted) return;
+    final pos = LatLng(p.latitude, p.longitude);
+    final kmh = (p.speed.isNaN || p.speed < 0 ? 0.0 : p.speed) * 3.6;
+    final rawHeading = p.heading.isNaN || p.heading < 0 ? null : p.heading;
+
+    // Belgi joyini silliq ko'chiramiz (mavjud naqsh).
+    final prevAnim = _animPos ?? _fix?.pos ?? pos;
+    setState(() {
+      _fix = DriverFix(pos, rawHeading ?? _animHeading, kmh);
+      _animFrom = prevAnim;
+      _animTo = pos;
+    });
+    _posAnimCtrl.forward(from: 0);
+
+    final progress = _navEngine.progress(pos);
+    if (progress == null) return;
+
+    // --- Yo'nalish manbai ---
+    // Marshrutga yaqin bo'lsak — marshrut yo'nalishi (barqaror, chunki yo'lga
+    // yopishtirilgan). Uzoqda — xom GPS. Deyarli to'xtaganda — o'zgartirmaymiz
+    // (past tezlikda GPS yo'nalishi "sakraydi").
+    double? target;
+    if (progress.offRouteM <= NavEngine.onRouteToleranceM) {
+      target = progress.bearing;
+    } else if (kmh >= 2.5 && rawHeading != null) {
+      target = rawHeading;
+    }
+    if (target != null) {
+      _headingFrom = _animHeading;
+      _headingTo = target;
+      _headingAnimCtrl.forward(from: 0);
+    }
+
+    // Kamerani haydovchi ustida ushlab turamiz (follow rejimi yoqiq bo'lsa).
+    if (_followMode) {
+      try {
+        _map.move(pos, _zoom < 11 ? 16 : _zoom);
+      } catch (_) {}
+    }
+
+    _checkOffRoute(progress);
+    _checkAlerts(progress);
+  }
+
+  /// Marshrutdan chiqib ketilganini aniqlaydi va MAVJUD qayta-yuklash
+  /// funksiyalarini chaqiradi (yangi marshrut mantig'i yozilmaydi).
+  void _checkOffRoute(NavProgress progress) {
+    const offRouteM = 45.0;
+    if (progress.offRouteM <= offRouteM) {
+      _offRouteStreak = 0;
+      return;
+    }
+    // Bitta noto'g'ri GPS o'qishi qayta marshrutlashni qo'zg'atmasin.
+    _offRouteStreak++;
+    if (_offRouteStreak < 2) return;
+
+    final now = DateTime.now();
+    final last = _lastRerouteAt;
+    if (last != null && now.difference(last) < _rerouteCooldown) return;
+    _lastRerouteAt = now;
+    _offRouteStreak = 0;
+
+    final trip = _activeTrip;
+    final offer = _offer;
+    if (trip != null) {
+      _loadTripRoute(trip);
+    } else if (offer != null) {
+      _loadRoute(offer);
+    } else {
+      _loadHomeRoute();
+    }
+  }
+
+  /// Ogohlantirishlarni tekshiradi: banner + bir martalik ovoz + TTS.
+  void _checkAlerts(NavProgress progress) {
+    final markers =
+        ref.read(geoMarkersProvider).valueOrNull ?? const <GeoMapMarker>[];
+    final lights = <({String id, LatLng pos})>[
+      for (final m in markers)
+        if (m.kind == 'traffic_light')
+          (id: '${m.lat},${m.lng}', pos: LatLng(m.lat, m.lng)),
+    ];
+    final ahead = lights.isEmpty
+        ? const <MarkerAhead>[]
+        : _navEngine.markersAhead(lights, progress);
+
+    final event = _alertTracker.tick(progress, _navEngine.steps, ahead);
+    if (event == null) return;
+
+    setState(() => _activeAlert = event);
+    _alertDismissTimer?.cancel();
+    _alertDismissTimer = Timer(const Duration(seconds: 7), () {
+      if (mounted) setState(() => _activeAlert = null);
+    });
+
+    if (ref.read(soundEnabledProvider)) {
+      ref.read(alertSoundProvider).playOnce();
+      final l10n = _ttsL10n;
+      if (l10n != null) {
+        ref.read(navTtsProvider).speak(maneuverSpeechText(l10n, event));
+      }
+    }
   }
 
   // ---------------- Taklif oqimi ----------------
@@ -216,7 +509,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     final dir =
         await ref.read(driverRoutingServiceProvider).directions(me, offer.pickup);
     if (!mounted || _offer?.orderId != offer.orderId) return;
-    setState(() => _route = dir?.points ?? [me, offer.pickup]);
+    final pts = dir?.points ?? [me, offer.pickup];
+    setState(() => _route = pts);
+    _startNavigation(pts, dir?.steps ?? const []);
   }
 
   void _clearOffer({bool notTaken = false}) {
@@ -226,6 +521,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
       _route = const [];
       _offerLeft = 0;
     });
+    _stopNavigation();
+    _loadHomeRoute();
     if (notTaken) {
       setState(() => _showNotTaken = true);
       Future.delayed(const Duration(seconds: 2), () {
@@ -362,7 +659,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     }
     final dir = await routing.directions(me, target);
     if (!mounted || _activeTrip?.id != trip.id) return;
-    setState(() => _route = dir?.points ?? [me, target]);
+    final pts = dir?.points ?? [me, target];
+    setState(() => _route = pts);
+    _startNavigation(pts, dir?.steps ?? const []);
     // Ovqat, hali olinmagan: oshxona -> mijoz segmentini ham chizamiz.
     if (trip.isFood && !trip.goingToDropoff && trip.dropoff != null) {
       final dir2 = await routing.directions(trip.pickup, trip.dropoff!);
@@ -387,6 +686,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
       _route = const [];
       _route2 = const [];
     });
+    _stopNavigation();
+    _loadHomeRoute();
   }
 
   void _toast(String msg) {
@@ -632,6 +933,15 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     final top = MediaQuery.of(context).padding.top;
     final hasTrip = _activeTrip != null;
     final hasOffer = _offer != null && !hasTrip;
+    // Rejim yoqilgan/o'chirilgan yoki uy manzili o'zgarganda — 30s
+    // taймerni kutmasdan uyga marshrutni darhol qayta hisoblaydi.
+    ref.listen<AsyncValue<DriverProfile?>>(driverProfileProvider, (prev, next) {
+      final prevActive = prev?.valueOrNull?.isHomeModeActive ?? false;
+      final nextActive = next.valueOrNull?.isHomeModeActive ?? false;
+      final prevLat = prev?.valueOrNull?.homeLat;
+      final nextLat = next.valueOrNull?.homeLat;
+      if (prevActive != nextActive || prevLat != nextLat) _loadHomeRoute();
+    });
 
     return Scaffold(
       body: Stack(
@@ -680,6 +990,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
               left: 0,
               right: 0,
               child: Center(child: _reconnectingPill(t)),
+            ),
+          // Navigatsiya ogohlantirishi (burilish / to'g'ri yo'l / svetofor).
+          // Yangi buyurtma banneri va "qayta ulanmoqda" bilan bir vaqtda
+          // ko'rinmaydi — ular ustunroq. Chap/o'ng ustunlar (oy, tezlik,
+          // avatar, qo'ng'iroqcha) bilan to'qnashmasligi uchun 76px chekinish.
+          if (_activeAlert != null &&
+              !hasOffer &&
+              _pollFailStreak < _reconnectThreshold)
+            Positioned(
+              top: top + 12,
+              left: 76,
+              right: 76,
+              child: Center(child: ManeuverBanner(event: _activeAlert!)),
             ),
           // Pastki panel: faol safar > qabul > oddiy
           if (hasTrip)
@@ -740,11 +1063,24 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
         maxZoom: 18,
         cameraConstraint: CameraConstraint.contain(bounds: beshariqBounds),
         interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+          // Navigatsiya uchun qo'lda burish ham ochiq — lekin qo'l tekkanda
+          // avtomatik kuzatuv (follow) o'chadi (pastda).
+          flags: InteractiveFlag.pinchZoom |
+              InteractiveFlag.drag |
+              InteractiveFlag.rotate,
         ),
-        onPositionChanged: (camera, _) {
+        onPositionChanged: (camera, hasGesture) {
           if ((camera.zoom - _zoom).abs() > 0.15) {
             setState(() => _zoom = camera.zoom);
+          }
+          // Haydovchi xaritani QO'LDA surdi/burdi — avtomatik kuzatuvni
+          // to'xtatamiz (ekran "tortib ketmasin"). Qayta yoqish uchun
+          // "joylashuvim" tugmasi bosiladi.
+          if (hasGesture && _followMode) {
+            setState(() => _followMode = false);
+          }
+          if (hasGesture) {
+            _mapRotationDeg = camera.rotation;
           }
         },
         onTap: (_, __) {
@@ -815,26 +1151,48 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
               borderColor: Colors.white,
             ),
           ]),
-        // Yangi buyurtma marshruti (yashil)
+        // "Uyga" marshruti — endi TO'LIQ navigatsiya (foydalanuvchi so'rovi:
+        // "albatta uyga rejimida ham"), shuning uchun boshqa stsenariylar
+        // bilan BIR XIL uslub: qalin yashil + oq border. Uyga rejimining
+        // "ixtiyoriy" ma'nosi oltin tugma va "Uyga" yorlig'ida saqlanadi.
+        if (_homeRoute.length >= 2 && _offer == null && _activeTrip == null)
+          PolylineLayer(polylines: [
+            Polyline(
+              points: _homeRoute,
+              strokeWidth: 7,
+              color: const Color(0xFF2E7D32),
+              borderStrokeWidth: 2.5,
+              borderColor: Colors.white,
+            ),
+          ]),
+        // Faol navigatsiya marshruti (qalin yashil + oq border) — haydovchi
+        // borishi kerak bo'lgan yo'l aniq ko'rinib tursin.
         if (_route.length >= 2)
           PolylineLayer(polylines: [
             Polyline(
               points: _route,
-              strokeWidth: 6,
+              strokeWidth: 7,
               color: const Color(0xFF2E7D32),
-              borderStrokeWidth: 2,
+              borderStrokeWidth: 2.5,
               borderColor: Colors.white,
             ),
           ]),
+        // MUHIM: xarita burilganda belgilar ham yotib qolmasligi uchun
+        // `rotate: true` (flutter_map standarti — `false`). Mashina belgisi
+        // bundan MUSTASNO: u o'z burchagini xarita burchagiga nisbatan
+        // hisoblaydi (pastga qarang).
         if (places.isNotEmpty && _zoom >= 14 && _offer == null)
-          MarkerLayer(markers: [for (final p in places) _placeMarker(p)]),
+          MarkerLayer(
+              rotate: true,
+              markers: [for (final p in places) _placeMarker(p)]),
         // Admin xarita belgilari (do'kon/fermer/svetofor/...)
         if (geoMarkers.isNotEmpty && _zoom >= 14 && _offer == null)
           MarkerLayer(
+              rotate: true,
               markers: [for (final m in geoMarkers) _geoMarker(m)]),
         // Olib ketish nuqtasi — bayroq (taklif paytida)
         if (_offer != null)
-          MarkerLayer(markers: [
+          MarkerLayer(rotate: true, markers: [
             Marker(
               point: _offer!.pickup,
               width: 40,
@@ -845,7 +1203,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
           ]),
         // Faol safar nishoni — maqsad nuqtasi (vertikalga mos ikonka)
         if (_activeTrip != null && _route.isNotEmpty)
-          MarkerLayer(markers: [
+          MarkerLayer(rotate: true, markers: [
             Marker(
               point: _route.last,
               width: 44,
@@ -893,6 +1251,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
   Marker _driverMarker(DriverFix fix, bool online) {
     // Ihcham o'lcham — xaritani bosib qo'ymaydi, zoom bilan yumshoq o'sadi.
     final size = (30 + (_zoom - 16) * 5).clamp(24.0, 44.0);
+    // Navigatsiya paytida silliqlashtirilgan burchak (sakramaydi), aks holda
+    // xom GPS burchagi.
+    final heading = _isNavigating ? _animHeading : fix.heading;
     return Marker(
       point: _animPos ?? fix.pos,
       width: size + 14,
@@ -901,7 +1262,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
       child: CarMarker(
         size: size,
         color: online ? _gold : _offlineNav,
-        heading: fix.heading,
+        heading: heading,
+        // Xarita burilганda ikki barobar aylanib ketmasligi uchun.
+        mapRotationDeg: _mapRotationDeg,
         glow: online,
       ),
     );
@@ -1110,11 +1473,21 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen>
     );
   }
 
+  /// "Joylashuvim" tugmasi — markazga qaytaradi VA navigatsiya paytida
+  /// avtomatik kuzatuvni (heading-up) qayta yoqadi. Qo'lda surilgandan keyin
+  /// kuzatuvni tiklashning yagona (va oldindan aytib bo'ladigan) yo'li.
   Widget _recenter() {
     return _MapButton(
-      icon: Icons.my_location_rounded,
+      icon: _isNavigating && _followMode
+          ? Icons.navigation_rounded
+          : Icons.my_location_rounded,
+      iconColor: _isNavigating && _followMode ? _gold : null,
       onTap: () {
         if (_fix != null) _map.move(_fix!.pos, 16.5);
+        if (!_isNavigating) return;
+        setState(() => _followMode = true);
+        _lastRotateAt = null; // darhol burilsin
+        _rotateMapThrottled(_animHeading);
       },
     );
   }

@@ -70,6 +70,12 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
 
   static readonly OFFER_SEC = 20;
   static readonly MAX_ATTEMPTS = 2; // 2 ta haydovchiga, keyin pool
+  /**
+   * Reyting-tiebreak klasterlash: masofa bo'yicha saralangan ro'yxatda
+   * ketma-ket ikki haydovchi orasidagi farq shu qiymatdan kam bo'lsa —
+   * "bir joyda" hisoblanadi va reyting bo'yicha (yuqorisi birinchi) tartiblanadi.
+   */
+  static readonly RATING_CLUSTER_GAP_KM = 0.15;
   static readonly POOL_FAIL_SEC = 120; // food/market: pool'da haydovchi topilmasa fail
   /** @deprecated {@link POOL_FAIL_SEC} nomiga o'tkazildi — moslik uchun qoldirildi. */
   static readonly FOOD_FAIL_SEC = DispatchService.POOL_FAIL_SEC;
@@ -137,7 +143,7 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
       state.offeredTo = null;
       return;
     }
-    let ids = await this.tracking.nearestDriverIds(
+    let candidates = await this.tracking.nearestDrivers(
       state.pickupLat,
       state.pickupLng,
       state.tried,
@@ -145,21 +151,28 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     // Comfort buyurtma — faqat Comfort tarifi yoqilgan haydovchilarga.
     if (state.tariffClass === 'comfort') {
       const comfort = await this.driverInfo.getComfortIds();
-      ids = ids.filter((id) => comfort.has(id));
+      candidates = candidates.filter((c) => comfort.has(c.id));
     }
+    if (candidates.length === 0) {
+      state.status = 'pool';
+      state.offeredTo = null;
+      state.homeModeMatch = false;
+      return;
+    }
+    // "Uyga" rejimi — endi QATTIQ FILTR (tavsiya emas): mos kelmagan "uyga
+    // rejimi" faol haydovchilar ro'yxatdan BUTUNLAY olib tashlanadi, mos
+    // kelganlari esa boshiga ko'chiriladi. Boshqa (oddiy) haydovchilarga
+    // bu bosqich tegmaydi.
+    const { ids, matches } = await this.applyHomeModeFilterAndRatingSort(
+      candidates,
+      state,
+    );
     if (ids.length === 0) {
       state.status = 'pool';
       state.offeredTo = null;
       state.homeModeMatch = false;
       return;
     }
-    // "Uyga" rejimi — mos keluvchi haydovchi(lar) ro'yxat BOSHIGA ko'chiriladi
-    // (ustuvorlik, qattiq filtr emas — boshqalar ham navbatda qoladi).
-    const { ids: prioritized, matches } = await this.applyHomeModePriority(
-      state,
-      ids,
-    );
-    ids = prioritized;
     state.offeredTo = ids[0];
     state.homeModeMatch = matches.has(ids[0]);
     state.attempt += 1;
@@ -250,8 +263,9 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
   /**
    * Pool (qabul qilinmagan) buyurtmalar — haydovchiga ko'ra: Comfort
    * buyurtmalar faqat Comfort tarifi yoqilgan haydovchilarga ko'rinadi.
-   * `homeModeMatch` — SO'RAGAN haydovchining o'z uyiga nisbatan mosligi
-   * (jonli hisoblanadi, saqlanmaydi — pool ko'p haydovchiga ochiq).
+   * So'ragan haydovchi "uyga rejimi" faol bo'lsa — QATTIQ FILTR: faqat
+   * mos kelgan buyurtmalar qaytariladi (boshqalari umuman ko'rinmaydi,
+   * bezovta qilmaydi). Oddiy haydovchilarga bu filtr tegmaydi.
    */
   async poolFor(driverId: string): Promise<DispatchOffer[]> {
     const all = [...this.offers.values()]
@@ -270,22 +284,26 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     const home = homeModeDrivers.get(driverId);
     if (!home) return filtered.map((s) => this.toOffer(s));
     const loc = await this.tracking.get(driverId);
-    if (!loc) return filtered.map((s) => this.toOffer(s));
+    // Fail-closed: haydovchining o'z joylashuvi noma'lum bo'lsa, mosligini
+    // aniqlab bo'lmaydi — hech narsa ko'rsatilmaydi (bezovta qilmasin).
+    if (!loc) return [];
 
-    const maxDetour = (await this.tariff.getTariff()).homeModeMaxDetourPercent;
-    const driverPoint: GeoPoint = { text: '', lat: loc.lat, lng: loc.lng };
-    const homePoint: GeoPoint = { text: '', lat: home.lat, lng: home.lng };
-    return Promise.all(
-      filtered.map(async (s) => {
-        const detour = await this.osrm.detourPercent(
-          driverPoint,
+    const t = await this.tariff.getTariff();
+    const results = await Promise.all(
+      filtered.map(async (s) => ({
+        s,
+        match: await this.isHomeModeMatch(
+          loc,
+          home,
           this.orderWaypoints(s),
-          homePoint,
-        );
-        const match = detour != null && detour <= maxDetour;
-        return { ...this.toOffer(s), homeModeMatch: match };
-      }),
+          t.homeModeMaxDetourPercent,
+          t.homeModeMaxHomeDistanceKm,
+        ),
+      })),
     );
+    return results
+      .filter((r) => r.match)
+      .map((r) => ({ ...this.toOffer(r.s), homeModeMatch: true }));
   }
 
   /**
@@ -305,13 +323,14 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     if (!home) return false;
     const loc = await this.tracking.get(driverId);
     if (!loc) return false;
-    const maxDetour = (await this.tariff.getTariff()).homeModeMaxDetourPercent;
-    const detour = await this.osrm.detourPercent(
-      { text: '', lat: loc.lat, lng: loc.lng },
+    const t = await this.tariff.getTariff();
+    return this.isHomeModeMatch(
+      loc,
+      home,
       this.orderWaypoints(s),
-      { text: '', lat: home.lat, lng: home.lng },
+      t.homeModeMaxDetourPercent,
+      t.homeModeMaxHomeDistanceKm,
     );
-    return detour != null && detour <= maxDetour;
   }
 
   /** Buyurtma nuqtalari (pickup + bo'lsa dropoff) — OSRM marshrut uchun. */
@@ -324,41 +343,118 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * `ids` ichidan "uyga rejimi" faol VA uy yo'liga mos (chetlanish
-   * `homeModeMaxDetourPercent`dan kam) haydovchilarni ro'yxat boshiga
-   * ko'chiradi. Hech kim mos kelmasa (yoki OSRM ishlamasa) — ro'yxat
-   * o'zgarishsiz qoladi, dispatch oddiy tartibda davom etadi.
+   * "Uyga mos"lik yagona ta'rifi — IKKALA shart ham TO'G'RI bo'lishi shart:
+   * (a) uyga boruvchi yo'ldan chetlanish `maxDetourPercent`dan kam, VA
+   * (b) buyurtmaning oxirgi nuqtasi (dropoff, bo'lmasa pickup) uydan
+   * `maxHomeDistanceKm`dan yaqin. OSRM ishlamasa/xato bersa — FAIL-CLOSED
+   * (`false`, "mos emas") — bu ATAYLAB: "uyga rejimi" foydalanuvchi buni
+   * aniq so'ragan (boshqa buyurtmalar bezovta qilmasin), noaniq holatda
+   * jim turish noto'g'ri buyurtma kelishidan yaxshiroq. Bitta joyda
+   * ishlatiladi va 4 chaqiruvchida (assignNext, poolFor,
+   * homeModeMatchFor, canAccept) BIR XIL natija berishi shart — B6
+   * komissiya qayta hisoblash aynan shu qiymatga bog'liq.
    */
-  private async applyHomeModePriority(
+  private async isHomeModeMatch(
+    driverLoc: { lat: number; lng: number },
+    home: { lat: number; lng: number },
+    waypoints: GeoPoint[],
+    maxDetourPercent: number,
+    maxHomeDistanceKm: number,
+  ): Promise<boolean> {
+    const driverPoint: GeoPoint = { text: '', lat: driverLoc.lat, lng: driverLoc.lng };
+    const homePoint: GeoPoint = { text: '', lat: home.lat, lng: home.lng };
+    const detour = await this.osrm.detourPercent(driverPoint, waypoints, homePoint);
+    if (detour == null || detour > maxDetourPercent) return false;
+    const finalPoint = waypoints[waypoints.length - 1];
+    return haversineKm(finalPoint, homePoint) <= maxHomeDistanceKm;
+  }
+
+  /**
+   * `candidates` ichidan "uyga rejimi" faol VA {@link isHomeModeMatch}ga
+   * ko'ra MOS KELMAGAN haydovchilar ro'yxatdan BUTUNLAY olib tashlanadi
+   * (qattiq filtr — boshqa buyurtmalar bilan bezovta qilinmasin). Oddiy
+   * (uyga rejimi faol bo'lmagan) haydovchilarga bu bosqich tegmaydi.
+   * Qolgan ro'yxatga reyting-klaster tiebreak qo'llanadi (bir joyda
+   * turgan haydovchilar orasida reytingi yuqorisiga ustuvorlik), so'ng
+   * mos kelgan "uyga rejimi" haydovchilar ro'yxat boshiga ko'chiriladi.
+   */
+  private async applyHomeModeFilterAndRatingSort(
+    candidates: { id: string; distanceKm: number }[],
     state: OfferState,
-    ids: string[],
   ): Promise<{ ids: string[]; matches: Set<string> }> {
     const matches = new Set<string>();
     const homeModeDrivers = await this.driverInfo.getHomeModeDrivers();
-    if (homeModeDrivers.size === 0) return { ids, matches };
-    const candidates = ids.filter((id) => homeModeDrivers.has(id));
-    if (candidates.length === 0) return { ids, matches };
+    let filtered = candidates;
 
-    const maxDetour = (await this.tariff.getTariff()).homeModeMaxDetourPercent;
-    const waypoints = this.orderWaypoints(state);
-    await Promise.all(
-      candidates.map(async (id) => {
-        const home = homeModeDrivers.get(id)!;
-        const loc = await this.tracking.get(id);
-        if (!loc) return;
-        const detour = await this.osrm.detourPercent(
-          { text: '', lat: loc.lat, lng: loc.lng },
-          waypoints,
-          { text: '', lat: home.lat, lng: home.lng },
-        );
-        if (detour != null && detour <= maxDetour) matches.add(id);
-      }),
-    );
-    if (matches.size === 0) return { ids, matches };
+    if (homeModeDrivers.size > 0) {
+      const t = await this.tariff.getTariff();
+      const waypoints = this.orderWaypoints(state);
+      const results = await Promise.all(
+        candidates.map(async (c) => {
+          const home = homeModeDrivers.get(c.id);
+          if (!home) return { c, keep: true, match: false };
+          const loc = await this.tracking.get(c.id);
+          // Fail-closed: joylashuvi noma'lum "uyga rejimi" haydovchi — mos emas.
+          if (!loc) return { c, keep: false, match: false };
+          const match = await this.isHomeModeMatch(
+            loc,
+            home,
+            waypoints,
+            t.homeModeMaxDetourPercent,
+            t.homeModeMaxHomeDistanceKm,
+          );
+          return { c, keep: match, match };
+        }),
+      );
+      filtered = results.filter((r) => r.keep).map((r) => r.c);
+      for (const r of results) if (r.match) matches.add(r.c.id);
+    }
+
+    const sorted = await this.applyRatingTiebreak(filtered);
+    if (matches.size === 0) return { ids: sorted, matches };
     return {
-      ids: [...ids.filter((id) => matches.has(id)), ...ids.filter((id) => !matches.has(id))],
+      ids: [
+        ...sorted.filter((id) => matches.has(id)),
+        ...sorted.filter((id) => !matches.has(id)),
+      ],
       matches,
     };
+  }
+
+  /**
+   * Masofa bo'yicha saralangan ro'yxatda "bir joyda" (ketma-ket farq
+   * ≤{@link RATING_CLUSTER_GAP_KM}) turgan haydovchilar klasterga
+   * yig'iladi va klaster ICHIDA reyting bo'yicha (yuqorisi birinchi)
+   * tartiblanadi — klasterlar orasida esa masofa tartibi saqlanadi.
+   * FAIL-OPEN: `getPublicBulk` auth servisidan javob ololmasa, barcha
+   * reyting `0` deb olinadi (barqaror `sort` tufayli masofa tartibi
+   * o'zgarishsiz qoladi) — dispatch HECH QACHON bu sabab bilan to'xtamaydi
+   * (bu reyting-tiebreak butun tizimga tegishli bo'lgani uchun, "uyga
+   * rejimi"dagi fail-closed siyosatidan ATAYLAB farqli).
+   */
+  private async applyRatingTiebreak(
+    candidates: { id: string; distanceKm: number }[],
+  ): Promise<string[]> {
+    if (candidates.length <= 1) return candidates.map((c) => c.id);
+    const info = await this.driverInfo.getPublicBulk(candidates.map((c) => c.id));
+    const ratingOf = (id: string) => info.get(id)?.rating ?? 0;
+    const out: string[] = [];
+    for (let i = 0; i < candidates.length; ) {
+      let j = i;
+      while (
+        j + 1 < candidates.length &&
+        candidates[j + 1].distanceKm - candidates[j].distanceKm <=
+          DispatchService.RATING_CLUSTER_GAP_KM
+      ) {
+        j++;
+      }
+      const cluster = candidates
+        .slice(i, j + 1)
+        .sort((a, b) => ratingOf(b.id) - ratingOf(a.id) || a.distanceKm - b.distanceKm);
+      out.push(...cluster.map((c) => c.id));
+      i = j + 1;
+    }
+    return out;
   }
 
   /** Buyurtma taklifi (vertikalni bilish uchun). */
@@ -375,6 +471,15 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
     if (s.tariffClass === 'comfort') {
       const ok = await this.driverInfo.isComfortDriver(driverId);
       if (!ok) return false;
+    }
+    // "Uyga rejimi" faol haydovchilar uchun QO'SHIMCHA himoya qatlami —
+    // pool ro'yxatida (keshlanish/poll oralig'i tufayli) endi ko'rinmasa
+    // ham, eski/keshlangan orderId bilan mos kelmagan buyurtmani qabul
+    // qilib olishning oldini oladi. Oddiy haydovchilarga tegmaydi.
+    const homeModeDrivers = await this.driverInfo.getHomeModeDrivers();
+    if (homeModeDrivers.has(driverId)) {
+      const match = await this.homeModeMatchFor(driverId, orderId);
+      if (!match) return false;
     }
     if (s.status === 'pool') return true;
     return s.offeredTo === driverId && Date.now() < s.expiresAt;

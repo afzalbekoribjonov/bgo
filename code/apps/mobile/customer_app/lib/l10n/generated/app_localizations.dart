@@ -456,6 +456,12 @@ abstract class AppLocalizations {
   /// **'Hammasi'**
   String get homeSeeAll;
 
+  /// No description provided for @homeMarketProducts.
+  ///
+  /// In uz, this message translates to:
+  /// **'Beshariq Market'**
+  String get homeMarketProducts;
+
   /// No description provided for @homeBanner2Title.
   ///
   /// In uz, this message translates to:

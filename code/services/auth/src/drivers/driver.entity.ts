@@ -16,6 +16,8 @@ export interface DriverProfileEntity {
   isComfort: boolean;
   balance: number;
   rating: number;
+  /** Nechta mijoz bahosi asosida `rating` hisoblangan (og'irlik-o'rtacha uchun). */
+  ratingCount: number;
   /** Xabarlar oxirgi o'qilgan payt (null — hech qachon ochilmagan). */
   messagesReadAt?: string | null;
   /** Vaqtinchalik bloklash — o'tmishda/null bo'lsa bloklanmagan. */

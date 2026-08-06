@@ -61,6 +61,7 @@ dependencies:
 
   # Yangi buyurtma ovozli signali
   audioplayers: ^6.1.0
+  flutter_tts: ^4.2.0
 
   # Push bildirishnomalar (FCM) — plan/10-auth-security.md
   firebase_core: ^3.6.0

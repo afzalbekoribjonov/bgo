@@ -16,6 +16,8 @@ class DriverProfile {
   final double? homeLng;
   final String? homeAddress;
   final bool isHomeModeActive;
+  /// Umumiy reyting (mijoz baholari + admin tuzatishi bilan), 0-5 oralig'ida.
+  final double rating;
 
   const DriverProfile({
     required this.id,
@@ -33,6 +35,7 @@ class DriverProfile {
     this.homeLng,
     this.homeAddress,
     this.isHomeModeActive = false,
+    this.rating = 0,
   });
 
   bool get hasHomeAddress => homeLat != null && homeLng != null;
@@ -60,6 +63,7 @@ class DriverProfile {
       homeLng: (json['homeLng'] as num?)?.toDouble(),
       homeAddress: json['homeAddress'] as String?,
       isHomeModeActive: (json['isHomeModeActive'] as bool?) ?? false,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
     );
   }
 }

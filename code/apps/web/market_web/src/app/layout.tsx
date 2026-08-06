@@ -4,6 +4,7 @@ import { DialogProvider } from '@/components/dialog';
 import { AuthProvider } from '@/lib/auth-context';
 import { CartProvider } from '@/lib/cart';
 import BottomNav from '@/components/bottom-nav';
+import ReadyPickupBanner from '@/components/ready-pickup-banner';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AuthProvider>
               <CartProvider>
                 <div className="app">
+                  <ReadyPickupBanner />
                   {children}
                   <BottomNav />
                 </div>

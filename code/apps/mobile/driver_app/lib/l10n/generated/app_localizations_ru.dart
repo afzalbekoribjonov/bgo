@@ -28,6 +28,59 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeAddressConfirm => 'Подтвердить адрес';
 
   @override
+  String get homeAddressUnknownPoint => 'Отмеченная точка';
+
+  @override
+  String get navTurnLeft => 'Налево';
+
+  @override
+  String get navTurnRight => 'Направо';
+
+  @override
+  String get navTurnSharpLeft => 'Резко налево';
+
+  @override
+  String get navTurnSharpRight => 'Резко направо';
+
+  @override
+  String get navTurnSlightLeft => 'Плавно налево';
+
+  @override
+  String get navTurnSlightRight => 'Плавно направо';
+
+  @override
+  String get navTurnUturn => 'Развернитесь';
+
+  @override
+  String get navTurnRoundabout => 'Круговое движение';
+
+  @override
+  String navTurnBanner(int distance, String direction) {
+    return 'Через $distance м $direction';
+  }
+
+  @override
+  String navSpeakTurn(int distance, String direction) {
+    return 'Через $distance метров $direction';
+  }
+
+  @override
+  String navStraightBanner(int km) {
+    return 'Прямо $km км';
+  }
+
+  @override
+  String navSpeakStraight(int km) {
+    return 'Прямо $km километров';
+  }
+
+  @override
+  String get navTrafficLightBanner => 'Светофор';
+
+  @override
+  String get navSpeakTrafficLight => 'Впереди светофор';
+
+  @override
   String get homeModeTitle => 'Режим \"Домой\"';
 
   @override

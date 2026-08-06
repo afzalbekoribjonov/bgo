@@ -1,6 +1,8 @@
 import { getToken } from './auth';
 import type {
   Category,
+  MarketSettings,
+  PagedResult,
   PickupLocation,
   Product,
   ProductComment,
@@ -28,8 +30,20 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
 }
 
 export const getCategories = () => api<Category[]>('/market/categories');
-export const getProducts = (categoryId?: string) =>
-  api<Product[]>(`/market/products${categoryId ? `?categoryId=${categoryId}` : ''}`);
+export const getProducts = (query: {
+  categoryId?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+} = {}) => {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value) params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return api<PagedResult<Product>>(`/market/products${qs ? `?${qs}` : ''}`);
+};
+export const getMarketSettings = () => api<MarketSettings>('/market/settings');
 export const getProduct = (id: string) => api<Product>(`/market/products/${id}`);
 export const likeProduct = (id: string) =>
   api<{ likesCount: number; liked: boolean }>(`/market/products/${id}/like`, { method: 'POST' });

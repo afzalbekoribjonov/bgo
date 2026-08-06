@@ -48,6 +48,7 @@ class _HomeAddressPickerScreenState extends State<HomeAddressPickerScreen> {
   String? _pickedLabel;
   bool _searching = false;
   bool _locating = false;
+  bool _confirming = false;
   List<_SearchResult> _results = [];
   Timer? _debounce;
 
@@ -133,10 +134,39 @@ class _HomeAddressPickerScreenState extends State<HomeAddressPickerScreen> {
     _map.move(_center, 16);
   }
 
-  void _confirm() {
-    final label = _pickedLabel ??
-        '${_center.latitude.toStringAsFixed(5)}, ${_center.longitude.toStringAsFixed(5)}';
-    Navigator.of(context).pop(PickedHome(_center.latitude, _center.longitude, label));
+  /// Qidiruv orqali tanlangan bo'lsa — o'sha nom ishlatiladi. Faqat pin
+  /// surib (qidiruvsiz) belgilangan bo'lsa — Nominatim REVERSE geocoding
+  /// bilan manzil nomi so'raladi; u ham topilmasa umumiy, raqamsiz matnga
+  /// tushiladi. Xom lat/lng HECH QACHON ko'rsatilmaydi.
+  Future<void> _confirm() async {
+    if (_confirming) return;
+    final picked = _pickedLabel;
+    if (picked != null) {
+      Navigator.of(context).pop(PickedHome(_center.latitude, _center.longitude, picked));
+      return;
+    }
+    setState(() => _confirming = true);
+    String? reverseLabel;
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        'https://nominatim.openstreetmap.org/reverse',
+        queryParameters: {
+          'lat': _center.latitude,
+          'lon': _center.longitude,
+          'format': 'jsonv2',
+        },
+        options: Options(headers: {'Accept-Language': 'uz'}),
+      );
+      final name = res.data?['display_name'] as String?;
+      if (name != null && name.trim().isNotEmpty) reverseLabel = name;
+    } catch (_) {
+      reverseLabel = null;
+    }
+    if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
+    Navigator.of(context).pop(
+      PickedHome(_center.latitude, _center.longitude, reverseLabel ?? t.homeAddressUnknownPoint),
+    );
   }
 
   @override
@@ -300,8 +330,15 @@ class _HomeAddressPickerScreenState extends State<HomeAddressPickerScreen> {
                         backgroundColor: DriverColors.green,
                         padding: const EdgeInsets.symmetric(vertical: 13),
                       ),
-                      onPressed: _confirm,
-                      child: Text(t.homeAddressConfirm),
+                      onPressed: _confirming ? null : _confirm,
+                      child: _confirming
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2.4, color: Colors.white),
+                            )
+                          : Text(t.homeAddressConfirm),
                     ),
                   ],
                 ),

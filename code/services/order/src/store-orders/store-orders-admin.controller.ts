@@ -21,6 +21,7 @@ const STORE_ORDER_STATUSES: StoreOrderStatus[] = [
   'PICKED_UP',
   'IN_TRANSIT',
   'DELIVERED',
+  'PREPARING',
   'READY_FOR_PICKUP',
   'COMPLETED',
   'CANCELLED',
@@ -45,10 +46,22 @@ export class StoreOrdersAdminController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('q') q?: string,
+    @Query('overduePickup') overduePickup?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
     return {
       success: true,
-      data: await this.service.adminListOrders({ status, deliveryMethod, from, to, q }),
+      data: await this.service.adminListOrders({
+        status,
+        deliveryMethod,
+        from,
+        to,
+        q,
+        overduePickup: overduePickup === 'true',
+        page: Math.max(1, Number(page) || 1),
+        pageSize: Math.min(100, Math.max(1, Number(pageSize) || 20)),
+      }),
     };
   }
 

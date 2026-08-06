@@ -193,6 +193,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get homeSeeAll => 'Hammasi';
 
   @override
+  String get homeMarketProducts => 'Beshariq Market';
+
+  @override
   String get homeBanner2Title => 'Birinchi buyurtmaga -20%';
 
   @override
@@ -947,6 +950,9 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get homeSeeAll => 'Ҳаммаси';
+
+  @override
+  String get homeMarketProducts => 'Beshariq Market';
 
   @override
   String get homeBanner2Title => 'Биринчи буюртмага -20%';

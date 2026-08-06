@@ -145,14 +145,15 @@ export class DriverLocationService {
   }
 
   /**
-   * Nuqtaga eng yaqin online haydovchi id'lari (masofa bo'yicha; exclude tashqari).
-   * Dispatch (buyurtmani eng yaqin haydovchiga taklif qilish) uchun.
+   * Nuqtaga eng yaqin online haydovchilar (masofa bilan; exclude tashqari),
+   * masofa bo'yicha o'sish tartibida. Dispatch (buyurtmani eng yaqin
+   * haydovchiga taklif qilish, reyting-tiebreak klasterlash) uchun.
    */
-  async nearestDriverIds(
+  async nearestDrivers(
     lat: number,
     lng: number,
     exclude: Set<string> = new Set(),
-  ): Promise<string[]> {
+  ): Promise<{ id: string; distanceKm: number }[]> {
     const since = new Date(Date.now() - ONLINE_MAX_AGE_SEC * 1000);
     const recent = await this.repo.listSince(since);
     const origin = { text: '', lat, lng };
@@ -160,11 +161,19 @@ export class DriverLocationService {
       .filter((d) => !exclude.has(d.driverId))
       .map((d) => ({
         id: d.driverId,
-        dist: haversineKm(origin, { text: '', lat: d.lat, lng: d.lng }),
+        distanceKm: haversineKm(origin, { text: '', lat: d.lat, lng: d.lng }),
       }))
-      .filter((d) => d.dist <= DISPATCH_RADIUS_KM)
-      .sort((a, b) => a.dist - b.dist)
-      .map((d) => d.id);
+      .filter((d) => d.distanceKm <= DISPATCH_RADIUS_KM)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+  }
+
+  /** Faqat id'lar (masofa bo'yicha) — {@link nearestDrivers}ning qulay qisqartmasi. */
+  async nearestDriverIds(
+    lat: number,
+    lng: number,
+    exclude: Set<string> = new Set(),
+  ): Promise<string[]> {
+    return (await this.nearestDrivers(lat, lng, exclude)).map((d) => d.id);
   }
 
   /** Nuqta atrofidagi online haydovchilar (anonim), masofa bo'yicha tartiblangan. */

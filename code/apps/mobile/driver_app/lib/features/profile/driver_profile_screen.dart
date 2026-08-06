@@ -2,11 +2,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:beshariq_core/beshariq_core.dart';
 import '../../core/alert_sound.dart';
 import '../../core/online_service.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../widgets/async_error.dart';
 import '../../widgets/language_button.dart';
 import '../auth/auth_api.dart';
 import '../auth/auth_controller.dart';
@@ -52,15 +50,6 @@ class DriverProfileScreen extends ConsumerWidget {
               title: t.profileMyCar,
               subtitle: t.profileMyCarSub,
               page: const _CarPage(),
-            ),
-            _rowDivider(context),
-            _tile(
-              context,
-              gradient: const [Color(0xFF66BB6A), Color(0xFF2E7D32)],
-              icon: Icons.payments_rounded,
-              title: t.profileTariffs,
-              subtitle: t.profileTariffsSub,
-              page: const _TariffsPage(),
             ),
             _rowDivider(context),
             _tile(
@@ -317,34 +306,66 @@ class DriverProfileScreen extends ConsumerWidget {
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.85)),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: online ? 0.22 : 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: online ? 0.5 : 0.2)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7, height: 7,
-                        decoration: BoxDecoration(
-                          color: online ? const Color(0xFF69F0AE) : Colors.white54,
-                          shape: BoxShape.circle,
-                        ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: online ? 0.22 : 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: online ? 0.5 : 0.2)),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        online ? t.profileOnlineBadge : t.profileOfflineBadge,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 7, height: 7,
+                            decoration: BoxDecoration(
+                              color: online ? const Color(0xFF69F0AE) : Colors.white54,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            online ? t.profileOnlineBadge : t.profileOfflineBadge,
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    if ((p?.rating ?? 0) > 0) _ratingBadge(p!.rating),
+                  ],
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Haydovchi umumiy reytingi — profil sarlavhasida, onlayn belgisi yonida.
+  Widget _ratingBadge(double rating) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFD54F)),
+          const SizedBox(width: 4),
+          Text(
+            rating.toStringAsFixed(1),
+            style: const TextStyle(
+                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -546,72 +567,6 @@ class _CarPage extends ConsumerWidget {
                 t.profileLicense, p?.licenseInfo ?? '—',
                 last: true),
           ]),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------- Tariflar va daromad ----------------
-
-class _TariffsPage extends ConsumerWidget {
-  const _TariffsPage();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context)!;
-    final e = ref.watch(earningsProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.profileTariffs)),
-      body: e.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => AsyncErrorRetry(
-          error: e,
-          onRetry: () => ref.invalidate(earningsProvider),
-        ),
-        data: (d) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _earnCard(context, t.profileTodayEarning,
-                "${groupThousands(d.total.todayEarning)} so'm", const Color(0xFF2E7D32)),
-            const SizedBox(height: 12),
-            _earnCard(context, t.profileTotalEarning,
-                "${groupThousands(d.total.earning)} so'm", const Color(0xFF1E88E5)),
-            const SizedBox(height: 20),
-            _sectionTitle(context, t.profileByRoutes),
-            _infoCard(context, [
-              _infoRow(context, Icons.restaurant_outlined, t.vertFood,
-                  "${groupThousands(d.food.earning)} so'm"),
-              _infoRow(context, Icons.local_taxi_outlined, t.taxiTab,
-                  "${groupThousands(d.taxi.earning)} so'm"),
-              _infoRow(context, Icons.local_shipping_outlined, t.deliveryTab,
-                  "${groupThousands(d.parcel.earning)} so'm",
-                  last: true),
-            ]),
-            const SizedBox(height: 14),
-            _hintNote(context, t.profilePaymentNote),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _earnCard(BuildContext context, String title, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.w800, color: color)),
         ],
       ),
     );

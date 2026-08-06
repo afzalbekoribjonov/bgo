@@ -11,18 +11,25 @@ class CarMarker extends StatelessWidget {
   final double heading;
   final bool glow;
 
+  /// Xaritaning joriy burilish burchagi (gradus). flutter_map butun
+  /// MarkerLayer'ni xarita burchagiga burib qo'yadi, shuning uchun belgining
+  /// O'Z burchagidan buni ayirmasak, mashina IKKI BAROBAR aylanib ketadi.
+  /// Standart 0 — xarita aylanmaydigan joylarda eski xatti-harakat saqlanadi.
+  final double mapRotationDeg;
+
   const CarMarker({
     super.key,
     this.size = 46,
     required this.color,
     this.heading = 0,
     this.glow = false,
+    this.mapRotationDeg = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: heading * math.pi / 180,
+      angle: (heading - mapRotationDeg) * math.pi / 180,
       child: CustomPaint(
         size: Size(size * 0.52, size),
         painter: _CarPainter(color, glow),

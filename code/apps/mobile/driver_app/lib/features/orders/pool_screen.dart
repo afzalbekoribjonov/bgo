@@ -84,8 +84,9 @@ class _PoolScreenState extends ConsumerState<PoolScreen> {
                 ),
               ]);
             }
-            // "Uyga" rejimi mos kelganlar (bo'lsa) ro'yxat boshida — tavsiya,
-            // qolganlari ham ko'rinishda davom etadi (qattiq filtr emas).
+            // Backend endi qattiq filtr qiladi — "uyga rejimi" faol
+            // haydovchi uchun `list` allaqachon faqat mos buyurtmalarni
+            // o'z ichiga oladi, shuning uchun `others` doim bo'sh bo'ladi.
             final matches = list.where((o) => o.homeModeMatch).toList();
             final others = list.where((o) => !o.homeModeMatch).toList();
             final sorted = [...matches, ...others];

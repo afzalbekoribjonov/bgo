@@ -28,6 +28,59 @@ class AppLocalizationsUz extends AppLocalizations {
   String get homeAddressConfirm => 'Manzilni tasdiqlash';
 
   @override
+  String get homeAddressUnknownPoint => 'Belgilangan nuqta';
+
+  @override
+  String get navTurnLeft => 'Chapga';
+
+  @override
+  String get navTurnRight => 'O\'ngga';
+
+  @override
+  String get navTurnSharpLeft => 'Keskin chapga';
+
+  @override
+  String get navTurnSharpRight => 'Keskin o\'ngga';
+
+  @override
+  String get navTurnSlightLeft => 'Bir oz chapga';
+
+  @override
+  String get navTurnSlightRight => 'Bir oz o\'ngga';
+
+  @override
+  String get navTurnUturn => 'Orqaga qayting';
+
+  @override
+  String get navTurnRoundabout => 'Aylanma yo\'l';
+
+  @override
+  String navTurnBanner(int distance, String direction) {
+    return '$distance m dan so\'ng $direction';
+  }
+
+  @override
+  String navSpeakTurn(int distance, String direction) {
+    return '$distance metrdan so\'ng $direction';
+  }
+
+  @override
+  String navStraightBanner(int km) {
+    return 'To\'g\'riga $km km';
+  }
+
+  @override
+  String navSpeakStraight(int km) {
+    return 'To\'g\'riga $km kilometr';
+  }
+
+  @override
+  String get navTrafficLightBanner => 'Svetofor';
+
+  @override
+  String get navSpeakTrafficLight => 'Oldinda nazorat svetofori';
+
+  @override
   String get homeModeTitle => 'Uyga rejimi';
 
   @override
@@ -926,6 +979,59 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get homeAddressConfirm => 'Манзилни тасдиқлаш';
+
+  @override
+  String get homeAddressUnknownPoint => 'Белгиланган нуқта';
+
+  @override
+  String get navTurnLeft => 'Чапга';
+
+  @override
+  String get navTurnRight => 'Ўнгга';
+
+  @override
+  String get navTurnSharpLeft => 'Кескин чапга';
+
+  @override
+  String get navTurnSharpRight => 'Кескин ўнгга';
+
+  @override
+  String get navTurnSlightLeft => 'Бир оз чапга';
+
+  @override
+  String get navTurnSlightRight => 'Бир оз ўнгга';
+
+  @override
+  String get navTurnUturn => 'Орқага қайтинг';
+
+  @override
+  String get navTurnRoundabout => 'Айланма йўл';
+
+  @override
+  String navTurnBanner(int distance, String direction) {
+    return '$distance м дан сўнг $direction';
+  }
+
+  @override
+  String navSpeakTurn(int distance, String direction) {
+    return '$distance метрдан сўнг $direction';
+  }
+
+  @override
+  String navStraightBanner(int km) {
+    return 'Тўғрига $km км';
+  }
+
+  @override
+  String navSpeakStraight(int km) {
+    return 'Тўғрига $km километр';
+  }
+
+  @override
+  String get navTrafficLightBanner => 'Светофор';
+
+  @override
+  String get navSpeakTrafficLight => 'Олдинда назорат светофори';
 
   @override
   String get homeModeTitle => 'Уйга режими';

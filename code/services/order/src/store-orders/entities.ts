@@ -7,6 +7,7 @@ export type StoreOrderStatus =
   | 'PICKED_UP'
   | 'IN_TRANSIT'
   | 'DELIVERED'
+  | 'PREPARING'
   | 'READY_FOR_PICKUP'
   | 'COMPLETED'
   | 'CANCELLED';
@@ -52,6 +53,8 @@ export interface StoreOrder {
   statusHistory: StoreOrderStatusEntry[];
   rating?: number;
   ratingComment?: string;
+  /** PICKUP: READY_FOR_PICKUP'ga o'tgan vaqt — 3 kunlik saqlash muddati uchun. */
+  readyAt?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -7,6 +7,33 @@
   "homeAddressSearchHint": "Манзил қидириш...",
   "homeAddressPinHint": "Харитада уй манзилингизни белгиланг",
   "homeAddressConfirm": "Манзилни тасдиқлаш",
+  "homeAddressUnknownPoint": "Белгиланган нуқта",
+  "navTurnLeft": "Чапга",
+  "navTurnRight": "Ўнгга",
+  "navTurnSharpLeft": "Кескин чапга",
+  "navTurnSharpRight": "Кескин ўнгга",
+  "navTurnSlightLeft": "Бир оз чапга",
+  "navTurnSlightRight": "Бир оз ўнгга",
+  "navTurnUturn": "Орқага қайтинг",
+  "navTurnRoundabout": "Айланма йўл",
+  "navTurnBanner": "{distance} м дан сўнг {direction}",
+  "@navTurnBanner": {
+    "placeholders": { "distance": { "type": "int" }, "direction": { "type": "String" } }
+  },
+  "navSpeakTurn": "{distance} метрдан сўнг {direction}",
+  "@navSpeakTurn": {
+    "placeholders": { "distance": { "type": "int" }, "direction": { "type": "String" } }
+  },
+  "navStraightBanner": "Тўғрига {km} км",
+  "@navStraightBanner": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "navSpeakStraight": "Тўғрига {km} километр",
+  "@navSpeakStraight": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "navTrafficLightBanner": "Светофор",
+  "navSpeakTrafficLight": "Олдинда назорат светофори",
   "homeModeTitle": "Уйга режими",
   "homeModeSetAddressFirst": "Аввал уй манзилини белгиланг",
   "homeModeLabel": "Уйга",

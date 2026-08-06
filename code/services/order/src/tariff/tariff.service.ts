@@ -27,6 +27,7 @@ export interface Tariff {
   homeModeTaxiCommissionPercent: number;
   homeModeParcelCommissionPercent: number;
   homeModeMaxDetourPercent: number;
+  homeModeMaxHomeDistanceKm: number;
 }
 
 export type TariffPatch = Partial<Omit<Tariff, 'id'>>;
@@ -84,6 +85,7 @@ export class TariffService {
     homeModeTaxiCommissionPercent: number;
     homeModeParcelCommissionPercent: number;
     homeModeMaxDetourPercent: number;
+    homeModeMaxHomeDistanceKm: number;
   }): Tariff {
     return {
       id: t.id,
@@ -111,6 +113,7 @@ export class TariffService {
       homeModeTaxiCommissionPercent: t.homeModeTaxiCommissionPercent,
       homeModeParcelCommissionPercent: t.homeModeParcelCommissionPercent,
       homeModeMaxDetourPercent: t.homeModeMaxDetourPercent,
+      homeModeMaxHomeDistanceKm: t.homeModeMaxHomeDistanceKm,
     };
   }
 }

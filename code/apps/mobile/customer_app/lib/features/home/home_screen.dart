@@ -11,6 +11,8 @@ import '../../core/location_service.dart';
 import '../../widgets/async_error.dart';
 import '../../widgets/brand.dart';
 import '../auth/auth_controller.dart';
+import '../market/market_api.dart';
+import '../market/market_models.dart';
 import '../order/order_api.dart';
 import '../parcel/parcel_api.dart';
 import '../parcel/parcel_models.dart';
@@ -72,12 +74,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
     final restaurants = ref.watch(restaurantsProvider);
     final dishes = ref.watch(dishesProvider);
+    final marketProducts = ref.watch(marketProductsProvider);
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(restaurantsProvider);
           ref.invalidate(dishesProvider);
+          ref.invalidate(marketProductsProvider);
         },
         child: ListView(
           padding: EdgeInsets.zero,
@@ -89,6 +93,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _marketButtons(),
             const SizedBox(height: 24),
             _foodSection(t, dishes),
+            const SizedBox(height: 24),
+            _marketProductsSection(t, marketProducts),
             const SizedBox(height: 24),
             _popularSection(t, restaurants),
             const SizedBox(height: 28),
@@ -423,6 +429,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ],
     );
+  }
+
+  /// Beshariq Market mahsulotlaridan tasodifiy tanlangan carousel —
+  /// _foodSection bilan bir xil vizual naqshda (ovqatlardan keyin).
+  Widget _marketProductsSection(
+      AppLocalizations t, AsyncValue<List<MarketProduct>> async) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 4, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  t.homeMarketProducts,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _openMarket,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: Text(t.homeSeeAll),
+                style: TextButton.styleFrom(foregroundColor: scheme.primary),
+              ),
+            ],
+          ),
+        ),
+        async.when(
+          loading: () => _horizontalSkeletonRow(height: 210, cardWidth: 150),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AsyncErrorRetry(
+              error: e,
+              onRetry: () => ref.invalidate(marketProductsProvider),
+            ),
+          ),
+          data: (products) {
+            if (products.isEmpty) return const SizedBox.shrink();
+            return _MarketProductCarousel(
+              products: products,
+              onTap: _openMarketProduct,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openMarketProduct(MarketProduct product) async {
+    final token = await ref.read(tokenStorageProvider).readAccess();
+    if (!mounted) return;
+    final base = ApiConfig.marketBaseUrl.replaceAll(RegExp(r'/+$'), '');
+    _go(AppWebViewScreen(
+      baseUrl: '$base/products/${product.id}',
+      token: token,
+      title: 'Beshariq Market',
+      loadingIcon: Icons.storefront_rounded,
+      loadingLabel: 'Market yuklanmoqda…',
+    ));
   }
 
   /// Oshxonalar lentasi — GPS bo'lsa ENG YAQINI BIRINCHI (masofa chipi
@@ -1078,6 +1148,277 @@ class _FoodCard extends StatelessWidget {
         ),
         child: Center(
           child: Icon(dishIcon(dish.name),
+              size: 70, color: Colors.white.withValues(alpha: 0.22)),
+        ),
+      );
+}
+
+/// Beshariq Market mahsulotlari karuseli — _FoodCarousel bilan bir xil
+/// naqsh (avtomatik aylanuvchi PageView + progress chizig'i), lekin
+/// mijoz so'ragan 10 ta tasodifiy mahsulot bilan.
+class _MarketProductCarousel extends StatefulWidget {
+  final List<MarketProduct> products;
+  final void Function(MarketProduct) onTap;
+  const _MarketProductCarousel({required this.products, required this.onTap});
+
+  @override
+  State<_MarketProductCarousel> createState() => _MarketProductCarouselState();
+}
+
+class _MarketProductCarouselState extends State<_MarketProductCarousel> {
+  late final PageController _ctrl;
+  late final List<MarketProduct> _shown;
+  Timer? _timer;
+  int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _shown = ([...widget.products]..shuffle()).take(10).toList();
+    _ctrl = PageController(viewportFraction: 0.88);
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!_ctrl.hasClients) return;
+      final next = (_page + 1) % _shown.length;
+      _ctrl.animateToPage(next,
+          duration: const Duration(milliseconds: 420), curve: Curves.easeOut);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        SizedBox(
+          height: 210,
+          child: PageView.builder(
+            controller: _ctrl,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemCount: _shown.length,
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _MarketProductCard(
+                product: _shown[i],
+                onTap: () => widget.onTap(_shown[i]),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Text(
+                '${_page + 1} / ${_shown.length}',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: scheme.outline,
+                    fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: (_page + 1) / _shown.length,
+                    backgroundColor: scheme.outlineVariant,
+                    valueColor: AlwaysStoppedAnimation(scheme.primary),
+                    minHeight: 4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Bitta Market mahsuloti kartasi (karusel elementi) — _FoodCard bilan bir
+/// xil vizual naqsh (rasm+gradient+narx chipi), oshxona o'rniga "Market"
+/// yorlig'i va reyting o'rniga (mavjud bo'lsa) ratingAvg belgisi bilan.
+class _MarketProductCard extends StatelessWidget {
+  final MarketProduct product;
+  final VoidCallback onTap;
+  const _MarketProductCard({required this.product, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final accent = dishAccent(product.name);
+    final t = AppLocalizations.of(context)!;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _bg(accent),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.3, 1.0],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.72),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.2,
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 4)
+                          ]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        const Icon(Icons.storefront_rounded,
+                            size: 13, color: Colors.white70),
+                        const SizedBox(width: 4),
+                        const Expanded(
+                          child: Text(
+                            'Beshariq Market',
+                            style: TextStyle(
+                                color: Colors.white70, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: scheme.primary,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: scheme.primary.withValues(alpha: 0.45),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            t.priceSom(groupThousands(product.price)),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (product.ratingAvg != null && product.ratingAvg! > 0)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.52),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded,
+                            size: 13, color: Colors.amber),
+                        const SizedBox(width: 3),
+                        Text(
+                          product.ratingAvg!.toStringAsFixed(1),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _bg(Color accent) {
+    final url = product.imageUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _gradient(accent),
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : _gradient(accent),
+      );
+    }
+    return _gradient(accent);
+  }
+
+  Widget _gradient(Color accent) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              accent,
+              accent.withValues(alpha: 0.55),
+              const Color(0xFF0D1117),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Icon(Icons.shopping_bag_rounded,
               size: 70, color: Colors.white.withValues(alpha: 0.22)),
         ),
       );

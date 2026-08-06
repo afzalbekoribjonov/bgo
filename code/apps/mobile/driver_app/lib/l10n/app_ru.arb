@@ -7,6 +7,33 @@
   "homeAddressSearchHint": "Поиск адреса...",
   "homeAddressPinHint": "Отметьте свой домашний адрес на карте",
   "homeAddressConfirm": "Подтвердить адрес",
+  "homeAddressUnknownPoint": "Отмеченная точка",
+  "navTurnLeft": "Налево",
+  "navTurnRight": "Направо",
+  "navTurnSharpLeft": "Резко налево",
+  "navTurnSharpRight": "Резко направо",
+  "navTurnSlightLeft": "Плавно налево",
+  "navTurnSlightRight": "Плавно направо",
+  "navTurnUturn": "Развернитесь",
+  "navTurnRoundabout": "Круговое движение",
+  "navTurnBanner": "Через {distance} м {direction}",
+  "@navTurnBanner": {
+    "placeholders": { "distance": { "type": "int" }, "direction": { "type": "String" } }
+  },
+  "navSpeakTurn": "Через {distance} метров {direction}",
+  "@navSpeakTurn": {
+    "placeholders": { "distance": { "type": "int" }, "direction": { "type": "String" } }
+  },
+  "navStraightBanner": "Прямо {km} км",
+  "@navStraightBanner": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "navSpeakStraight": "Прямо {km} километров",
+  "@navSpeakStraight": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "navTrafficLightBanner": "Светофор",
+  "navSpeakTrafficLight": "Впереди светофор",
   "homeModeTitle": "Режим \"Домой\"",
   "homeModeSetAddressFirst": "Сначала укажите домашний адрес",
   "homeModeLabel": "Домой",

@@ -1,3 +1,16 @@
+export interface MarketSettings {
+  minOrderAmount: number;
+  isAcceptingOrders: boolean;
+}
+
+/** Sahifalab yuklangan mahsulot ro'yxati javobi. */
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -64,6 +77,7 @@ export type StoreOrderStatus =
   | 'PICKED_UP'
   | 'IN_TRANSIT'
   | 'DELIVERED'
+  | 'PREPARING'
   | 'READY_FOR_PICKUP'
   | 'COMPLETED'
   | 'CANCELLED';
@@ -83,6 +97,8 @@ export interface StoreOrder {
   total: number;
   status: StoreOrderStatus;
   rating?: number;
+  /** PICKUP: READY_FOR_PICKUP'ga o'tgan vaqt. */
+  readyAt?: string;
   createdAt: string;
   updatedAt: string;
   pickupLocationName?: string | null;

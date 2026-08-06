@@ -25,11 +25,13 @@ import type {
   MarketplaceCategory,
   MarketplaceSeller,
   MarketProduct,
+  MarketSettings,
   MarketSupportMessage,
   MarketSupportThread,
   OrderDetail,
   OrdersQuery,
   OwnerCandidate,
+  PagedResult,
   PartnerApplication,
   SellerType,
   CreateSellerInput,
@@ -44,6 +46,7 @@ import type {
   Stats,
   SuspiciousDriversResponse,
   StoreOrder,
+  StoreOrdersPage,
   StoreOrderStatus,
   SupportChatMessage,
   SupportConversation,
@@ -243,6 +246,7 @@ export const updateTariff = (body: {
   homeModeTaxiCommissionPercent: number;
   homeModeParcelCommissionPercent: number;
   homeModeMaxDetourPercent: number;
+  homeModeMaxHomeDistanceKm: number;
 }) =>
   api<Tariff>('/admin/tariff', {
     method: 'PUT',
@@ -364,7 +368,26 @@ export const updateMarketCategory = (
 export const deleteMarketCategory = (id: string) =>
   api<unknown>(`/market/admin/categories/${id}`, { method: 'DELETE' });
 
-export const getMarketProducts = () => api<MarketProduct[]>('/market/admin/products');
+export const getMarketProducts = (
+  query: { categoryId?: string; q?: string; page?: number; pageSize?: number } = {},
+) => {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value) params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return api<PagedResult<MarketProduct>>(`/market/admin/products${qs ? `?${qs}` : ''}`);
+};
+export const getMarketSettings = () => api<MarketSettings>('/market/admin/settings');
+export const updateMarketSettings = (body: {
+  minOrderAmount?: number;
+  isAcceptingOrders?: boolean;
+}) =>
+  api<MarketSettings>('/market/admin/settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 export const createMarketProduct = (body: {
   categoryId: string;
   name: I18nString;
@@ -540,13 +563,17 @@ export const getStoreOrders = (query: {
   from?: string;
   to?: string;
   q?: string;
+  /** READY_FOR_PICKUP holatida 3 kundan ortiq turgan buyurtmalar. */
+  overduePickup?: boolean;
+  page?: number;
+  pageSize?: number;
 } = {}) => {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value) params.set(key, String(value));
   }
   const qs = params.toString();
-  return api<StoreOrder[]>(`/store/admin/orders${qs ? `?${qs}` : ''}`);
+  return api<StoreOrdersPage>(`/store/admin/orders${qs ? `?${qs}` : ''}`);
 };
 export const completeStorePickup = (id: string) =>
   api<StoreOrder>(`/store/admin/orders/${id}/complete-pickup`, { method: 'POST' });

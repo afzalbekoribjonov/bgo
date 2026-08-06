@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:beshariq_core/beshariq_core.dart';
+
 /// Beshariq markazi va chegarasi (haydovchi navigatsiyasi uchun).
 const LatLng beshariqCenter = LatLng(40.4236, 70.6094);
 final LatLngBounds beshariqBounds = LatLngBounds(
@@ -63,42 +65,114 @@ Future<LatLng?> driverCurrentLatLng() async {
   }
 }
 
-/// OSRM marshrut natijasi — geometriya + masofa + davomiylik.
+/// Bitta burilish (maneuver) — backend orqali OSRM `steps`dan keladi.
+/// Turn-by-turn ogohlantirish shu ma'lumot asosida beriladi.
+class RouteStep {
+  /// OSRM maneuver.type: depart|turn|new name|merge|fork|roundabout|arrive...
+  final String type;
+
+  /// OSRM maneuver.modifier: left|right|slight left|sharp right|straight|uturn
+  /// (ba'zi turlarda bo'lmaydi — null).
+  final String? modifier;
+
+  /// SHU qadam uzunligi — burilishgacha bosib o'tiladigan masofa (metr).
+  final double distanceMeters;
+  final double durationSeconds;
+
+  /// Burilish nuqtasi.
+  final LatLng location;
+  final String? streetName;
+
+  /// Aylanma yo'ldan chiqish raqami (bo'lmasa null).
+  final int? exit;
+
+  const RouteStep({
+    required this.type,
+    required this.modifier,
+    required this.distanceMeters,
+    required this.durationSeconds,
+    required this.location,
+    this.streetName,
+    this.exit,
+  });
+
+  factory RouteStep.fromJson(Map<String, dynamic> j) {
+    final loc = (j['location'] as List?) ?? const [];
+    return RouteStep(
+      type: (j['type'] as String?) ?? 'turn',
+      modifier: j['modifier'] as String?,
+      distanceMeters: (j['distanceMeters'] as num?)?.toDouble() ?? 0,
+      durationSeconds: (j['durationSeconds'] as num?)?.toDouble() ?? 0,
+      location: loc.length >= 2
+          ? LatLng((loc[0] as num).toDouble(), (loc[1] as num).toDouble())
+          : const LatLng(0, 0),
+      streetName: j['streetName'] as String?,
+      exit: (j['exit'] as num?)?.toInt(),
+    );
+  }
+}
+
+/// OSRM marshrut natijasi — geometriya + masofa + davomiylik + burilishlar.
 class RouteResult {
   final List<LatLng> points;
   final double distanceMeters;
   final double durationSeconds;
-  const RouteResult(this.points, this.distanceMeters, this.durationSeconds);
 
+  /// Burilishlar ro'yxati. Zaxira (to'g'ri chiziq) holatida bo'sh bo'ladi —
+  /// bunda turn-by-turn ogohlantirish ishlamaydi, qolgani ishlaydi.
+  final List<RouteStep> steps;
+
+  const RouteResult(
+    this.points,
+    this.distanceMeters,
+    this.durationSeconds, {
+    this.steps = const [],
+  });
+
+  bool get hasSteps => steps.isNotEmpty;
   int get etaMinutes => (durationSeconds / 60).ceil().clamp(1, 999);
   String get distanceKm => (distanceMeters / 1000).toStringAsFixed(1);
 }
 
-/// Yo'l marshruti (OSRM) — haqiqiy yo'l ustidan.
+/// Yo'l marshruti — backend (`GET /driver/route`) orqali O'ZIMIZNING
+/// self-hosted OSRM'dan olinadi (ochiq demo-serverga chiqilmaydi) va
+/// burilishlar (`steps`) bilan birga keladi.
+///
+/// Xato/timeout/OSRM ishlamasa — `null` qaytaradi; chaqiruvchilar mavjud
+/// "to'g'ri chiziq" zaxirasiga tushadi (`dir?.points ?? [me, target]`).
 class DriverRoutingService {
-  final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 8),
-    receiveTimeout: const Duration(seconds: 8),
-  ));
+  final Dio _dio;
+  DriverRoutingService(this._dio);
 
   Future<RouteResult?> directions(LatLng from, LatLng to) async {
     try {
-      final url = 'https://router.project-osrm.org/route/v1/driving/'
-          '${from.longitude},${from.latitude};${to.longitude},${to.latitude}'
-          '?overview=full&geometries=geojson';
-      final res = await _dio.get<Map<String, dynamic>>(url);
-      final routes = res.data?['routes'] as List?;
-      if (routes == null || routes.isEmpty) return null;
-      final r = routes.first as Map;
-      final coords = r['geometry']?['coordinates'] as List?;
-      final pts = (coords ?? const [])
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/driver/route',
+        queryParameters: {
+          'fromLat': from.latitude,
+          'fromLng': from.longitude,
+          'toLat': to.latitude,
+          'toLng': to.longitude,
+        },
+      );
+      final data = res.data?['data'] as Map<String, dynamic>?;
+      if (data == null) return null; // OSRM javob bermadi — zaxiraga tushamiz
+      final pts = ((data['points'] as List?) ?? const [])
+          .whereType<List>()
+          .where((c) => c.length >= 2)
           .map((c) =>
-              LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
+              LatLng((c[0] as num).toDouble(), (c[1] as num).toDouble()))
+          .toList();
+      if (pts.length < 2) return null;
+      final steps = ((data['steps'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((s) => RouteStep.fromJson(s.cast<String, dynamic>()))
           .toList();
       return RouteResult(
         pts,
-        (r['distance'] as num?)?.toDouble() ?? 0,
-        (r['duration'] as num?)?.toDouble() ?? 0,
+        (data['distanceMeters'] as num?)?.toDouble() ?? 0,
+        (data['durationSeconds'] as num?)?.toDouble() ?? 0,
+        steps: steps,
       );
     } catch (_) {
       return null;
@@ -106,5 +180,6 @@ class DriverRoutingService {
   }
 }
 
-final driverRoutingServiceProvider =
-    Provider<DriverRoutingService>((ref) => DriverRoutingService());
+final driverRoutingServiceProvider = Provider<DriverRoutingService>(
+  (ref) => DriverRoutingService(ref.read(dioProvider)),
+);

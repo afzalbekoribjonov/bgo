@@ -6,10 +6,12 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import { UpdateMarketSettingsDto } from './dto/market-settings.dto';
 import {
   CreatePickupLocationDto,
   UpdatePickupLocationDto,
@@ -51,8 +53,21 @@ export class AdminController {
 
   // ---- Mahsulotlar ----
   @Get('products')
-  async products() {
-    return { success: true, data: await this.service.adminListProducts() };
+  async products(
+    @Query('categoryId') categoryId?: string,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return {
+      success: true,
+      data: await this.service.adminListProducts({
+        categoryId,
+        q,
+        page: Math.max(1, Number(page) || 1),
+        pageSize: Math.min(50, Math.max(1, Number(pageSize) || 20)),
+      }),
+    };
   }
 
   @Post('products')
@@ -79,6 +94,17 @@ export class AdminController {
   @Delete('comments/:id')
   async deleteComment(@Param('id') id: string) {
     return { success: true, data: await this.service.deleteComment(id) };
+  }
+
+  // ---- Sozlamalar (minimal buyurtma + do'kon holati) ----
+  @Get('settings')
+  async settings() {
+    return { success: true, data: await this.service.getSettings() };
+  }
+
+  @Patch('settings')
+  async updateSettings(@Body() dto: UpdateMarketSettingsDto) {
+    return { success: true, data: await this.service.updateSettings(dto) };
   }
 
   // ---- Olib ketish joylari ----

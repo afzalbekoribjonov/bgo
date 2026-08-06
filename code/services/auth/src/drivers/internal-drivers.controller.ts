@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { DriversService } from './drivers.service';
 
@@ -21,6 +21,14 @@ export class ChargeDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+/** Servislararo: mijoz bahosini haydovchi reytingiga qo'shish so'rovi. */
+export class ApplyRatingDto {
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  score!: number;
 }
 
 /**
@@ -125,5 +133,16 @@ export class InternalDriversController {
       success: true,
       data: await this.drivers.silentRefund(userId, dto.amount, dto.note ?? ''),
     };
+  }
+
+  /**
+   * POST /api/v1/internal/drivers/:userId/apply-rating -> mijoz bahosini
+   * (1-5) haydovchining umumiy reytingiga og'irlik-o'rtacha sifatida qo'shadi.
+   */
+  @Post(':userId/apply-rating')
+  @HttpCode(200)
+  async applyRating(@Param('userId') userId: string, @Body() dto: ApplyRatingDto) {
+    await this.drivers.applyCustomerRating(userId, dto.score);
+    return { success: true };
   }
 }

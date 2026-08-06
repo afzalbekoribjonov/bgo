@@ -45,16 +45,37 @@ export class CatalogController {
   async products(
     @Headers('accept-language') lang?: string,
     @Query('categoryId') categoryId?: string,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
     return {
       success: true,
-      data: await this.service.listProducts(localeFromHeader(lang), categoryId),
+      data: await this.service.listProducts(localeFromHeader(lang), {
+        categoryId,
+        q,
+        page: Math.max(1, Number(page) || 1),
+        pageSize: Math.min(50, Math.max(1, Number(pageSize) || 20)),
+      }),
     };
   }
 
   @Get('pickup-locations')
   async pickupLocations() {
     return { success: true, data: await this.service.listPickupLocations() };
+  }
+
+  /** Checkout'dan oldin do'kon holatini (yopiqmi/minimal summa) ko'rsatish uchun — token shart emas. */
+  @Get('settings')
+  async settings() {
+    const s = await this.service.getSettings();
+    return {
+      success: true,
+      data: {
+        minOrderAmount: s.minOrderAmount,
+        isAcceptingOrders: s.isAcceptingOrders,
+      },
+    };
   }
 
   @Get('products/:id')

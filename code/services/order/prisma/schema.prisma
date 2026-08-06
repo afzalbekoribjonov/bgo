@@ -150,7 +150,10 @@ model Tariff {
   homeModeTaxiCommissionPercent   Int @default(20)
   homeModeParcelCommissionPercent Int @default(20)
   // Uyga borish yo'lidan shu foizdan ko'p chetlanish — "uyga mos" hisoblanmaydi.
-  homeModeMaxDetourPercent        Int @default(30)
+  homeModeMaxDetourPercent        Int   @default(30)
+  // Buyurtmaning oxirgi nuqtasi (dropoff, bo'lmasa pickup) uydan shu masofadan
+  // uzoq bo'lsa — "uyga mos" hisoblanmaydi (chetlanish foizi mos bo'lsa ham).
+  homeModeMaxHomeDistanceKm       Float @default(2)
   updatedAt             DateTime @updatedAt
 
   @@map("tariffs")
@@ -357,6 +360,7 @@ enum StoreOrderStatus {
   PICKED_UP // haydovchi mahsulotni oldi (DELIVERY)
   IN_TRANSIT // mijozga yo'lda (DELIVERY)
   DELIVERED // mijozga yetkazildi (DELIVERY)
+  PREPARING // mahsulot yig'ilmoqda (PICKUP)
   READY_FOR_PICKUP // mijoz olib ketishga tayyor (PICKUP)
   COMPLETED // mijoz olib ketdi (PICKUP)
   CANCELLED
@@ -386,6 +390,9 @@ model StoreOrder {
   statusHistory    Json
   rating           Int?
   ratingComment    String?
+  // PICKUP: READY_FOR_PICKUP'ga o'tgan vaqt — 3 kunlik saqlash muddatini
+  // hisoblash uchun (admin panelda muddati o'tgan buyurtmalar filtri).
+  readyAt          DateTime?
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 

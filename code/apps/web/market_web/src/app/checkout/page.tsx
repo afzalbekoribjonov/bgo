@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createOrder, formatSom, getPickupLocations } from '@/lib/api';
+import { createOrder, formatSom, getMarketSettings, getPickupLocations } from '@/lib/api';
 import { useToast } from '@/components/toast';
 import { useAuthState } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart';
-import type { PickupLocation } from '@/lib/types';
+import type { MarketSettings, PickupLocation } from '@/lib/types';
 
 type Method = 'DELIVERY' | 'PICKUP';
 
@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const cart = useCart();
 
   const [locations, setLocations] = useState<PickupLocation[]>([]);
+  const [settings, setSettings] = useState<MarketSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<Method>('DELIVERY');
   const [locationId, setLocationId] = useState('');
@@ -30,9 +31,10 @@ export default function CheckoutPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const locs = await getPickupLocations();
+      const [locs, s] = await Promise.all([getPickupLocations(), getMarketSettings()]);
       setLocations(locs);
       if (locs[0]) setLocationId(locs[0].id);
+      setSettings(s);
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
@@ -68,8 +70,14 @@ export default function CheckoutPage() {
     );
   }
 
+  const shortfall = settings ? Math.max(0, settings.minOrderAmount - cart.total) : 0;
+  const underMinimum = shortfall > 0;
+  const marketClosed = settings?.isAcceptingOrders === false;
+
   async function place() {
     setFormErr('');
+    if (marketClosed) { setFormErr("Do'kon hozir buyurtma qabul qilmayapti"); return; }
+    if (underMinimum) { setFormErr(`Minimal buyurtma summasi: ${formatSom(settings!.minOrderAmount)}`); return; }
     if (!locationId) { setFormErr("Olib ketish/yetkazish bazasini tanlang"); return; }
     if (method === 'DELIVERY') {
       if (!coords) { setFormErr("Yetkazish uchun joriy joylashuvni aniqlang"); return; }
@@ -198,11 +206,33 @@ export default function CheckoutPage() {
             {method === 'DELIVERY' ? "Yetkazish narxi masofaga qarab hisoblanadi va buyurtma tasdiqlangach ko'rsatiladi" : "Olib ketishda qo'shimcha to'lov yo'q"}
           </div>
         </div>
+
+        {marketClosed && (
+          <div className="view-only-banner" style={{ marginTop: 14 }}>
+            ⏸️ Do&apos;kon hozir vaqtincha buyurtma qabul qilmayapti
+          </div>
+        )}
+        {!marketClosed && underMinimum && (
+          <div className="view-only-banner" style={{ marginTop: 14 }}>
+            🛒 Minimal buyurtma: {formatSom(settings!.minOrderAmount)} — yana{' '}
+            <b>{formatSom(shortfall)}</b> qo&apos;shing
+          </div>
+        )}
       </div>
 
       <div className="fixed-cta">
-        <button className="btn btn-block" disabled={placing} onClick={place}>
-          {placing ? 'Yuborilmoqda...' : 'Buyurtma berish'}
+        <button
+          className="btn btn-block"
+          disabled={placing || loading || marketClosed || underMinimum}
+          onClick={place}
+        >
+          {placing
+            ? 'Yuborilmoqda...'
+            : marketClosed
+              ? "Do'kon yopiq"
+              : underMinimum
+                ? `Yana ${formatSom(shortfall)} qo'shing`
+                : 'Buyurtma berish'}
         </button>
       </div>
     </>

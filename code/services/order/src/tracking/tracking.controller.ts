@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -13,7 +15,9 @@ import {
   Roles,
   RolesGuard,
 } from '@beshariq/nest-auth';
+import { OsrmRouteClient } from '../common/osrm-route.client';
 import { PingLocationDto } from './dto/ping-location.dto';
+import { RouteQueryDto } from './dto/route-query.dto';
 import { DriverLocationService } from './driver-location.service';
 
 /**
@@ -24,7 +28,24 @@ import { DriverLocationService } from './driver-location.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('driver')
 export class TrackingController {
-  constructor(private readonly locations: DriverLocationService) {}
+  constructor(
+    private readonly locations: DriverLocationService,
+    private readonly osrm: OsrmRouteClient,
+  ) {}
+
+  /**
+   * Navigatsiya marshruti: geometriya + burilishlar (turn-by-turn uchun).
+   * OSRM ishlamasa `data: null` qaytadi (HTTP xato EMAS) — ilova mavjud
+   * "to'g'ri chiziq" zaxirasiga tushadi va navigatsiya buzilmaydi.
+   */
+  @Get('route')
+  async route(@Query() q: RouteQueryDto) {
+    const data = await this.osrm.routeWithSteps(
+      { lat: q.fromLat, lng: q.fromLng },
+      { lat: q.toLat, lng: q.toLng },
+    );
+    return { success: true, data };
+  }
 
   /** Joylashuvni yangilash (har bir necha soniyada). */
   @Post('location')

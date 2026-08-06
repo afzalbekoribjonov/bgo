@@ -7,6 +7,33 @@
   "homeAddressSearchHint": "Manzil qidirish...",
   "homeAddressPinHint": "Xaritada uy manzilingizni belgilang",
   "homeAddressConfirm": "Manzilni tasdiqlash",
+  "homeAddressUnknownPoint": "Belgilangan nuqta",
+  "navTurnLeft": "Chapga",
+  "navTurnRight": "O'ngga",
+  "navTurnSharpLeft": "Keskin chapga",
+  "navTurnSharpRight": "Keskin o'ngga",
+  "navTurnSlightLeft": "Bir oz chapga",
+  "navTurnSlightRight": "Bir oz o'ngga",
+  "navTurnUturn": "Orqaga qayting",
+  "navTurnRoundabout": "Aylanma yo'l",
+  "navTurnBanner": "{distance} m dan so'ng {direction}",
+  "@navTurnBanner": {
+    "placeholders": { "distance": { "type": "int" }, "direction": { "type": "String" } }
+  },
+  "navSpeakTurn": "{distance} metrdan so'ng {direction}",
+  "@navSpeakTurn": {
+    "placeholders": { "distance": { "type": "int" }, "direction": { "type": "String" } }
+  },
+  "navStraightBanner": "To'g'riga {km} km",
+  "@navStraightBanner": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "navSpeakStraight": "To'g'riga {km} kilometr",
+  "@navSpeakStraight": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "navTrafficLightBanner": "Svetofor",
+  "navSpeakTrafficLight": "Oldinda nazorat svetofori",
   "homeModeTitle": "Uyga rejimi",
   "homeModeSetAddressFirst": "Avval uy manzilini belgilang",
   "homeModeLabel": "Uyga",

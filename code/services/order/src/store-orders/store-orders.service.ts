@@ -25,6 +25,7 @@ import { DriverLocationService } from '../tracking/driver-location.service';
 import { CreateStoreOrderDto } from './dto/create-store-order.dto';
 import {
   AdminStoreOrderView,
+  StoreDeliveryMethod,
   StoreOrder,
   StoreOrderItem,
   StoreOrderLive,
@@ -33,6 +34,9 @@ import {
 import { StoreOrderRepository } from './store-order.repository';
 
 const ACTIVE_DELIVERY_STATUSES = ['ACCEPTED', 'ARRIVED', 'PICKED_UP', 'IN_TRANSIT'];
+// PICKUP: "Tayyor" holatida saqlash muddati — shundan o'tgan buyurtmalar admin
+// panelda alohida filtr orqali ko'rsatiladi (avtomatik bekor qilish YO'Q).
+const PICKUP_HOLD_DAYS = 3;
 
 /** Beshariq Market buyurtmasi — narx SERVER tomonda (market katalogi + tarif). */
 @Injectable()
@@ -121,7 +125,18 @@ export class StoreOrdersService implements OnModuleInit {
   }
 
   async create(customerId: string, dto: CreateStoreOrderDto): Promise<StoreOrder> {
-    const pickupLocation = await this.market.getPickupLocation(dto.pickupLocationId);
+    const [pickupLocation, settings] = await Promise.all([
+      this.market.getPickupLocation(dto.pickupLocationId),
+      this.market.getSettings(),
+    ]);
+
+    // Hech narsa hisoblanmasdan/zaxira band qilinmasdan oldin — eng arzon,
+    // xatosiz rad. `settings` null bo'lsa (Market javob bermadi) — FAIL-OPEN,
+    // buyurtma davom etadi (getProduct/getPickupLocation fail-closed bo'lgani
+    // uchun Market chindan ishlamasa checkout baribir shu yerda to'xtaydi).
+    if (settings?.isAcceptingOrders === false) {
+      throw new BadRequestException('Market vaqtincha buyurtma qabul qilmayapti');
+    }
 
     // Har item uchun narx/nom SERVER tomonda (market katalogidan) — mijoz
     // yuborgan narxga ishonilmaydi. Zaxira ketma-ket band qilinadi; birortasi
@@ -151,6 +166,17 @@ export class StoreOrdersService implements OnModuleInit {
     }
 
     const itemsTotal = items.reduce((sum, it) => sum + it.lineTotal, 0);
+    if (settings?.minOrderAmount && itemsTotal < settings.minOrderAmount) {
+      // Bu yergacha stock ALLAQACHON band qilingan (yuqoridagi tsikl) — rad
+      // etishdan oldin albatta bo'shatiladi, aks holda zaxira asossiz kamayib
+      // qoladi (har rad etilgan sinovda birma-bir "oqib" ketadi).
+      await Promise.all(
+        reserved.map((r) => this.market.releaseStock(r.productId, r.qty)),
+      );
+      throw new BadRequestException(
+        `Minimal buyurtma summasi: ${settings.minOrderAmount} so'm`,
+      );
+    }
     let deliveryFee = 0;
     if (dto.deliveryMethod === 'DELIVERY') {
       if (!dto.address) {
@@ -180,10 +206,10 @@ export class StoreOrdersService implements OnModuleInit {
       this.offerOrder(order).catch((err) =>
         this.logger.warn(`Market dispatch xatosi: ${(err as Error).message}`),
       );
-    } else {
-      // Olib ketish — tayyorgarlik shart emas (ombordan), darhol tayyor.
-      await this.repo.updateStatus(order.id, 'READY_FOR_PICKUP', { by: 'system' });
     }
+    // Olib ketish (PICKUP) — PENDING'da qoladi; admin/xodim qo'lda
+    // Qabul qilindi -> Yig'ilmoqda -> Tayyor -> Topshirildi bosqichlarida
+    // ilgari suradi (allowedAdminTransitions).
     return (await this.repo.findById(order.id)) ?? order;
   }
 
@@ -282,7 +308,7 @@ export class StoreOrdersService implements OnModuleInit {
   /** Mijoz bekor qiladi — hali yetkazilmagan/olib ketilmagan bosqichda. */
   async cancel(customerId: string, id: string): Promise<StoreOrder> {
     const order = await this.getOwned(customerId, id);
-    const cancellable = ['PENDING', 'ACCEPTED', 'ARRIVED', 'READY_FOR_PICKUP'];
+    const cancellable = ['PENDING', 'ACCEPTED', 'ARRIVED', 'PREPARING', 'READY_FOR_PICKUP'];
     if (!cancellable.includes(order.status)) {
       throw new BadRequestException("Buyurtmani bu bosqichda bekor qilib bo'lmaydi");
     }
@@ -311,7 +337,12 @@ export class StoreOrdersService implements OnModuleInit {
     if (rating < 1 || rating > 5) {
       throw new BadRequestException("Baho 1-5 oralig'ida bo'lishi kerak");
     }
-    return this.repo.setRating(id, rating, comment);
+    const updated = await this.repo.setRating(id, rating, comment);
+    // O'zi olib ketish (PICKUP) buyurtmalarida driverId yo'q — kuryer yo'q.
+    if (order.driverId) {
+      this.driverInfo.applyDriverRating(order.driverId, rating).catch(() => undefined);
+    }
+    return updated;
   }
 
   // ---------- Haydovchi (faqat DELIVERY) ----------
@@ -492,7 +523,8 @@ export class StoreOrdersService implements OnModuleInit {
     if (['DELIVERED', 'COMPLETED', 'CANCELLED'].includes(order.status)) return [];
     if (order.deliveryMethod === 'PICKUP') {
       const map: Partial<Record<StoreOrderStatus, StoreOrderStatus[]>> = {
-        PENDING: ['READY_FOR_PICKUP', 'CANCELLED'],
+        PENDING: ['PREPARING', 'CANCELLED'],
+        PREPARING: ['READY_FOR_PICKUP', 'CANCELLED'],
         READY_FOR_PICKUP: ['COMPLETED', 'CANCELLED'],
       };
       return map[order.status] ?? ['CANCELLED'];
@@ -509,6 +541,7 @@ export class StoreOrdersService implements OnModuleInit {
 
   private statusMessage(status: StoreOrderStatus): string {
     const map: Partial<Record<StoreOrderStatus, string>> = {
+      PREPARING: 'Buyurtmangiz yig\'ilmoqda',
       READY_FOR_PICKUP: 'Buyurtmangiz olib ketishga tayyor',
       ARRIVED: 'Haydovchi olib ketish nuqtasiga yetib keldi',
       PICKED_UP: 'Buyurtmangiz olindi',
@@ -535,7 +568,20 @@ export class StoreOrdersService implements OnModuleInit {
     from?: string;
     to?: string;
     q?: string;
-  }): Promise<AdminStoreOrderView[]> {
+    /** READY_FOR_PICKUP holatida 3 kundan ortiq turgan (olib ketilmagan) buyurtmalar. */
+    overduePickup?: boolean;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    items: AdminStoreOrderView[];
+    total: number;
+    page: number;
+    pageSize: number;
+    revenueSum: number;
+    activeCount: number;
+  }> {
+    const page = Math.max(1, filter.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, filter.pageSize ?? 20));
     const fromTs = filter.from
       ? new Date(filter.from.length === 10 ? `${filter.from}T00:00:00.000` : filter.from).getTime()
       : undefined;
@@ -549,28 +595,35 @@ export class StoreOrdersService implements OnModuleInit {
     const numericQuery = /^#?\d+$/.test(rawQuery)
       ? rawQuery.replace(/^#/, '')
       : undefined;
-    const textQuery = numericQuery ? undefined : rawQuery.toLowerCase() || undefined;
-    const orders = await this.repo.findAll();
-    const filtered = orders.filter((o) => {
-      if (filter.status && o.status !== filter.status) return false;
-      if (filter.deliveryMethod && o.deliveryMethod !== filter.deliveryMethod) return false;
-      const ts = new Date(o.createdAt).getTime();
-      if (fromTs !== undefined && ts < fromTs) return false;
-      if (toTs !== undefined && ts > toTs) return false;
-      if (numericQuery && `${o.publicNo}` !== numericQuery) return false;
-      if (textQuery) {
-        const hay = [
-          ...o.items.map((it) => `${it.nameSnapshot} ${it.size ?? ''}`),
-          o.address?.text ?? '',
-        ]
-          .join(' ')
-          .toLowerCase();
-        if (!hay.includes(textQuery)) return false;
-      }
-      return true;
-    });
-    const customers = await this.driverInfo.getUsersInfo(filtered.map((o) => o.customerId));
-    return filtered.map((o) => this.toAdminView(o, customers.get(o.customerId) ?? null));
+    const textQuery = numericQuery ? undefined : rawQuery || undefined;
+    const overdueBefore = filter.overduePickup
+      ? Date.now() - PICKUP_HOLD_DAYS * 24 * 60 * 60 * 1000
+      : undefined;
+
+    const { items: orders, total, revenueSum, activeCount } = await this.repo.findAllPaged(
+      {
+        status: filter.status as StoreOrderStatus | undefined,
+        deliveryMethod: filter.deliveryMethod as StoreDeliveryMethod | undefined,
+        fromTs,
+        toTs,
+        overdueBefore,
+        publicNo: numericQuery ? Number(numericQuery) : undefined,
+        textQuery,
+      },
+      page,
+      pageSize,
+    );
+    // Faqat JORIY sahifadagi qatorlar uchun boyitiladi (sahifalashdan oldin
+    // butun filtrlangan ro'yxat ustida ishlardi — endi ko'p marta kichikroq).
+    const customers = await this.driverInfo.getUsersInfo(orders.map((o) => o.customerId));
+    return {
+      items: orders.map((o) => this.toAdminView(o, customers.get(o.customerId) ?? null)),
+      total,
+      page,
+      pageSize,
+      revenueSum,
+      activeCount,
+    };
   }
 
   async adminGetById(id: string): Promise<AdminStoreOrderView | null> {

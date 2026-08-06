@@ -17,6 +17,14 @@ import {
   CreatePickupLocationDto,
   UpdatePickupLocationDto,
 } from './dto/pickup-location.dto';
+import { UpdateMarketSettingsDto } from './dto/market-settings.dto';
+
+export interface ProductListQuery {
+  categoryId?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 @Injectable()
 export class MarketService {
@@ -51,12 +59,47 @@ export class MarketService {
     }));
   }
 
-  async listProducts(locale: SupportedLocale, categoryId?: string) {
-    const products = await this.prisma.product.findMany({
-      where: { isActive: true, ...(categoryId ? { categoryId } : {}) },
-      orderBy: { createdAt: 'desc' },
-    });
-    return products.map((p) => this.toPublicProduct(p, locale));
+  async listProducts(locale: SupportedLocale, query: ProductListQuery) {
+    const page = Math.max(1, query.page ?? 1);
+    const pageSize = Math.min(50, Math.max(1, query.pageSize ?? 20));
+    const where: Prisma.ProductWhereInput = {
+      isActive: true,
+      ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+      ...(await this.searchIdFilter(query.q)),
+    };
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+    return {
+      items: products.map((p) => this.toPublicProduct(p, locale)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  /**
+   * Mahsulot nomi (uch tilli i18n Json ustun) bo'yicha erkin-matn qidiruv.
+   * Prisma'ning typed `where`i JSON ustun ichida matn qidira olmaydi — shuning
+   * uchun parametrlashtirilgan (tegged-template, in'ektsiyadan xavfsiz)
+   * $queryRaw bilan mos ID'lar topiladi, keyin oddiy `where: {id:{in}}` orqali
+   * qolgan filtrlar (isActive/categoryId) bilan birlashtiriladi.
+   */
+  private async searchIdFilter(
+    q?: string,
+  ): Promise<Prisma.ProductWhereInput> {
+    const term = q?.trim();
+    if (!term) return {};
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM products WHERE name::text ILIKE ${'%' + term + '%'}
+    `;
+    return { id: { in: rows.map((r) => r.id) } };
   }
 
   async getProduct(id: string, locale: SupportedLocale, userId?: string) {
@@ -222,16 +265,33 @@ export class MarketService {
 
   // ---------- Admin: mahsulotlar ----------
 
-  async adminListProducts() {
-    const products = await this.prisma.product.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return products.map((p) => ({
-      ...p,
-      name: p.name as unknown as I18nString,
-      description: p.description as unknown as I18nString | null,
-      sizes: p.sizes,
-    }));
+  async adminListProducts(query: ProductListQuery) {
+    const page = Math.max(1, query.page ?? 1);
+    const pageSize = Math.min(50, Math.max(1, query.pageSize ?? 20));
+    const where: Prisma.ProductWhereInput = {
+      ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+      ...(await this.searchIdFilter(query.q)),
+    };
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+    return {
+      items: products.map((p) => ({
+        ...p,
+        name: p.name as unknown as I18nString,
+        description: p.description as unknown as I18nString | null,
+        sizes: p.sizes,
+      })),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   async createProduct(dto: CreateProductDto) {
@@ -318,6 +378,25 @@ export class MarketService {
       data: { isActive: false },
     });
     return { ok: true };
+  }
+
+  // ---------- Sozlamalar (yagona global qator — Shop modeli yo'q) ----------
+
+  /** Joriy sozlama (bo'lmasa standart qiymatlar bilan yaratiladi). */
+  async getSettings() {
+    return this.prisma.marketSettings.upsert({
+      where: { id: 'default' },
+      update: {},
+      create: { id: 'default' },
+    });
+  }
+
+  async updateSettings(patch: UpdateMarketSettingsDto) {
+    return this.prisma.marketSettings.upsert({
+      where: { id: 'default' },
+      update: patch,
+      create: { id: 'default', ...patch },
+    });
   }
 
   // ---------- Internal (order servisi uchun — Faza A1) ----------

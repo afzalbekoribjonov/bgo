@@ -121,6 +121,20 @@ export class PrismaDriverRepository extends DriverRepository {
     return this.toEntity(profile);
   }
 
+  async applyCustomerRating(
+    id: string,
+    score: number,
+  ): Promise<DriverProfileEntity> {
+    await this.prisma.$executeRaw`
+      UPDATE "driver_profiles"
+      SET "rating" = LEAST(5, GREATEST(0, ("rating" * "ratingCount" + ${score}) / ("ratingCount" + 1))),
+          "ratingCount" = "ratingCount" + 1
+      WHERE "id" = ${id}
+    `;
+    const row = await this.prisma.driverProfile.findUniqueOrThrow({ where: { id } });
+    return this.toEntity(row);
+  }
+
   async listTopups(driverId: string): Promise<DriverTopupEntity[]> {
     const rows = await this.prisma.driverTopup.findMany({
       where: { driverId, visible: true },
@@ -220,6 +234,7 @@ export class PrismaDriverRepository extends DriverRepository {
       isComfort: d.isComfort,
       balance: d.balance,
       rating: d.rating,
+      ratingCount: d.ratingCount,
       messagesReadAt: d.messagesReadAt?.toISOString() ?? null,
       blockedUntil: d.blockedUntil?.toISOString() ?? null,
       blockReason: d.blockReason,

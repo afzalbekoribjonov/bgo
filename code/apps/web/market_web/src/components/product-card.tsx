@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { formatSom } from '@/lib/api';
 import type { Product } from '@/lib/types';
@@ -7,7 +8,13 @@ export default function ProductCard({ product }: { product: Product }) {
     <Link href={`/products/${product.id}`} className="product-card">
       <div className="product-card-img">
         {product.imageUrls[0] ? (
-          <img src={product.imageUrls[0]} alt={product.name} />
+          <Image
+            src={product.imageUrls[0]}
+            alt={product.name}
+            fill
+            sizes="(max-width: 480px) 50vw, 240px"
+            style={{ objectFit: 'cover' }}
+          />
         ) : (
           '🛒'
         )}

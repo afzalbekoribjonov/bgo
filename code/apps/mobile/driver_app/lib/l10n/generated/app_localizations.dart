@@ -138,6 +138,96 @@ abstract class AppLocalizations {
   /// **'Manzilni tasdiqlash'**
   String get homeAddressConfirm;
 
+  /// No description provided for @homeAddressUnknownPoint.
+  ///
+  /// In uz, this message translates to:
+  /// **'Belgilangan nuqta'**
+  String get homeAddressUnknownPoint;
+
+  /// No description provided for @navTurnLeft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Chapga'**
+  String get navTurnLeft;
+
+  /// No description provided for @navTurnRight.
+  ///
+  /// In uz, this message translates to:
+  /// **'O\'ngga'**
+  String get navTurnRight;
+
+  /// No description provided for @navTurnSharpLeft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Keskin chapga'**
+  String get navTurnSharpLeft;
+
+  /// No description provided for @navTurnSharpRight.
+  ///
+  /// In uz, this message translates to:
+  /// **'Keskin o\'ngga'**
+  String get navTurnSharpRight;
+
+  /// No description provided for @navTurnSlightLeft.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bir oz chapga'**
+  String get navTurnSlightLeft;
+
+  /// No description provided for @navTurnSlightRight.
+  ///
+  /// In uz, this message translates to:
+  /// **'Bir oz o\'ngga'**
+  String get navTurnSlightRight;
+
+  /// No description provided for @navTurnUturn.
+  ///
+  /// In uz, this message translates to:
+  /// **'Orqaga qayting'**
+  String get navTurnUturn;
+
+  /// No description provided for @navTurnRoundabout.
+  ///
+  /// In uz, this message translates to:
+  /// **'Aylanma yo\'l'**
+  String get navTurnRoundabout;
+
+  /// No description provided for @navTurnBanner.
+  ///
+  /// In uz, this message translates to:
+  /// **'{distance} m dan so\'ng {direction}'**
+  String navTurnBanner(int distance, String direction);
+
+  /// No description provided for @navSpeakTurn.
+  ///
+  /// In uz, this message translates to:
+  /// **'{distance} metrdan so\'ng {direction}'**
+  String navSpeakTurn(int distance, String direction);
+
+  /// No description provided for @navStraightBanner.
+  ///
+  /// In uz, this message translates to:
+  /// **'To\'g\'riga {km} km'**
+  String navStraightBanner(int km);
+
+  /// No description provided for @navSpeakStraight.
+  ///
+  /// In uz, this message translates to:
+  /// **'To\'g\'riga {km} kilometr'**
+  String navSpeakStraight(int km);
+
+  /// No description provided for @navTrafficLightBanner.
+  ///
+  /// In uz, this message translates to:
+  /// **'Svetofor'**
+  String get navTrafficLightBanner;
+
+  /// No description provided for @navSpeakTrafficLight.
+  ///
+  /// In uz, this message translates to:
+  /// **'Oldinda nazorat svetofori'**
+  String get navSpeakTrafficLight;
+
   /// No description provided for @homeModeTitle.
   ///
   /// In uz, this message translates to:

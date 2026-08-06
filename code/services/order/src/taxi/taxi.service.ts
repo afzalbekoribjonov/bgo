@@ -427,7 +427,11 @@ export class TaxiService implements OnModuleInit {
     if (rating < 1 || rating > 5) {
       throw new BadRequestException('Baho 1-5 oralig\'ida bo\'lishi kerak');
     }
-    return this.repo.setRating(id, rating, comment);
+    const updated = await this.repo.setRating(id, rating, comment);
+    if (trip.driverId) {
+      this.driverInfo.applyDriverRating(trip.driverId, rating).catch(() => undefined);
+    }
+    return updated;
   }
 
   /**

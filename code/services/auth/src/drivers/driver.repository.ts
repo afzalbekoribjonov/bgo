@@ -35,6 +35,16 @@ export abstract class DriverRepository {
   /** Faqat haydovchiga ko'rinadigan yozuvlar (visible=true). */
   abstract listTopups(driverId: string): Promise<DriverTopupEntity[]>;
 
+  /**
+   * Mijoz bahosini (1-5) haydovchining umumiy reytingiga og'irlik-o'rtacha
+   * sifatida qo'shadi — ATOMAR DB-darajasidagi yangilash (poyga holatining
+   * oldini olish uchun, `topup()`dagi `increment` naqshiga o'xshab).
+   */
+  abstract applyCustomerRating(
+    id: string,
+    score: number,
+  ): Promise<DriverProfileEntity>;
+
   // ---------- Xabarlar (admin → haydovchi) ----------
 
   abstract createMessage(data: NewDriverMessage): Promise<DriverMessageEntity>;

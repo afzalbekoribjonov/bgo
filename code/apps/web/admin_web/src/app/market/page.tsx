@@ -15,6 +15,7 @@ import {
   getMarketComments,
   getMarketPickupLocations,
   getMarketProducts,
+  getMarketSettings,
   getMarketSupportMessages,
   getMarketSupportThreads,
   getStoreOrders,
@@ -23,10 +24,12 @@ import {
   updateMarketCategory,
   updateMarketPickupLocation,
   updateMarketProduct,
+  updateMarketSettings,
   uploadMarketImage,
 } from '@/lib/api';
 import { useToast } from '@/components/toast';
 import { useDialog } from '@/components/dialog';
+import { NumInput } from '@/components/num-input';
 import SizeEditor from '@/components/size-editor';
 import ImageUploader from '@/components/image-uploader';
 import type {
@@ -35,13 +38,14 @@ import type {
   MarketComment,
   MarketPickupLocation,
   MarketProduct,
+  MarketSettings,
   MarketSupportMessage,
   MarketSupportThread,
   StoreOrder,
   StoreOrderStatus,
 } from '@/lib/types';
 
-type Tab = 'products' | 'categories' | 'orders' | 'support' | 'pickup';
+type Tab = 'products' | 'categories' | 'orders' | 'support' | 'pickup' | 'settings';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'products', label: 'Mahsulotlar' },
@@ -49,6 +53,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'orders', label: 'Buyurtmalar' },
   { id: 'support', label: 'Support chat' },
   { id: 'pickup', label: 'Olib ketish joylari' },
+  { id: 'settings', label: 'Sozlamalar' },
 ];
 
 const STATUS_LABEL: Record<StoreOrder['status'], string> = {
@@ -58,6 +63,7 @@ const STATUS_LABEL: Record<StoreOrder['status'], string> = {
   PICKED_UP: 'Olindi',
   IN_TRANSIT: "Yo'lda",
   DELIVERED: 'Yetkazildi',
+  PREPARING: "Yig'ilmoqda",
   READY_FOR_PICKUP: "Olib ketishga tayyor",
   COMPLETED: 'Yakunlandi',
   CANCELLED: 'Bekor qilindi',
@@ -70,6 +76,7 @@ const STATUS_DOT: Record<StoreOrder['status'], string> = {
   PICKED_UP: 'dot-blue',
   IN_TRANSIT: 'dot-blue',
   DELIVERED: 'dot-green',
+  PREPARING: 'dot-amber',
   READY_FOR_PICKUP: 'dot-amber',
   COMPLETED: 'dot-green',
   CANCELLED: 'dot-red',
@@ -114,6 +121,7 @@ export default function MarketPage() {
         <SupportTab initialCustomerId={chatTarget} onConsumeInitial={() => setChatTarget(null)} />
       )}
       {tab === 'pickup' && <PickupTab />}
+      {tab === 'settings' && <SettingsTab />}
     </div>
   );
 }
@@ -153,8 +161,8 @@ function localeLabel(v: I18nString): string {
   return v.uz || v.ru || v.uz_Cyrl || '';
 }
 
-/** Bir sahifada ko'rsatiladigan mahsulotlar soni — katalog kattalashganda
- * sahifa minglab qatorni birdan render qilib og'irlashib ketmasin. */
+/** Bir sahifada backend'dan so'raladigan mahsulotlar soni — katalog
+ * kattalashganda hammasi bir yo'la yuklanib og'irlashib ketmasin. */
 const PRODUCTS_PAGE_SIZE = 40;
 
 /* ============ Mahsulotlar ============ */
@@ -162,10 +170,13 @@ function ProductsTab() {
   const toast = useToast();
   const dialog = useDialog();
   const [products, setProducts] = useState<MarketProduct[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [categories, setCategories] = useState<MarketCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState('');
-  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PAGE_SIZE);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<MarketProduct | null>(null);
   const [busy, setBusy] = useState(false);
@@ -184,31 +195,38 @@ function ProductsTab() {
   const [priceEditId, setPriceEditId] = useState<string | null>(null);
   const [priceDraft, setPriceDraft] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    getMarketCategories().catch((e) => toast((e as Error).message, 'error')).then((c) => c && setCategories(c));
+  }, [toast]);
+
+  // Qidiruv — har bosilgan tugmada emas, 300ms sokinlikdan keyin serverga.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const loadProducts = useCallback(async (targetPage: number, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
-      const [p, c] = await Promise.all([getMarketProducts(), getMarketCategories()]);
-      setProducts(p);
-      setCategories(c);
+      const res = await getMarketProducts({
+        q: debouncedQuery || undefined,
+        page: targetPage,
+        pageSize: PRODUCTS_PAGE_SIZE,
+      });
+      setProducts((prev) => (append ? [...prev, ...res.items] : res.items));
+      setTotal(res.total);
+      setPage(res.page);
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [toast]);
+  }, [toast, debouncedQuery]);
 
-  useEffect(() => { load(); }, [load]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) => localeLabel(p.name).toLowerCase().includes(q));
-  }, [products, query]);
-
-  // Qidiruv o'zgarsa ko'rinadigan sahifa boshidan boshlansin.
-  useEffect(() => setVisibleCount(PRODUCTS_PAGE_SIZE), [query]);
-
-  const visible = filtered.slice(0, visibleCount);
+  // Qidiruv o'zgarsa (yoki dastlabki yuklashda) — 1-sahifadan qaytadan.
+  useEffect(() => { loadProducts(1, false); }, [loadProducts]);
+  const load = useCallback(() => loadProducts(1, false), [loadProducts]);
 
   function resetForm() {
     setEditing(null);
@@ -341,7 +359,7 @@ function ProductsTab() {
   return (
     <div>
       <div className="row-sb" style={{ marginBottom: 16 }}>
-        <span className="text-sm muted">{products.length} ta mahsulot</span>
+        <span className="text-sm muted">{total} ta mahsulot</span>
         <button className="btn" onClick={openCreate} disabled={categories.length === 0}>
           + Yangi mahsulot
         </button>
@@ -451,12 +469,12 @@ function ProductsTab() {
 
       {loading ? (
         <div className="card"><div className="sk sk-para" /></div>
-      ) : filtered.length === 0 ? (
+      ) : products.length === 0 ? (
         <div className="card">
           <div className="empty">
             <div className="empty-icon">🛒</div>
-            <div className="empty-title">{products.length === 0 ? "Mahsulot yo'q" : 'Mahsulot topilmadi'}</div>
-            <div className="empty-desc">{products.length === 0 ? "Yangi mahsulot qo'shing" : 'Qidiruvni o\'zgartirib ko\'ring'}</div>
+            <div className="empty-title">{total === 0 && !debouncedQuery ? "Mahsulot yo'q" : 'Mahsulot topilmadi'}</div>
+            <div className="empty-desc">{total === 0 && !debouncedQuery ? "Yangi mahsulot qo'shing" : 'Qidiruvni o\'zgartirib ko\'ring'}</div>
           </div>
         </div>
       ) : (
@@ -475,7 +493,7 @@ function ProductsTab() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((p) => (
+              {products.map((p) => (
                 <tr key={p.id}>
                   <td>
                     {p.imageUrls[0] ? (
@@ -536,10 +554,10 @@ function ProductsTab() {
         </div>
       )}
 
-      {filtered.length > visibleCount && (
+      {products.length < total && (
         <div style={{ textAlign: 'center', marginTop: 14 }}>
-          <button className="btn ghost" onClick={() => setVisibleCount((v) => v + PRODUCTS_PAGE_SIZE)}>
-            Yana ko&apos;rsatish ({filtered.length - visibleCount} ta qoldi)
+          <button className="btn ghost" disabled={loadingMore} onClick={() => loadProducts(page + 1, true)}>
+            {loadingMore ? 'Yuklanmoqda…' : `Yana ko'rsatish (${total - products.length} ta qoldi)`}
           </button>
         </div>
       )}
@@ -691,6 +709,7 @@ function CategoriesTab() {
 const STATUS_FILTERS: { id: StoreOrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'Barchasi' },
   { id: 'PENDING', label: 'Kutilmoqda' },
+  { id: 'PREPARING', label: "Yig'ilmoqda" },
   { id: 'READY_FOR_PICKUP', label: 'Olib ketishga tayyor' },
   { id: 'ACCEPTED', label: 'Qabul qilindi' },
   { id: 'IN_TRANSIT', label: "Yo'lda" },
@@ -706,13 +725,22 @@ const TRANSITION_STYLE: Partial<Record<StoreOrderStatus, string>> = {
   COMPLETED: 'green',
 };
 
+/** Bir sahifada backend'dan so'raladigan buyurtmalar soni. */
+const ORDERS_PAGE_SIZE = 30;
+
 function OrdersTab({ onOpenChat }: { onOpenChat: (customerId: string) => void }) {
   const toast = useToast();
   const dialog = useDialog();
   const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [revenueSum, setRevenueSum] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [method, setMethod] = useState<'all' | 'DELIVERY' | 'PICKUP'>('all');
   const [status, setStatus] = useState<StoreOrderStatus | 'all'>('all');
+  const [overduePickup, setOverduePickup] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -724,24 +752,33 @@ function OrdersTab({ onOpenChat }: { onOpenChat: (customerId: string) => void })
     return () => clearTimeout(t);
   }, [search]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const loadOrders = useCallback(async (targetPage: number, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
-      setOrders(
-        await getStoreOrders({
-          ...(status !== 'all' ? { status } : {}),
-          ...(method !== 'all' ? { deliveryMethod: method } : {}),
-          ...(debouncedSearch ? { q: debouncedSearch } : {}),
-        }),
-      );
+      const res = await getStoreOrders({
+        ...(status !== 'all' ? { status } : {}),
+        ...(method !== 'all' ? { deliveryMethod: method } : {}),
+        ...(debouncedSearch ? { q: debouncedSearch } : {}),
+        ...(overduePickup ? { overduePickup: true } : {}),
+        page: targetPage,
+        pageSize: ORDERS_PAGE_SIZE,
+      });
+      setOrders((prev) => (append ? [...prev, ...res.items] : res.items));
+      setTotal(res.total);
+      setPage(res.page);
+      setRevenueSum(res.revenueSum);
+      setActiveCount(res.activeCount);
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [status, method, debouncedSearch, toast]);
+  }, [status, method, overduePickup, debouncedSearch, toast]);
 
-  useEffect(() => { load(); }, [load]);
+  // Filtr/qidiruv o'zgarsa (yoki dastlabki yuklashda) — 1-sahifadan qaytadan.
+  useEffect(() => { loadOrders(1, false); }, [loadOrders]);
+  const load = useCallback(() => loadOrders(1, false), [loadOrders]);
 
   /** Holatni o'zgartirish — bekor qilish uchun tasdiq so'raladi. */
   async function changeStatus(o: StoreOrder, next: StoreOrderStatus) {
@@ -763,16 +800,6 @@ function OrdersTab({ onOpenChat }: { onOpenChat: (customerId: string) => void })
       setBusyId(null);
     }
   }
-
-  const summary = useMemo(() => {
-    const revenue = orders
-      .filter((o) => o.status !== 'CANCELLED')
-      .reduce((s, o) => s + o.total, 0);
-    const active = orders.filter(
-      (o) => !['DELIVERED', 'COMPLETED', 'CANCELLED'].includes(o.status),
-    ).length;
-    return { count: orders.length, revenue, active };
-  }, [orders]);
 
   return (
     <div>
@@ -813,14 +840,21 @@ function OrdersTab({ onOpenChat }: { onOpenChat: (customerId: string) => void })
             {f === 'all' ? 'Barcha turlar' : f === 'DELIVERY' ? '🚗 Yetkazish' : '🏬 Olib ketish'}
           </button>
         ))}
+        <button
+          className={`chip ${overduePickup ? 'active' : ''}`}
+          onClick={() => setOverduePickup((v) => !v)}
+          title="READY_FOR_PICKUP holatida 3 kundan ortiq turgan buyurtmalar"
+        >
+          ⏰ 3 kundan oshgan
+        </button>
       </div>
 
-      {/* Qisqa hisob */}
-      {!loading && orders.length > 0 && (
+      {/* Qisqa hisob — joriy filtrga mos BUTUN to'plam bo'yicha (faqat yuklangan sahifa emas) */}
+      {!loading && total > 0 && (
         <div className="row text-sm muted" style={{ gap: 16, marginBottom: 12 }}>
-          <span><b style={{ color: 'var(--text)' }}>{summary.count}</b> ta buyurtma</span>
-          <span>Faol: <b style={{ color: 'var(--amber)' }}>{summary.active}</b></span>
-          <span>Tushum: <b style={{ color: 'var(--text)' }}>{formatSom(summary.revenue)}</b></span>
+          <span><b style={{ color: 'var(--text)' }}>{total}</b> ta buyurtma</span>
+          <span>Faol: <b style={{ color: 'var(--amber)' }}>{activeCount}</b></span>
+          <span>Tushum: <b style={{ color: 'var(--text)' }}>{formatSom(revenueSum)}</b></span>
         </div>
       )}
 
@@ -1017,6 +1051,14 @@ function OrdersTab({ onOpenChat }: { onOpenChat: (customerId: string) => void })
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {orders.length < total && (
+        <div style={{ textAlign: 'center', marginTop: 14 }}>
+          <button className="btn ghost" disabled={loadingMore} onClick={() => loadOrders(page + 1, true)}>
+            {loadingMore ? 'Yuklanmoqda…' : `Yana ko'rsatish (${total - orders.length} ta qoldi)`}
+          </button>
         </div>
       )}
     </div>
@@ -1218,6 +1260,119 @@ function SupportTab({
 }
 
 /* ============ Olib ketish joylari ============ */
+/* ============ Sozlamalar (minimal buyurtma + do'kon holati) ============ */
+function SettingsTab() {
+  const toast = useToast();
+  const dialog = useDialog();
+  const [settings, setSettings] = useState<MarketSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [minOrderAmount, setMinOrderAmount] = useState('');
+  const [isAcceptingOrders, setIsAcceptingOrders] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    getMarketSettings()
+      .then((s) => {
+        setSettings(s);
+        setMinOrderAmount(String(s.minOrderAmount));
+        setIsAcceptingOrders(s.isAcceptingOrders);
+      })
+      .catch((e) => toast((e as Error).message, 'error'))
+      .finally(() => setLoading(false));
+  }, [toast]);
+
+  async function save() {
+    // Ochiqdan yopiqqa o'tish — barcha mijozlar checkout qila olmay qoladi,
+    // shuning uchun boshqa "yopuvchi" harakatlar (masalan pickup joyni
+    // faolsizlantirish) kabi tasdiq so'raladi.
+    if (settings?.isAcceptingOrders !== false && !isAcceptingOrders) {
+      const ok = await dialog.confirm(
+        "Do'kon vaqtincha yopiladi — mijozlar buyurtma bera olmaydi.",
+        { title: "Market'ni yopish", danger: true, confirmLabel: 'Yopish' },
+      );
+      if (!ok) return;
+    }
+    setSaving(true);
+    try {
+      const updated = await updateMarketSettings({
+        minOrderAmount: parseInt(minOrderAmount, 10) || 0,
+        isAcceptingOrders,
+      });
+      setSettings(updated);
+      toast('Sozlamalar saqlandi ✓', 'success');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="card-body">
+          <div className="sk sk-line sk-line-sm" style={{ marginBottom: 8, maxWidth: 240 }} />
+          <div className="sk" style={{ height: 40, borderRadius: 8, maxWidth: 240 }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div className="card" style={{ flex: 1, minWidth: 280, maxWidth: 420 }}>
+        <div className="card-header">
+          <span className="card-title">🛒 Market sozlamalari</span>
+        </div>
+        <div className="card-body">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <NumInput
+              label="Minimal buyurtma summasi"
+              value={minOrderAmount}
+              onChange={setMinOrderAmount}
+              suffix="so'm"
+              hint="Savat summasi shundan kam bo'lsa checkout bloklanadi. 0 — cheklov yo'q."
+            />
+            <div>
+              <label>Do&apos;kon holati</label>
+              <div className="row-sb" style={{ marginTop: 6 }}>
+                <span
+                  className="badge"
+                  style={{ background: isAcceptingOrders ? 'var(--green)' : '#64748b' }}
+                >
+                  {isAcceptingOrders ? 'Buyurtma qabul qilmoqda' : 'Vaqtincha yopiq'}
+                </span>
+                <button
+                  className={`btn btn-sm ${isAcceptingOrders ? 'red' : 'green'}`}
+                  onClick={() => setIsAcceptingOrders((v) => !v)}
+                >
+                  {isAcceptingOrders ? 'Vaqtincha yopish' : 'Qayta ochish'}
+                </button>
+              </div>
+              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>
+                Yopiq holatda mijozlar mahsulotlarni ko&apos;ra oladi, lekin checkout bloklanadi.
+              </p>
+            </div>
+          </div>
+          <div className="row" style={{ marginTop: 20 }}>
+            <button className="btn" disabled={saving} onClick={save}>
+              {saving ? (
+                <>
+                  <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                  Saqlanmoqda&hellip;
+                </>
+              ) : (
+                'Saqlash'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PickupTab() {
   const toast = useToast();
   const dialog = useDialog();

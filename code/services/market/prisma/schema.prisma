@@ -96,3 +96,14 @@ model SupportMessage {
   @@index([customerId, createdAt])
   @@map("support_messages")
 }
+
+/// Butun Market uchun yagona global sozlama (bitta do'kon — Shop modeli yo'q).
+/// Yagona qator, id har doim "default" (Tariff'dagi bir xil singleton naqshi).
+model MarketSettings {
+  id                String   @id @default("default")
+  minOrderAmount    Int      @default(0)
+  isAcceptingOrders Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+
+  @@map("market_settings")
+}

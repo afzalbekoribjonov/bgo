@@ -7,6 +7,7 @@ export interface DriverPublicInfo {
   carName: string | null;
   carYear: number | null;
   plateNumber: string | null;
+  rating: number;
 }
 
 /** Har qanday foydalanuvchining umumiy ma'lumoti (mijoz/haydovchi/oshxona egasi). */
@@ -123,6 +124,32 @@ export class DriverInfoClient {
       if (!res.ok) this.logger.warn(`Sezdirmasdan qaytarish muvaffaqiyatsiz: ${res.status}`);
     } catch (err) {
       this.logger.warn(`Sezdirmasdan qaytarish xatosi: ${(err as Error).message}`);
+    }
+  }
+
+  /**
+   * Mijoz safar/buyurtmani baholadi (1-5) — haydovchining umumiy reytingiga
+   * qo'shiladi (best-effort, xato bo'lsa jim log — mijozga qaytariladigan
+   * javobni bloklamaydi/buzmaydi).
+   */
+  async applyDriverRating(userId: string, score: number): Promise<void> {
+    if (!userId || !this.key || score < 1 || score > 5) return;
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/api/v1/internal/drivers/${userId}/apply-rating`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-key': this.key,
+          },
+          body: JSON.stringify({ score }),
+          signal: AbortSignal.timeout(DriverInfoClient.FETCH_TIMEOUT_MS),
+        },
+      );
+      if (!res.ok) this.logger.warn(`Reyting sinxronlanmadi: ${res.status}`);
+    } catch (err) {
+      this.logger.warn(`Reyting sinxronlanmadi: ${(err as Error).message}`);
     }
   }
 

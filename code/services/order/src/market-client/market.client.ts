@@ -24,6 +24,11 @@ export interface MarketPickupLocation {
   lng: number;
 }
 
+export interface MarketSettingsSnapshot {
+  minOrderAmount: number;
+  isAcceptingOrders: boolean;
+}
+
 /**
  * Market servisidan (katalog) mahsulot/zaxira/pickup joy ma'lumotini oladi —
  * narx/nom SERVER tomonda aniqlanadi (mijoz yuborgan narxga ishonilmaydi).
@@ -37,6 +42,8 @@ export class MarketClient {
   private readonly internalKey?: string;
   /** Osilib qolgan ichki chaqiruv butun so'rovni cheksiz ushlab turmasin. */
   private static readonly FETCH_TIMEOUT_MS = 5_000;
+  private settingsCache: { settings: MarketSettingsSnapshot; at: number } | null = null;
+  private static readonly SETTINGS_TTL_MS = 60_000;
 
   constructor(config: ConfigService) {
     this.baseUrl =
@@ -129,6 +136,40 @@ export class MarketClient {
       throw new BadRequestException(
         `Mahsulot zaxirasi yetarli emas (id: ${productId})`,
       );
+    }
+  }
+
+  /**
+   * Market sozlamalari (minimal buyurtma + do'kon holati) — checkout'da
+   * tekshiriladi. Qisqa TTL-kesh; xatoda OXIRGI ma'lum qiymat qaytariladi,
+   * kesh umuman bo'lmasa `null` (cheklovsiz — FAIL-OPEN). Bu `getProduct`/
+   * `getPickupLocation`dan ATAYLAB farqli: ular narx/zaxira xavfsizligi
+   * uchun fail-CLOSED, lekin Market butunlay ishlamay qolsa checkout baribir
+   * o'sha chaqiruvlar orqali to'xtaydi — shuning uchun bu yerda bitta
+   * vaqtinchalik xato haqiqiy minimal-buyurtma qoidasini bekor qilib
+   * qo'ymasligi muhimroq.
+   */
+  async getSettings(): Promise<MarketSettingsSnapshot | null> {
+    if (
+      this.settingsCache &&
+      Date.now() - this.settingsCache.at < MarketClient.SETTINGS_TTL_MS
+    ) {
+      return this.settingsCache.settings;
+    }
+    if (!this.internalKey) return this.settingsCache?.settings ?? null;
+    try {
+      const res = await fetch(`${this.baseUrl}/api/v1/market/internal/settings`, {
+        headers: { 'x-internal-key': this.internalKey },
+        signal: AbortSignal.timeout(MarketClient.FETCH_TIMEOUT_MS),
+      });
+      if (!res.ok) return this.settingsCache?.settings ?? null;
+      const json = (await res.json()) as { data: MarketSettingsSnapshot };
+      const settings = json?.data ?? null;
+      if (settings) this.settingsCache = { settings, at: Date.now() };
+      return settings;
+    } catch (err) {
+      this.logger.warn(`Market sozlamalari olinmadi: ${(err as Error).message}`);
+      return this.settingsCache?.settings ?? null;
     }
   }
 

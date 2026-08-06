@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getTariff, updateTariff } from '@/lib/api';
+import { NumInput } from '@/components/num-input';
 import { useToast } from '@/components/toast';
 import type { Tariff } from '@/lib/types';
 
@@ -12,46 +13,6 @@ const TAB_ITEMS: { key: Tab; label: string; icon: string }[] = [
   { key: 'taxi', label: 'Taksi', icon: '🚕' },
   { key: 'parcel', label: 'Dostavka', icon: '📦' },
 ];
-
-function NumInput({
-  label,
-  value,
-  onChange,
-  suffix,
-  hint,
-  decimal,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  suffix?: string;
-  hint?: string;
-  decimal?: boolean;
-}) {
-  return (
-    <div>
-      <label>
-        {label}
-        {suffix && (
-          <span style={{ fontSize: 11.5, color: 'var(--text-muted)', marginLeft: 6 }}>
-            ({suffix})
-          </span>
-        )}
-      </label>
-      <input
-        value={value}
-        inputMode={decimal ? 'decimal' : 'numeric'}
-        onChange={(e) => onChange(decimal ? e.target.value.replace(/[^0-9.]/g, '') : e.target.value.replace(/\D/g, ''))}
-        style={{ maxWidth: 240 }}
-      />
-      {hint && (
-        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '5px 0 0', lineHeight: 1.5 }}>
-          {hint}
-        </p>
-      )}
-    </div>
-  );
-}
 
 export default function TariffPage() {
   const toast = useToast();
@@ -90,6 +51,7 @@ export default function TariffPage() {
   const [homeModeTaxiPct, setHomeModeTaxiPct] = useState('');
   const [homeModeParcelPct, setHomeModeParcelPct] = useState('');
   const [homeModeDetourPct, setHomeModeDetourPct] = useState('');
+  const [homeModeDistanceKm, setHomeModeDistanceKm] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -119,6 +81,7 @@ export default function TariffPage() {
         setHomeModeTaxiPct(String(t.homeModeTaxiCommissionPercent ?? 20));
         setHomeModeParcelPct(String(t.homeModeParcelCommissionPercent ?? 20));
         setHomeModeDetourPct(String(t.homeModeMaxDetourPercent ?? 30));
+        setHomeModeDistanceKm(String(t.homeModeMaxHomeDistanceKm ?? 2));
       })
       .catch((e) => toast((e as Error).message, 'error'))
       .finally(() => setLoading(false));
@@ -151,6 +114,7 @@ export default function TariffPage() {
         homeModeTaxiCommissionPercent: parseInt(homeModeTaxiPct, 10) || 0,
         homeModeParcelCommissionPercent: parseInt(homeModeParcelPct, 10) || 0,
         homeModeMaxDetourPercent: parseInt(homeModeDetourPct, 10) || 0,
+        homeModeMaxHomeDistanceKm: parseFloat(homeModeDistanceKm) || 0,
       });
       setTariff(updated);
       toast('Tariflar saqlandi ✓', 'success');
@@ -530,6 +494,13 @@ export default function TariffPage() {
                   suffix="%"
                   hint="Uyga bevosita yo'ldan shu foizdan ko'p chetlansa — 'mos' hisoblanmaydi. Taksi va dostavka uchun umumiy."
                 />
+                <NumInput
+                  label="Uyga yaqinlik chegarasi"
+                  value={homeModeDistanceKm}
+                  onChange={setHomeModeDistanceKm}
+                  suffix="km"
+                  hint="Buyurtmaning oxirgi nuqtasi (manzil) uydan shu masofadan uzoq bo'lsa — 'mos' hisoblanmaydi (chetlanish foizi mos bo'lsa ham). Taksi va dostavka uchun umumiy."
+                />
               </div>
               <div
                 style={{
@@ -608,8 +579,8 @@ export default function TariffPage() {
             <div className="card-body">
               <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 14 }}>
                 Kuryer uyga boruvchi dostavkaga ustuvorlik olganda qo&apos;llanadigan
-                komissiya. Chetlanish chegarasi Taksi bo&apos;limida (taksi va
-                dostavka uchun umumiy).
+                komissiya. Chetlanish va masofa chegaralari Taksi bo&apos;limida
+                (taksi va dostavka uchun umumiy).
               </p>
               <NumInput
                 label="Dostavka komissiyasi"

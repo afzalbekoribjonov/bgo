@@ -33,6 +33,11 @@ export class InternalController {
     };
   }
 
+  @Get('settings')
+  async settings() {
+    return { success: true, data: await this.service.getSettings() };
+  }
+
   @Post('products/:id/reserve-stock')
   @HttpCode(200)
   async reserve(@Param('id') id: string, @Body('qty') qty: number) {

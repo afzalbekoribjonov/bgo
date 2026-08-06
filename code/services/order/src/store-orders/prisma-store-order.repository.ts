@@ -12,7 +12,11 @@ import {
   StoreOrderStatus,
   StoreOrderStatusEntry,
 } from './entities';
-import { StoreOrderRepository, UpdateStoreStatusMeta } from './store-order.repository';
+import {
+  StoreOrderAdminFilter,
+  StoreOrderRepository,
+  UpdateStoreStatusMeta,
+} from './store-order.repository';
 
 type Row = Record<string, unknown>;
 
@@ -50,11 +54,68 @@ export class PrismaStoreOrderRepository extends StoreOrderRepository {
     return o ? this.toStoreOrder(o as Row) : null;
   }
 
-  async findAll(): Promise<StoreOrder[]> {
-    const rows = await this.prisma.storeOrder.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return rows.map((o) => this.toStoreOrder(o as Row));
+  async findAllPaged(
+    filter: StoreOrderAdminFilter,
+    page: number,
+    pageSize: number,
+  ): Promise<{ items: StoreOrder[]; total: number; revenueSum: number; activeCount: number }> {
+    const and: Prisma.StoreOrderWhereInput[] = [];
+    if (filter.status) and.push({ status: filter.status });
+    if (filter.deliveryMethod) and.push({ deliveryMethod: filter.deliveryMethod });
+    if (filter.publicNo !== undefined) and.push({ publicNo: filter.publicNo });
+    if (filter.overdueBefore !== undefined) {
+      and.push({
+        status: 'READY_FOR_PICKUP',
+        readyAt: { lt: new Date(filter.overdueBefore) },
+      });
+    }
+    if (filter.fromTs !== undefined || filter.toTs !== undefined) {
+      and.push({
+        createdAt: {
+          ...(filter.fromTs !== undefined ? { gte: new Date(filter.fromTs) } : {}),
+          ...(filter.toTs !== undefined ? { lte: new Date(filter.toTs) } : {}),
+        },
+      });
+    }
+    if (filter.textQuery) {
+      // `items`/`address` — JSON ustunlar, typed `where` ichida qidirib
+      // bo'lmaydi. Parametrlashtirilgan (in'ektsiyadan xavfsiz) $queryRaw
+      // bilan mos ID'lar topiladi, keyin oddiy `where: {id:{in}}` orqali
+      // qolgan filtrlar bilan birlashtiriladi.
+      const term = `%${filter.textQuery}%`;
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM store_orders
+        WHERE items::text ILIKE ${term} OR address::text ILIKE ${term}
+      `;
+      and.push({ id: { in: rows.map((r) => r.id) } });
+    }
+    const where: Prisma.StoreOrderWhereInput = and.length > 0 ? { AND: and } : {};
+    // Tushum/faol-son — sahifadagi emas, BUTUN filtrlangan to'plam bo'yicha
+    // (aks holda admin panelida sahifalab ko'rsatilgach raqamlar chalg'ituvchi
+    // bo'lib qolar edi). Ikkalasi ham `status` ustunidagi mavjud indeksga
+    // tayanadigan yengil agregat so'rovlar — to'liq jadval o'qilmaydi.
+    const [rows, total, revenueAgg, activeCount] = await Promise.all([
+      this.prisma.storeOrder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.storeOrder.count({ where }),
+      this.prisma.storeOrder.aggregate({
+        where: { ...where, status: { not: 'CANCELLED' } },
+        _sum: { total: true },
+      }),
+      this.prisma.storeOrder.count({
+        where: { ...where, status: { notIn: ['DELIVERED', 'COMPLETED', 'CANCELLED'] } },
+      }),
+    ]);
+    return {
+      items: rows.map((o) => this.toStoreOrder(o as Row)),
+      total,
+      revenueSum: revenueAgg._sum.total ?? 0,
+      activeCount,
+    };
   }
 
   async findByCustomer(customerId: string): Promise<StoreOrder[]> {
@@ -141,7 +202,11 @@ export class PrismaStoreOrderRepository extends StoreOrderRepository {
     ];
     const updated = await this.prisma.storeOrder.update({
       where: { id },
-      data: { status, statusHistory: history as unknown as Prisma.InputJsonValue },
+      data: {
+        status,
+        statusHistory: history as unknown as Prisma.InputJsonValue,
+        ...(status === 'READY_FOR_PICKUP' ? { readyAt: new Date() } : {}),
+      },
     });
     return this.toStoreOrder(updated as Row);
   }
@@ -206,6 +271,7 @@ export class PrismaStoreOrderRepository extends StoreOrderRepository {
       statusHistory: o.statusHistory as unknown as StoreOrderStatusEntry[],
       rating: (o.rating as number) ?? undefined,
       ratingComment: (o.ratingComment as string) ?? undefined,
+      readyAt: (o.readyAt as Date | null)?.toISOString() ?? undefined,
       createdAt: (o.createdAt as Date).toISOString(),
       updatedAt: (o.updatedAt as Date).toISOString(),
     };

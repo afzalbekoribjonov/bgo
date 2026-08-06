@@ -130,6 +130,7 @@ export interface Tariff {
   homeModeTaxiCommissionPercent: number;
   homeModeParcelCommissionPercent: number;
   homeModeMaxDetourPercent: number;
+  homeModeMaxHomeDistanceKm: number;
 }
 
 export interface PromoCode {
@@ -523,6 +524,21 @@ export interface MarketProduct {
   updatedAt: string;
 }
 
+export interface MarketSettings {
+  id: string;
+  minOrderAmount: number;
+  isAcceptingOrders: boolean;
+  updatedAt: string;
+}
+
+/** Sahifalab yuklangan ro'yxat javobi (mahsulotlar/buyurtmalar). */
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface MarketComment {
   id: string;
   productId: string;
@@ -575,6 +591,7 @@ export type StoreOrderStatus =
   | 'PICKED_UP'
   | 'IN_TRANSIT'
   | 'DELIVERED'
+  | 'PREPARING'
   | 'READY_FOR_PICKUP'
   | 'COMPLETED'
   | 'CANCELLED';
@@ -585,6 +602,13 @@ export interface StoreOrderStatusEntry {
   by?: 'customer' | 'driver' | 'admin' | 'system';
   driverId?: string;
   reason?: string;
+}
+
+/** Buyurtmalar ro'yxati javobi — sahifalangan + BUTUN filtrlangan to'plam
+ * bo'yicha jonli hisob (faqat joriy sahifa emas). */
+export interface StoreOrdersPage extends PagedResult<StoreOrder> {
+  revenueSum: number;
+  activeCount: number;
 }
 
 export interface StoreOrder {
@@ -608,6 +632,8 @@ export interface StoreOrder {
   allowedTransitions?: StoreOrderStatus[];
   /** Mijoz ism/telefoni — best-effort (auth servisi javob bermasa null). */
   customer?: { fullName: string | null; phone: string } | null;
+  /** PICKUP: READY_FOR_PICKUP'ga o'tgan vaqt — 3 kunlik saqlash muddati uchun. */
+  readyAt?: string;
   createdAt: string;
   updatedAt: string;
 }

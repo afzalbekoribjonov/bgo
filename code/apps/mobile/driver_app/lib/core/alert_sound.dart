@@ -29,6 +29,22 @@ class AlertSound {
     } catch (_) {}
   }
 
+  /// Bir martalik qisqa signal (navigatsiya ogohlantirishlari uchun).
+  ///
+  /// ALOHIDA, qisqa umrli `AudioPlayer` ishlatiladi — yangi buyurtma
+  /// signalini (tsiklli `_player`) hech qachon to'xtatib/rejimini buzib
+  /// qo'ymasligi uchun. Ovoz tugagach o'zi tozalanadi.
+  Future<void> playOnce([String asset = 'sounds/alert.wav']) async {
+    try {
+      final p = AudioPlayer();
+      await p.setReleaseMode(ReleaseMode.stop);
+      p.onPlayerComplete.first.then((_) => p.dispose()).catchError((_) {});
+      await p.play(AssetSource(asset));
+    } catch (_) {
+      // Ovoz qurilmasi yo'q/band — jim o'tkazamiz (navigatsiya buzilmaydi).
+    }
+  }
+
   void dispose() {
     _player.dispose();
   }

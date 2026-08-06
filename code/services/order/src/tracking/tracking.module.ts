@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
+import { OsrmRouteClient } from '../common/osrm-route.client';
 import { DriverLocationRepository } from './driver-location.repository';
 import { DriverLocationService } from './driver-location.service';
 import { PrismaDriverLocationRepository } from './prisma-driver-location.repository';
@@ -14,6 +15,7 @@ import { TripDistanceTracker } from './trip-distance-tracker.service';
   providers: [
     DriverLocationService,
     TripDistanceTracker,
+    OsrmRouteClient,
     JwtAuthGuard,
     RolesGuard,
     {
