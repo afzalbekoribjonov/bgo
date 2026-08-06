@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { cancelOrder, formatDate, formatSom, getOrder, rateOrder } from '@/lib/api';
 import { useToast } from '@/components/toast';
 import { useDialog } from '@/components/dialog';
+import Topbar from '@/components/topbar';
 import type { StoreOrder } from '@/lib/types';
 
 const DELIVERY_STEPS: { statuses: StoreOrder['status'][]; label: string }[] = [
@@ -79,10 +80,7 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <>
-        <div className="topbar">
-          <button className="topbar-back" onClick={() => router.back()}>←</button>
-          <span className="topbar-title">Yuklanmoqda...</span>
-        </div>
+        <Topbar title="Yuklanmoqda..." showBack onBack={() => router.back()} />
       </>
     );
   }
@@ -105,10 +103,7 @@ export default function OrderDetailPage() {
 
   return (
     <>
-      <div className="topbar">
-        <button className="topbar-back" onClick={() => router.back()}>←</button>
-        <span className="topbar-title">Buyurtma #{order.publicNo}</span>
-      </div>
+      <Topbar title={`Buyurtma #${order.publicNo}`} showBack onBack={() => router.back()} />
       <div className="content">
         {isCancelled ? (
           <div className="err-block">Bu buyurtma bekor qilingan</div>

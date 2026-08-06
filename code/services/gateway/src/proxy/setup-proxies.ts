@@ -49,6 +49,11 @@ export function setupProxies(app: INestApplication): void {
         pathFilter: (path) => path.startsWith(route.prefix),
         target,
         changeOrigin: true,
+        // Sekinlashgan/osilib qolgan servis gateway ulanishini cheksiz
+        // ochiq ushlab turmasin — vaqt tugasa 'error' hodisasi (pastda)
+        // chaqirilib, 502 JSON javob qaytadi.
+        proxyTimeout: 15_000,
+        timeout: 15_000,
         on: {
           error: (err, _req, res) => {
             logger.error(`Proxy xato (${route.prefix} -> ${target}): ${err.message}`);

@@ -78,6 +78,25 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
         }
       },
     ));
+    // JS bridge: sayt ichidan (masalan market_web'ning "Uy" tugmasi)
+    // `window.NativeApp.postMessage('home')` chaqirib, asosiy ekranga
+    // qaytishni so'raydi. Delegate kabi har mount'da qayta ro'yxatdan
+    // o'tkaziladi — kesh'dagi controller eski (dispose bo'lgan) State'ga
+    // ishora qilib qolmasligi uchun (kanal keshlangan controller'da
+    // allaqachon bor bo'lsa, avval olib tashlanadi).
+    () async {
+      try {
+        await _controller.removeJavaScriptChannel('NativeApp');
+      } catch (_) {}
+      await _controller.addJavaScriptChannel(
+        'NativeApp',
+        onMessageReceived: (message) {
+          if (message.message == 'home' && mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+        },
+      );
+    }();
     if (_fromCache) {
       // Sahifa allaqachon yuklangan — qayta so'rovsiz darhol ko'rsatiladi.
       _progress = 100;

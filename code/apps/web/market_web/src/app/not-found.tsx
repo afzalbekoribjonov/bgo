@@ -1,14 +1,10 @@
 import Link from 'next/link';
+import Topbar from '@/components/topbar';
 
 export default function NotFound() {
   return (
     <>
-      <div className="topbar">
-        <span className="topbar-title">
-          <span className="brand-logo">🛒</span>
-          Beshariq Market
-        </span>
-      </div>
+      <Topbar title="Beshariq Market" brandIcon="🛒" />
       <div className="content">
         <div className="empty" style={{ paddingTop: 80 }}>
           <div className="empty-icon">🔍</div>

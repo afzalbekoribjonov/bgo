@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupportMessages, sendSupportMessage } from '@/lib/api';
 import { useToast } from '@/components/toast';
 import { useAuthState } from '@/lib/auth-context';
+import Topbar from '@/components/topbar';
 import type { SupportMessage } from '@/lib/types';
 
 export default function SupportPage() {
@@ -50,9 +51,7 @@ export default function SupportPage() {
 
   return (
     <>
-      <div className="topbar">
-        <span className="topbar-title">💬 Market Support</span>
-      </div>
+      <Topbar title="💬 Market Support" />
       <div className="content" style={{ paddingBottom: authed ? 90 : 20 }}>
         {!ready ? null : !authed ? (
           <div className="empty">

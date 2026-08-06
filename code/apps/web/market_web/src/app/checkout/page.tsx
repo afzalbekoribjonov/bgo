@@ -6,6 +6,7 @@ import { createOrder, formatSom, getMarketSettings, getPickupLocations } from '@
 import { useToast } from '@/components/toast';
 import { useAuthState } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart';
+import Topbar from '@/components/topbar';
 import type { MarketSettings, PickupLocation } from '@/lib/types';
 
 type Method = 'DELIVERY' | 'PICKUP';
@@ -113,10 +114,7 @@ export default function CheckoutPage() {
   if (!authed) {
     return (
       <>
-        <div className="topbar">
-          <button className="topbar-back" onClick={() => router.back()}>←</button>
-          <span className="topbar-title">Rasmiylashtirish</span>
-        </div>
+        <Topbar title="Rasmiylashtirish" showBack onBack={() => router.back()} />
         <div className="content">
           <div className="empty">
             <div className="empty-icon">🔒</div>
@@ -129,10 +127,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <div className="topbar">
-        <button className="topbar-back" onClick={() => router.back()}>←</button>
-        <span className="topbar-title">Rasmiylashtirish</span>
-      </div>
+      <Topbar title="Rasmiylashtirish" showBack onBack={() => router.back()} />
       <div className="content" style={{ paddingBottom: 120 }}>
         <div className="section-title">Qanday olasiz?</div>
         <div className="method-row">

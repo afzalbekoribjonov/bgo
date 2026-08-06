@@ -7,6 +7,7 @@ import {
   VALIDATION_PIPE_OPTIONS,
 } from '@beshariq/nest-bootstrap';
 import helmet from 'helmet';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { AppModule } from './app.module';
 import { setupProxies } from './proxy/setup-proxies';
@@ -51,6 +52,13 @@ async function bootstrap() {
     'http://localhost:3001', // backup
   ]);
   app.enableCors(buildCorsOptions(corsOrigins));
+
+  // Javoblarni siqish (gzip/br) — sahifalangan ro'yxatlar kabi katta JSON
+  // javoblar tarmoqda kichikroq bo'ladi. MUHIM: proxy'dan OLDIN turishi
+  // shart — aks holda javob oqimi allaqachon yozib bo'lingan bo'ladi va
+  // siqish qo'llanmaydi. Rasm kabi allaqachon siqilgan turlar avtomatik
+  // o'tkazib yuboriladi (compression'ning standart filtri).
+  app.use(compression());
 
   // Proxy: barcha API so'rovlarini tegishli servislarga yo'naltiradi
   setupProxies(app);

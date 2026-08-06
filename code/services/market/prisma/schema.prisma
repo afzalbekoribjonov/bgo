@@ -46,6 +46,10 @@ model Product {
   comments ProductComment[]
 
   @@index([categoryId])
+  /// listProducts/adminListProducts naqshi: isActive filtri + createdAt desc saralash.
+  @@index([isActive, createdAt])
+  /// Xuddi shu naqsh, lekin kategoriya bo'yicha filtrlanganda.
+  @@index([categoryId, isActive, createdAt])
   @@map("products")
 }
 

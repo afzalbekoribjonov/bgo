@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatDate, formatSom, getMyOrders } from '@/lib/api';
 import { useToast } from '@/components/toast';
 import { useAuthState } from '@/lib/auth-context';
+import Topbar from '@/components/topbar';
 import type { StoreOrder, StoreOrderStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<StoreOrderStatus, string> = {
@@ -56,9 +57,7 @@ export default function OrdersPage() {
 
   return (
     <>
-      <div className="topbar">
-        <span className="topbar-title">📦 Buyurtmalarim</span>
-      </div>
+      <Topbar title="📦 Buyurtmalarim" />
       <div className="content">
         {!ready ? null : !authed ? (
           <div className="empty">

@@ -5,6 +5,8 @@ import { formatSom } from '@/lib/api';
 import { useAuthState } from '@/lib/auth-context';
 import { lineKey, useCart } from '@/lib/cart';
 import { useDialog } from '@/components/dialog';
+import Topbar from '@/components/topbar';
+import QtyStepper from '@/components/qty-stepper';
 
 export default function CartPage() {
   const router = useRouter();
@@ -22,9 +24,7 @@ export default function CartPage() {
 
   return (
     <>
-      <div className="topbar">
-        <span className="topbar-title">🛒 Savat</span>
-      </div>
+      <Topbar title="🛒 Savat" />
       <div className="content" style={{ paddingBottom: cart.items.length ? 140 : 20 }}>
         {!authed && (
           <div className="view-only-banner">
@@ -56,16 +56,12 @@ export default function CartPage() {
                     <div className="cart-item-price">{formatSom(item.price)}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                    <div className="qty-stepper">
-                      <button onClick={() => cart.setQty(key, item.qty - 1)}>−</button>
-                      <span className="qty-val">{item.qty}</span>
-                      <button
-                        onClick={() => cart.setQty(key, item.qty + 1)}
-                        disabled={item.qty >= item.stockQty}
-                      >
-                        +
-                      </button>
-                    </div>
+                    <QtyStepper
+                      value={item.qty}
+                      onDecrement={() => cart.setQty(key, item.qty - 1)}
+                      onIncrement={() => cart.setQty(key, item.qty + 1)}
+                      incrementDisabled={item.qty >= item.stockQty}
+                    />
                     <button
                       className="text-xs"
                       style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }}

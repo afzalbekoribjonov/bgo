@@ -7,6 +7,7 @@ import { useToast } from '@/components/toast';
 import { useAuthState } from '@/lib/auth-context';
 import ProductCard from '@/components/product-card';
 import RetryBanner from '@/components/retry-banner';
+import Topbar from '@/components/topbar';
 import type { Category } from '@/lib/types';
 
 export default function HomePage() {
@@ -76,12 +77,7 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="topbar">
-        <span className="topbar-title">
-          <span className="brand-logo">🛒</span>
-          Beshariq Market
-        </span>
-      </div>
+      <Topbar title="Beshariq Market" brandIcon="🛒" />
       <div className="content">
         {!authed && (
           <div className="view-only-banner">

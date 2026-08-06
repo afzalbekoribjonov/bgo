@@ -1,5 +1,7 @@
 'use client';
 
+import Topbar from '@/components/topbar';
+
 export default function GlobalError({
   reset,
 }: {
@@ -8,12 +10,7 @@ export default function GlobalError({
 }) {
   return (
     <>
-      <div className="topbar">
-        <span className="topbar-title">
-          <span className="brand-logo">🛒</span>
-          Beshariq Market
-        </span>
-      </div>
+      <Topbar title="Beshariq Market" brandIcon="🛒" />
       <div className="content">
         <div className="empty" style={{ paddingTop: 80 }}>
           <div className="empty-icon">⚠️</div>

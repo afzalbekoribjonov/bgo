@@ -13,6 +13,8 @@ import {
 import { useToast } from '@/components/toast';
 import { useAuthState } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart';
+import Topbar from '@/components/topbar';
+import QtyStepper from '@/components/qty-stepper';
 import type { Product, ProductComment } from '@/lib/types';
 
 export default function ProductDetailPage() {
@@ -123,10 +125,7 @@ export default function ProductDetailPage() {
   if (!ready || loading) {
     return (
       <>
-        <div className="topbar">
-          <button className="topbar-back" onClick={() => router.back()}>←</button>
-          <span className="topbar-title">Yuklanmoqda...</span>
-        </div>
+        <Topbar title="Yuklanmoqda..." showBack onBack={() => router.back()} />
         <div className="content">
           <div className="sk" style={{ aspectRatio: 1, borderRadius: 16, marginBottom: 16 }} />
           <div className="sk sk-line" style={{ height: 20, width: '70%', marginBottom: 10 }} />
@@ -147,10 +146,7 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      <div className="topbar">
-        <button className="topbar-back" onClick={() => router.back()}>←</button>
-        <span className="topbar-title">{product.name}</span>
-      </div>
+      <Topbar title={product.name} showBack onBack={() => router.back()} />
       <div className="content" style={{ paddingBottom: product.inStock ? 100 : 24 }}>
         <div className="gallery" ref={galleryRef} onScroll={onGalleryScroll}>
           {product.imageUrls.length === 0 ? (
@@ -218,7 +214,12 @@ export default function ProductDetailPage() {
         )}
 
         <div className="detail-stats">
-          <button className={`detail-stat ${product.liked ? 'liked' : ''}`} onClick={toggleLike} disabled={liking || product.liked}>
+          <button
+            className={`detail-stat ${product.liked ? 'liked' : ''}`}
+            onClick={toggleLike}
+            disabled={liking || product.liked}
+            aria-label={product.liked ? 'Yoqtirilgan' : 'Yoqtirish'}
+          >
             {product.liked ? '❤️' : '🤍'} {product.likesCount}
           </button>
           {product.ratingAvg !== null && (
@@ -270,11 +271,13 @@ export default function ProductDetailPage() {
       {product.inStock && (
         <div className="fixed-cta">
           <div className="card card-p row-sb">
-            <div className="qty-stepper">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1}>−</button>
-              <span className="qty-val">{qty}</span>
-              <button onClick={() => setQty((q) => Math.min(product.stockQty, q + 1))} disabled={qty >= product.stockQty}>+</button>
-            </div>
+            <QtyStepper
+              value={qty}
+              onDecrement={() => setQty((q) => Math.max(1, q - 1))}
+              onIncrement={() => setQty((q) => Math.min(product.stockQty, q + 1))}
+              decrementDisabled={qty <= 1}
+              incrementDisabled={qty >= product.stockQty}
+            />
             <button className="btn btn-lg cart-cta" style={{ flex: 1 }} onClick={addToCart}>
               <span className="cart-cta-label">Savatga qo'shish</span>
               <span className="cart-cta-price">{formatSom(product.price * qty)}</span>
