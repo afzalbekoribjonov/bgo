@@ -174,6 +174,15 @@ export class RestaurantsService {
     return !!restaurant && restaurant.ownerUserId === userId;
   }
 
+  /**
+   * Oshxona egasining userId'si — faqat ichki (internal) chaqiruvchilar
+   * uchun (masalan order servisi yangi buyurtmada push yuborish uchun).
+   */
+  async getOwnerUserId(restaurantId: string): Promise<string | null> {
+    const restaurant = await this.repo.getRestaurant(restaurantId);
+    return restaurant?.ownerUserId ?? null;
+  }
+
   /** Oshxona menyusi — kategoriyalar bo'yicha guruhlangan, tilga moslangan. */
   async getMenu(id: string, locale: SupportedLocale) {
     const restaurant = await this.requireRestaurant(id);

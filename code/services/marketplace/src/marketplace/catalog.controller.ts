@@ -31,6 +31,18 @@ function parseSellerType(value?: string): SellerType {
 export class CatalogController {
   constructor(private readonly service: MarketplaceService) {}
 
+  /**
+   * "Mening do'konim" — kirgan foydalanuvchi sotuvchi egasimi? Egasi bo'lsa
+   * native panelga avtomatik kirish uchun token qaytaradi. Rol talab
+   * qilinmaydi — egalik ownerUserId bo'yicha tekshiriladi (Restaurant'dagi
+   * `/restaurants/my-kitchen` bilan bir xil naqsh).
+   */
+  @Get('my-shop')
+  @UseGuards(JwtAuthGuard)
+  async myShop(@CurrentUser() user: AccessTokenPayload) {
+    return { success: true, data: await this.service.panelTokenForOwner(user.sub) };
+  }
+
   @Get('categories')
   async categories(
     @Query('sellerType') sellerType: string,

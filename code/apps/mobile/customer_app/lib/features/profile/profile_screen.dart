@@ -12,7 +12,8 @@ import '../order/my_orders_screen.dart';
 import '../partner/partner_screen.dart';
 import '../support/support_home_screen.dart';
 import 'addresses_screen.dart';
-import '../../core/app_webview_screen.dart';
+import '../kitchen/kitchen_home_screen.dart';
+import '../seller_panel/seller_home_screen.dart';
 import 'profile_api.dart';
 import 'profile_edit_screen.dart';
 
@@ -125,8 +126,9 @@ class ProfileScreen extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final locale = ref.watch(localeProvider);
     final scheme = Theme.of(context).colorScheme;
-    // "Mening oshxonam" — faqat foydalanuvchi oshxona egasi bo'lsa ko'rinadi.
-    final myKitchen = ref.watch(myKitchenProvider).valueOrNull;
+    // "Mening oshxonam"/"Mening do'konim" — faqat egalar uchun ko'rinadi.
+    final kitchenLink = ref.watch(kitchenLinkProvider);
+    final sellerLink = ref.watch(sellerShopLinkProvider);
     final unreadMessages = ref.watch(unreadMessagesProvider).valueOrNull ?? 0;
     final name = (user?.fullName?.trim().isNotEmpty ?? false)
         ? user!.fullName!.trim()
@@ -218,21 +220,29 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
 
-          // ===== Mening oshxonam (faqat egalar) =====
-          if (myKitchen != null && myKitchen.owns) ...[
+          // ===== Mening oshxonam (faqat egalar) — native panel =====
+          if (kitchenLink.linked) ...[
             const SizedBox(height: 12),
             _KitchenCard(
-              name: myKitchen.name,
+              name: kitchenLink.name,
               subtitle: t.profileKitchenSub,
               onTap: () => _open(
                 context,
-                AppWebViewScreen(
-                  baseUrl: ApiConfig.panelBaseUrl,
-                  token: myKitchen.accessToken!,
-                  title: myKitchen.name ?? 'Mening oshxonam',
-                  loadingLabel: 'Oshxona paneli yuklanmoqda…',
-                ),
+                KitchenHomeScreen(restaurantId: kitchenLink.id!),
               ),
+            ),
+          ],
+
+          // ===== Mening do'konim (faqat egalar) — native panel =====
+          if (sellerLink.linked) ...[
+            const SizedBox(height: 12),
+            _KitchenCard(
+              name: sellerLink.name,
+              fallbackName: 'Mening do\'konim',
+              subtitle: 'Mahsulot, suhbat va profilni boshqaring',
+              gradient: const [Color(0xFF5E35B1), Color(0xFF4527A0)],
+              icon: Icons.storefront_outlined,
+              onTap: () => _open(context, const SellerHomeScreen()),
             ),
           ],
           const SizedBox(height: 18),
@@ -636,31 +646,38 @@ class _RowDivider extends StatelessWidget {
   }
 }
 
-/// "Mening oshxonam" — to'q sariq gradientli maxsus karta (faqat egalar).
+/// "Mening oshxonam"/"Mening do'konim" — gradientli hamkor-panel kartasi
+/// (faqat egalar uchun ko'rinadi).
 class _KitchenCard extends StatelessWidget {
   final String? name;
+  final String fallbackName;
   final String subtitle;
   final VoidCallback onTap;
+  final List<Color> gradient;
+  final IconData icon;
 
   const _KitchenCard({
     required this.name,
+    this.fallbackName = 'Mening oshxonam',
     required this.subtitle,
     required this.onTap,
+    this.gradient = const [Color(0xFFEF6C00), Color(0xFFE65100)],
+    this.icon = Icons.storefront_rounded,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEF6C00), Color(0xFFE65100)],
+        gradient: LinearGradient(
+          colors: gradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFEF6C00).withValues(alpha: 0.32),
+            color: gradient.first.withValues(alpha: 0.32),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -682,8 +699,7 @@ class _KitchenCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.storefront_rounded,
-                      color: Colors.white, size: 24),
+                  child: Icon(icon, color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -691,7 +707,7 @@ class _KitchenCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name ?? 'Mening oshxonam',
+                        name ?? fallbackName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

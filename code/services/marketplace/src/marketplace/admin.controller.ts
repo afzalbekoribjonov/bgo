@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -12,6 +13,7 @@ import {
 import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { SellerType } from '../../prisma/generated/client';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import { AssignOwnerByPhoneDto, LookupOwnerDto } from './dto/owner-phone.dto';
 import { CreateSellerDto, UpdateSellerDto } from './dto/seller.dto';
 import { MarketplaceService } from './marketplace.service';
 
@@ -48,6 +50,19 @@ export class AdminController {
   @Delete('sellers/:id')
   async deleteSeller(@Param('id') id: string) {
     return { success: true, data: await this.service.deleteSeller(id) };
+  }
+
+  /** Telefon raqami bo'yicha foydalanuvchini qidiradi (biriktirishdan oldin ko'rsatish). */
+  @Post('sellers/owner-lookup')
+  @HttpCode(200)
+  async lookupOwner(@Body() dto: LookupOwnerDto) {
+    return { success: true, data: await this.service.findOwnerCandidate(dto.phone) };
+  }
+
+  /** Do'kon egasini telefon raqami bo'yicha biriktiradi (UUID kerak emas). */
+  @Patch('sellers/:id/owner-by-phone')
+  async assignOwnerByPhone(@Param('id') id: string, @Body() dto: AssignOwnerByPhoneDto) {
+    return { success: true, data: await this.service.assignOwnerByPhone(id, dto.phone) };
   }
 
   // ---- Kategoriyalar ----

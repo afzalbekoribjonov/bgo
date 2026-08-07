@@ -1,4 +1,4 @@
-import { Controller, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { RestaurantsService } from './restaurants.service';
 
@@ -18,5 +18,16 @@ export class InternalRestaurantsController {
   async inactive(@Param('id') id: string) {
     await this.service.setOpen(id, false);
     return { success: true };
+  }
+
+  /**
+   * Oshxona egasining userId'sini qaytaradi — order servisi yangi
+   * buyurtmada egaga push-bildirishnoma yuborish uchun ishlatadi.
+   * Ichki-only: ownerUserId hech qachon public/admin javoblarda ochilmaydi.
+   */
+  @Get(':id/owner')
+  async owner(@Param('id') id: string) {
+    const ownerUserId = await this.service.getOwnerUserId(id);
+    return { ownerUserId };
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'auth_gate.dart';
 import 'package:beshariq_core/beshariq_core.dart';
+import 'core/navigation.dart';
 import 'theme/app_theme.dart';
 
 /// Ilova fonda/yopiq bo'lganda kelgan push (tizim o'zi ko'rsatadi).
@@ -32,6 +33,7 @@ class BeshariqApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     return MaterialApp(
+      navigatorKey: navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),

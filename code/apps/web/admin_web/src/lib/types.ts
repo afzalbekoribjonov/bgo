@@ -652,6 +652,8 @@ export interface MarketplaceSeller {
   lat: number | null;
   lng: number | null;
   isActive: boolean;
+  /** Do'kon egasining auth foydalanuvchi id'si — telefon orqali biriktiriladi. */
+  ownerUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }

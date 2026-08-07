@@ -64,6 +64,9 @@ dependencies:
   # "Mening oshxonam" — oshxona panelini ilova ichida ko'rsatish (WebView)
   webview_flutter: ^4.10.0
 
+  # Hamkor panellari (oshxona/do'kon) — mahsulot/taom rasmi tanlash
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

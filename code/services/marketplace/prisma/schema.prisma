@@ -45,11 +45,15 @@ model Seller {
   lat          Float?
   lng          Float?
   isActive     Boolean    @default(true)
+  /// Do'kon egasining auth foydalanuvchi id'si — telefon orqali admin
+  /// biriktiradi (Restaurant.ownerUserId naqshi). null — hali biriktirilmagan.
+  ownerUserId  String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   products     Product[]
 
   @@index([sellerType])
+  @@index([ownerUserId])
   @@map("sellers")
 }
 

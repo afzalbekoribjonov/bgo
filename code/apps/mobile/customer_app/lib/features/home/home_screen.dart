@@ -471,7 +471,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           data: (products) {
-            if (products.isEmpty) return const SizedBox.shrink();
+            if (products.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: Text(t.emptyMarketProducts,
+                      style: TextStyle(color: scheme.outline)),
+                ),
+              );
+            }
             return _MarketProductCarousel(
               products: products,
               onTap: _openMarketProduct,
@@ -495,10 +503,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ));
   }
 
-  /// Oshxonalar lentasi — GPS bo'lsa ENG YAQINI BIRINCHI (masofa chipi
-  /// bilan); GPS yo'q/joylashuvsiz oshxonalar reyting bo'yicha oxirida.
+  /// Oshxonalar lentasi — FAOL (ochiq) oshxonalar tasodifiy tartibda
+  /// (har safar ekran ochilganda boshqacha tartibda ko'rinadi), YOPIQ
+  /// oshxonalar esa alohida, pastroqdagi so'nik bo'limda ko'rsatiladi.
   Widget _popularSection(
       AppLocalizations t, AsyncValue<List<RestaurantSummary>> async) {
+    final scheme = Theme.of(context).colorScheme;
     return async.when(
       loading: () => _horizontalSkeletonRow(height: 172, cardWidth: 140),
       error: (e, _) => Padding(
@@ -509,70 +519,109 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       data: (list) {
-        if (list.isEmpty) return const SizedBox.shrink();
+        if (list.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Text(t.emptyRestaurants, style: TextStyle(color: scheme.outline)),
+            ),
+          );
+        }
         final me = _myLoc;
-        List<RestaurantSummary> ordered;
         final byDistance = <String, double>{};
-        if (me != null && list.any((r) => r.hasLocation)) {
+        if (me != null) {
           const d = Distance();
           for (final r in list.where((r) => r.hasLocation)) {
             byDistance[r.id] =
                 d.as(LengthUnit.Kilometer, me, LatLng(r.lat, r.lng));
           }
-          final located = list.where((r) => r.hasLocation).toList()
-            ..sort((a, b) => byDistance[a.id]!.compareTo(byDistance[b.id]!));
-          final rest = list.where((r) => !r.hasLocation).toList()
-            ..sort((a, b) => b.rating.compareTo(a.rating));
-          ordered = [...located, ...rest];
-        } else {
-          ordered = [...list]..sort((a, b) => b.rating.compareTo(a.rating));
         }
-        final shown = ordered.take(7).toList();
+        final open = list.where((r) => r.isOpen).toList();
+        final closed = list.where((r) => !r.isOpen).toList();
+        // Har ekran ochilganda tasodifiy tartib (_FoodCarousel'dagi bir xil naqsh).
+        final shownOpen = ([...open]..shuffle()).take(10).toList();
         final nearby = byDistance.isNotEmpty;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 4, 12),
-              child: Row(
-                children: [
-                  if (nearby) ...[
-                    Icon(Icons.near_me_rounded,
-                        size: 19, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 6),
-                  ],
-                  Expanded(
-                    child: Text(
-                      nearby ? t.homeNearby : t.homePopular,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
+            if (shownOpen.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 4, 12),
+                child: Row(
+                  children: [
+                    if (nearby) ...[
+                      Icon(Icons.near_me_rounded, size: 19, color: scheme.primary),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Text(
+                        nearby ? t.homeNearby : t.homePopular,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
                     ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _go(const RestaurantListScreen()),
-                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                    label: Text(t.homeSeeAll),
-                    style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.primary),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 172,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: shown.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => RestaurantMiniCard(
-                  restaurant: shown[i],
-                  distanceKm: byDistance[shown[i].id],
+                    TextButton.icon(
+                      onPressed: () => _go(const RestaurantListScreen()),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      label: Text(t.homeSeeAll),
+                      style: TextButton.styleFrom(foregroundColor: scheme.primary),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              SizedBox(
+                height: 172,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: shownOpen.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (_, i) => RestaurantMiniCard(
+                    restaurant: shownOpen[i],
+                    distanceKm: byDistance[shownOpen[i].id],
+                  ),
+                ),
+              ),
+            ],
+            if (closed.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 4, 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.bedtime_rounded, size: 18, color: scheme.outline),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        t.homeClosedRestaurants,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800, color: scheme.outline),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 172,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: closed.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (_, i) => Opacity(
+                    opacity: 0.55,
+                    child: RestaurantMiniCard(
+                      restaurant: closed[i],
+                      distanceKm: byDistance[closed[i].id],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         );
       },

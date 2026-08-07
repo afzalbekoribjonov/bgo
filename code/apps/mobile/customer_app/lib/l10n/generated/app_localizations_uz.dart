@@ -196,6 +196,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get homeMarketProducts => 'Beshariq Market';
 
   @override
+  String get homeClosedRestaurants => 'Yopiq oshxonalar';
+
+  @override
+  String get emptyMarketProducts => 'Hozircha mahsulot yo\'q';
+
+  @override
   String get homeBanner2Title => 'Birinchi buyurtmaga -20%';
 
   @override
@@ -953,6 +959,12 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
 
   @override
   String get homeMarketProducts => 'Beshariq Market';
+
+  @override
+  String get homeClosedRestaurants => 'Ёпиқ ошхоналар';
+
+  @override
+  String get emptyMarketProducts => 'Ҳозирча маҳсулот йўқ';
 
   @override
   String get homeBanner2Title => 'Биринчи буюртмага -20%';

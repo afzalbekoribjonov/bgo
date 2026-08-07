@@ -4,8 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { Prisma, SellerType } from '../../prisma/generated/client';
 import { I18nString, pickLocale, SupportedLocale } from '@beshariq/i18n';
+import { AuthClient } from '../auth-client/auth.client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import { CreateSellerDto, UpdateSellerDto, UpdateSellerProfileDto } from './dto/seller.dto';
@@ -13,7 +16,12 @@ import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+    private readonly authClient: AuthClient,
+  ) {}
 
   // ---------- Ochiq katalog ----------
 
@@ -280,6 +288,60 @@ export class MarketplaceService {
     await this.requireSeller(id);
     await this.prisma.seller.delete({ where: { id } });
     return { ok: true };
+  }
+
+  // ---------- Egalik (owner) — Restaurant'dagi bir xil naqsh ----------
+
+  /** Telefon raqami bo'yicha foydalanuvchini qidiradi — biriktirishdan oldin ko'rsatish/tasdiqlash uchun. */
+  async findOwnerCandidate(phone: string) {
+    return this.authClient.findUserByPhone(phone);
+  }
+
+  /** Egani telefon raqami bo'yicha biriktiradi — userId avtomatik auth servisidan topiladi. */
+  async assignOwnerByPhone(id: string, phone: string) {
+    await this.requireSeller(id);
+    const user = await this.authClient.findUserByPhone(phone);
+    if (!user) {
+      throw new NotFoundException(
+        "Bu telefon raqami bilan ro'yxatdan o'tgan foydalanuvchi topilmadi. Foydalanuvchi avval Beshariq Go ilovasiga shu raqam bilan kirishi kerak.",
+      );
+    }
+    return this.prisma.seller.update({
+      where: { id },
+      data: { ownerUserId: user.id },
+    });
+  }
+
+  /**
+   * "Mening do'konim" — mijoz ilovasida allaqachon kirgan foydalanuvchi o'z
+   * do'koni panelini native ekranlarda avtomatik ochishi uchun. Egalik
+   * `ownerUserId` bo'yicha SERVER tomonda tekshiriladi (rol talab qilinmaydi);
+   * topilsa panel uchun mos JWT (role 'seller' + sellerId) beriladi.
+   * Topilmasa `{ sellerId: null }`.
+   */
+  async panelTokenForOwner(ownerUserId: string): Promise<{
+    sellerId: string | null;
+    name?: string;
+    accessToken?: string;
+  }> {
+    const seller = await this.prisma.seller.findFirst({ where: { ownerUserId } });
+    if (!seller) return { sellerId: null };
+    const accessToken = await this.jwt.signAsync(
+      {
+        sub: `seller:${seller.id}`,
+        phone: '',
+        roles: ['seller'],
+        sellerId: seller.id,
+        // sellerCreateProduct() bu claim'ga to'g'ridan-to'g'ri ishonadi (DB'dan
+        // qayta izlanmaydi) — SellerCredential-token bilan bir xil shakl.
+        sellerType: seller.sellerType,
+      },
+      {
+        secret: this.config.get<string>('JWT_ACCESS_SECRET'),
+        expiresIn: this.config.get<string>('JWT_ACCESS_TTL') ?? '30m',
+      },
+    );
+    return { sellerId: seller.id, name: seller.name, accessToken };
   }
 
   // ---------- Admin: kategoriyalar ----------

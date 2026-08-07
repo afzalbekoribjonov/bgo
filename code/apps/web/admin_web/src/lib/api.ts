@@ -631,6 +631,21 @@ export const updateMarketplaceSeller = (id: string, body: UpdateSellerInput) =>
 export const deleteMarketplaceSeller = (id: string) =>
   api<unknown>(`/marketplace/admin/sellers/${id}`, { method: 'DELETE' });
 
+/** Telefon raqami bo'yicha foydalanuvchini qidiradi (biriktirishdan oldin ko'rsatish). */
+export const lookupSellerOwner = (phone: string) =>
+  api<OwnerCandidate | null>('/marketplace/admin/sellers/owner-lookup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+/** Do'kon egasini telefon raqami bo'yicha biriktiradi — userId avtomatik topiladi. */
+export const assignSellerOwnerByPhone = (id: string, phone: string) =>
+  api<MarketplaceSeller>(`/marketplace/admin/sellers/${id}/owner-by-phone`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+
 export const getMarketplaceCategories = (sellerType?: SellerType) =>
   api<MarketplaceCategory[]>(
     `/marketplace/admin/categories${sellerType ? `?sellerType=${sellerType}` : ''}`,

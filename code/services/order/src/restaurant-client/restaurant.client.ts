@@ -66,6 +66,29 @@ export class RestaurantClient {
     }
   }
 
+  /**
+   * Oshxona egasining userId'si — yangi buyurtmada push-bildirishnoma
+   * yuborish uchun. Best-effort; internal endpoint (`setInactive` bilan
+   * bir xil naqsh) — kalit yo'q/xato bo'lsa `null` (push shunchaki
+   * o'tkazib yuboriladi, buyurtma yaratish bloklanmaydi).
+   */
+  async getOwnerUserId(restaurantId: string): Promise<string | null> {
+    if (!this.internalKey) return null;
+    const url = `${this.baseUrl}/api/v1/internal/restaurants/${restaurantId}/owner`;
+    try {
+      const response = await fetch(url, {
+        headers: { 'x-internal-key': this.internalKey },
+        signal: AbortSignal.timeout(RestaurantClient.FETCH_TIMEOUT_MS),
+      });
+      if (!response.ok) return null;
+      const body = (await response.json()) as { data: { ownerUserId: string | null } };
+      return body.data?.ownerUserId ?? null;
+    } catch (err) {
+      this.logger.warn(`Oshxona egasini olishda xato: ${(err as Error).message}`);
+      return null;
+    }
+  }
+
   /** Oshxona menyusidagi taomlar (id -> {name, price, isAvailable}). */
   async getMenuItems(
     restaurantId: string,

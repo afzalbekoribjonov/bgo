@@ -196,6 +196,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeMarketProducts => 'Beshariq Market';
 
   @override
+  String get homeClosedRestaurants => 'Закрытые рестораны';
+
+  @override
+  String get emptyMarketProducts => 'Пока нет товаров';
+
+  @override
   String get homeBanner2Title => '-20% на первый заказ';
 
   @override

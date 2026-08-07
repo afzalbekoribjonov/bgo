@@ -462,6 +462,18 @@ abstract class AppLocalizations {
   /// **'Beshariq Market'**
   String get homeMarketProducts;
 
+  /// No description provided for @homeClosedRestaurants.
+  ///
+  /// In uz, this message translates to:
+  /// **'Yopiq oshxonalar'**
+  String get homeClosedRestaurants;
+
+  /// No description provided for @emptyMarketProducts.
+  ///
+  /// In uz, this message translates to:
+  /// **'Hozircha mahsulot yo\'q'**
+  String get emptyMarketProducts;
+
   /// No description provided for @homeBanner2Title.
   ///
   /// In uz, this message translates to:

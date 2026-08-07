@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth';
+import { AuthClient } from '../auth-client/auth.client';
 import { AdminController } from './admin.controller';
 import { CatalogController } from './catalog.controller';
 import { ImageKitService } from './imagekit.service';
@@ -16,7 +17,7 @@ import { UploadController } from './upload.controller';
     AdminController,
     UploadController,
   ],
-  providers: [MarketplaceService, ImageKitService, JwtAuthGuard, RolesGuard],
+  providers: [MarketplaceService, ImageKitService, AuthClient, JwtAuthGuard, RolesGuard],
   exports: [MarketplaceService],
 })
 export class MarketplaceModule {}

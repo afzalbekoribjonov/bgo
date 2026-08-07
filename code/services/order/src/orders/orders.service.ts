@@ -384,7 +384,22 @@ export class OrdersService implements OnModuleInit {
     this.offerToDrivers(order).catch((e) =>
       this.logger.warn(`Dispatch taklif xatosi: ${(e as Error).message}`),
     );
+    // Oshxona egasiga push — native panelga darhol o'tishi uchun (best-effort).
+    this.notifyRestaurantOwner(order).catch((e) =>
+      this.logger.warn(`Oshxona push xatosi: ${(e as Error).message}`),
+    );
     return order;
+  }
+
+  /** Yangi buyurtma haqida oshxona egasiga push (best-effort, egasi bo'lmasa jim). */
+  private async notifyRestaurantOwner(order: Order): Promise<void> {
+    const ownerUserId = await this.restaurant.getOwnerUserId(order.restaurantId);
+    if (!ownerUserId) return;
+    await this.notifications.notify(ownerUserId, 'Yangi buyurtma', "Sizga yangi buyurtma keldi", {
+      type: 'kitchen_order',
+      restaurantId: order.restaurantId,
+      orderId: order.id,
+    });
   }
 
   async getOwned(customerId: string, id: string): Promise<Order> {

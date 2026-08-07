@@ -16,6 +16,7 @@ import {
 } from '@/lib/api';
 import { useToast } from '@/components/toast';
 import { useDialog } from '@/components/dialog';
+import { SellerOwnerAssignModal } from '@/components/seller-owner-assign-modal';
 import type {
   I18nString,
   MarketplaceCategory,
@@ -122,6 +123,9 @@ function SellersTab() {
   const [credExists, setCredExists] = useState(false);
   const [credSaving, setCredSaving] = useState(false);
   const [credErr, setCredErr] = useState('');
+
+  // Egalik — mobil ilovada native panelga kirish uchun (telefon bo'yicha)
+  const [showOwnerModal, setShowOwnerModal] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -429,6 +433,38 @@ function SellersTab() {
                     ? '🔄 Parolni yangilash'
                     : '🔐 Kirish yaratish'}
                 </button>
+
+                <div className="divider" style={{ margin: '18px 0' }} />
+                <div className="row-sb" style={{ marginBottom: 10 }}>
+                  <span className="card-title" style={{ fontSize: 15 }}>Egalik (mobil ilova)</span>
+                  <span
+                    className="text-sm"
+                    style={{
+                      color: editing.ownerUserId ? 'var(--green)' : 'var(--text-muted)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: editing.ownerUserId ? 'var(--green)' : 'var(--text-muted)',
+                        display: 'inline-block',
+                      }}
+                    />
+                    {editing.ownerUserId ? 'Biriktirilgan' : 'Biriktirilmagan'}
+                  </span>
+                </div>
+                <div className="text-sm muted" style={{ marginBottom: 10 }}>
+                  Telefon raqami bo&apos;yicha biriktirilgan foydalanuvchi Beshariq Go
+                  ilovasida &quot;Mening do&apos;konim&quot; orqali native panelga kiradi.
+                </div>
+                <button className="btn ghost" onClick={() => setShowOwnerModal(true)}>
+                  {editing.ownerUserId ? "🔄 Egasini almashtirish" : '👤 Ega biriktirish'}
+                </button>
               </>
             )}
           </div>
@@ -478,6 +514,20 @@ function SellersTab() {
             </div>
           ))}
         </div>
+      )}
+
+      {showOwnerModal && editing && (
+        <SellerOwnerAssignModal
+          sellerId={editing.id}
+          sellerName={editing.name}
+          onClose={() => setShowOwnerModal(false)}
+          onAssigned={async () => {
+            const fresh = await getMarketplaceSellers(typeFilter === 'all' ? undefined : typeFilter);
+            setSellers(fresh);
+            setEditing((cur) => fresh.find((s) => s.id === cur?.id) ?? cur);
+            toast('Ega biriktirildi', 'success');
+          }}
+        />
       )}
     </div>
   );
