@@ -5,6 +5,7 @@ import { InternalKeyGuard, JwtAuthGuard, RolesGuard } from '@beshariq/nest-auth'
 import { AuthClient } from '../auth-client/auth.client';
 import { AdminRestaurantsController } from './admin-restaurants.controller';
 import { CatalogController } from './catalog.controller';
+import { ImageKitService } from './imagekit.service';
 import { InternalRestaurantsController } from './internal-restaurants.controller';
 import { ManagementController } from './management.controller';
 import { OwnerController } from './owner.controller';
@@ -26,6 +27,7 @@ import { UploadController } from './upload.controller';
   ],
   providers: [
     RestaurantsService,
+    ImageKitService,
     JwtAuthGuard,
     RolesGuard,
     InternalKeyGuard,

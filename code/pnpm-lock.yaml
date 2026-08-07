@@ -585,6 +585,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      imagekit:
+        specifier: ^5.2.0
+        version: 5.2.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
