@@ -226,7 +226,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get subtotalLabel => 'Taomlar';
 
   @override
-  String get deliveryFeeLabel => 'Yetkazib berish';
+  String get deliveryFeeLabel => 'Xizmat haqi';
 
   @override
   String get totalLabel => 'Jami';
@@ -991,7 +991,7 @@ class AppLocalizationsUzCyrl extends AppLocalizationsUz {
   String get subtotalLabel => 'Таомлар';
 
   @override
-  String get deliveryFeeLabel => 'Етказиб бериш';
+  String get deliveryFeeLabel => 'Хизмат ҳақи';
 
   @override
   String get totalLabel => 'Жами';

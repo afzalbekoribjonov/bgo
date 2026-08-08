@@ -525,7 +525,7 @@ abstract class AppLocalizations {
   /// No description provided for @deliveryFeeLabel.
   ///
   /// In uz, this message translates to:
-  /// **'Yetkazib berish'**
+  /// **'Xizmat haqi'**
   String get deliveryFeeLabel;
 
   /// No description provided for @totalLabel.

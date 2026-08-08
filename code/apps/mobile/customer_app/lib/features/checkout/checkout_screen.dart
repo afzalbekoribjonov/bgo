@@ -330,14 +330,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            _sectionHeader(Icons.receipt_long_rounded, t.totalLabel),
-            const SizedBox(height: 10),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
                 children: [
-                  // Promokod — Tekshirish tugmasi bilan (avval tekshiriladi)
+                  // Promokod — kompakt qator, ikonka-tugma bilan (avval tekshiriladi)
                   Row(
                     children: [
                       Expanded(
@@ -348,7 +346,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               TextCapitalization.characters,
                           onChanged: _onPromoChanged,
                           decoration: InputDecoration(
-                            hintText: '${t.promoLabel} (${t.promoHint})',
+                            hintText: t.promoLabel.toUpperCase(),
                             isDense: true,
                             prefixIcon: Icon(
                               _promoValid
@@ -376,20 +374,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           icon: const Icon(Icons.close_rounded, size: 18),
                         )
                       else
-                        FilledButton.tonal(
+                        IconButton.filledTonal(
+                          tooltip: t.promoCheck,
                           onPressed: _promoChecking ? null : _checkPromo,
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(0, 46),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14),
-                          ),
-                          child: _promoChecking
+                          icon: _promoChecking
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2))
-                              : Text(t.promoCheck),
+                              : const Icon(Icons.check_rounded),
                         ),
                     ],
                   ),
@@ -430,9 +424,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ],
                   const Divider(height: 22),
-                  _summaryRow(context, t.subtotalLabel,
-                      t.priceSom(groupThousands(cart.subtotal))),
-                  const SizedBox(height: 8),
+                  // Taomlar narxi yuqoridagi "Buyurtmangiz" ro'yxatida
+                  // allaqachon ko'rinadi — bu yerda takrorlanmaydi.
                   _summaryRow(context, t.deliveryFeeLabel,
                       t.priceSom(groupThousands(deliveryFee))),
                   if (discount > 0) ...[

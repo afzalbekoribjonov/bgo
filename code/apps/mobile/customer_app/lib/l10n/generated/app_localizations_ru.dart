@@ -226,7 +226,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get subtotalLabel => 'Блюда';
 
   @override
-  String get deliveryFeeLabel => 'Доставка';
+  String get deliveryFeeLabel => 'Сервисный сбор';
 
   @override
   String get totalLabel => 'Итого';
