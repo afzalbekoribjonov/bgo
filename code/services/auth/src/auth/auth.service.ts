@@ -43,7 +43,7 @@ export class AuthService {
     devCode?: string;
     telegramBotUrl?: string;
   }> {
-    const code = this.otp.generate(phone);
+    const code = await this.otp.generate(phone);
 
     let channel: 'telegram' | 'sms' = 'sms';
     if (this.telegram.isEnabled) {
@@ -70,7 +70,7 @@ export class AuthService {
 
   /** OTP tasdiqlash — foydalanuvchini topadi/yaratadi va tokenlar beradi. */
   async verifyOtp(phone: string, code: string) {
-    this.otp.verify(phone, code);
+    await this.otp.verify(phone, code);
 
     let user = await this.users.findByPhone(phone);
     let isNew = false;

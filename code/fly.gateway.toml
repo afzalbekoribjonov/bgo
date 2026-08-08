@@ -15,10 +15,8 @@ primary_region = "fra"
   MARKET_SERVICE_URL = "http://beshariq-market.flycast"
   MARKETPLACE_SERVICE_URL = "http://beshariq-marketplace.flycast"
   SUPPORT_SERVICE_URL = "http://beshariq-support.flycast"
-  # Frontendlar deploy qilingach, aniq domenlar bilan to'ldiriladi
-  # (vergul bilan ajratilgan ro'yxat). Hozircha bo'sh — brauzer-CORS
-  # mobil ilova/xizmatlararo trafikka taalluqli emas.
-  # CORS_ORIGIN = "https://admin-web.vercel.app,https://market-web.vercel.app"
+  # Vercel'dagi 5 frontend domeni (<funksiya>bgo.vercel.app naqshi).
+  CORS_ORIGIN = "https://adminbgo.vercel.app,https://marketbgo.vercel.app,https://restaurantbgo.vercel.app,https://shopsbgo.vercel.app,https://sellerbgo.vercel.app"
 
 [http_service]
   internal_port = 4000

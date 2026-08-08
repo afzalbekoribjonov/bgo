@@ -74,6 +74,22 @@ model DeviceToken {
   @@map("device_tokens")
 }
 
+/**
+ * Bir martalik login kodi (OTP) — DB'da saqlanadi, xotirada emas. Auth
+ * xizmati bir nechta Fly mashinasida parallel ishlaganda, kod so'ralgan
+ * mashina bilan tekshirilgan mashina boshqa-boshqa bo'lishi mumkin edi
+ * (in-memory Map holatida bu "Kod noto'g'ri" xatosiga olib kelgan).
+ */
+model OtpCode {
+  phone     String   @id
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("otp_codes")
+}
+
 /** Telefon ↔ Telegram chat bog'lanishi (OTP'ni bot orqali yuborish uchun). */
 model TelegramLink {
   phone     String   @id // +998...
