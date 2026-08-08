@@ -2,12 +2,15 @@
 
 import { useCallback } from 'react';
 import Map, { Marker, NavigationControl } from 'react-map-gl/maplibre';
-import type { MapLayerMouseEvent, LngLatBoundsLike } from 'react-map-gl/maplibre';
+import type { MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // Oldingi chegara (~18×18 km) chekka qishloqlarga pin qo'yishga imkon
 // bermasdi. Endi butun tuman + qo'shni hududlar uchun keng zaxira bilan.
-const BOUNDS: LngLatBoundsLike = [[70.1094, 40.1236], [71.1094, 40.7236]];
+// [g'arb, janub, sharq, shimol] — react-map-gl'ning maxBounds propi aynan
+// shu yassi 4-tuple shaklini kutadi (LngLatBoundsLike'ning boshqa
+// variantlari — masalan ichma-ich juftlik — bilan mos kelmaydi).
+const BOUNDS: [number, number, number, number] = [70.1094, 40.1236, 71.1094, 40.7236];
 const CENTER = { longitude: 70.6094, latitude: 40.4236 };
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
