@@ -51,9 +51,14 @@ export function setupProxies(app: INestApplication): void {
         changeOrigin: true,
         // Sekinlashgan/osilib qolgan servis gateway ulanishini cheksiz
         // ochiq ushlab turmasin — vaqt tugasa 'error' hodisasi (pastda)
-        // chaqirilib, 502 JSON javob qaytadi.
-        proxyTimeout: 15_000,
-        timeout: 15_000,
+        // chaqirilib, 502 JSON javob qaytadi. 15s emas 45s: Fly.io'da
+        // auto-stop yoqilgan — gateway VA maqsad xizmat ikkalasi ham
+        // bo'sh turgach uxlab qolgan bo'lishi mumkin, birinchi so'rov
+        // ikkalasini ham ketma-ket uyg'otishi kerak (har biri bir necha
+        // soniya) — 15s bunga yetarli emas edi, real 502 xatosiga olib
+        // kelgan.
+        proxyTimeout: 45_000,
+        timeout: 45_000,
         on: {
           error: (err, _req, res) => {
             logger.error(`Proxy xato (${route.prefix} -> ${target}): ${err.message}`);

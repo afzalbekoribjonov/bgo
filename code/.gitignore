@@ -60,4 +60,4 @@ infra/docker/data/
 # OSRM ma'lumot fayllari (katta, generatsiya qilinadi)
 infra/osrm/data/
 *.osm.pbf
-*.osrm*
+infra/osrm/data/*.osrm*
