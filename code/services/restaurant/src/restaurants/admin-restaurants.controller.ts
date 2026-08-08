@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -36,5 +37,12 @@ export class AdminRestaurantsController {
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateRestaurantDto) {
     return { success: true, data: await this.service.updateRestaurant(id, dto) };
+  }
+
+  /** Oshxonani butunlay o'chirish — qaytarib bo'lmaydi. */
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.service.deleteRestaurant(id);
+    return { success: true };
   }
 }

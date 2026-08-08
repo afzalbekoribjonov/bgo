@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthClient } from '../auth-client/auth.client';
+import { OrderClient } from '../order-client/order.client';
 import { pickLocale, SupportedLocale } from '@beshariq/i18n';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import { CreateMenuItemDto, UpdateMenuItemDto } from './dto/menu-item.dto';
@@ -16,6 +17,7 @@ export class RestaurantsService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly authClient: AuthClient,
+    private readonly orderClient: OrderClient,
   ) {}
 
   // ---------- Public katalog (mijoz) ----------
@@ -152,6 +154,33 @@ export class RestaurantsService {
     await this.requireRestaurant(id);
     const restaurant = await this.repo.updateRestaurant(id, dto);
     return this.toAdminRestaurant(restaurant);
+  }
+
+  /**
+   * Oshxonani butunlay o'chiradi (admin) — qaytarib bo'lmaydi. Menyu/kategoriya
+   * shu bazada kaskad o'chadi; buyurtma tarixi (order servisida, alohida baza)
+   * teginmaydi — mavjud kod BLOCKED/faolsiz oshxona uchun ham xuddi shunday
+   * "restaurant: null" bilan degradatsiya qiladi (yangi xatti-harakat emas).
+   *
+   * Xavfsizlik tekshiruvi: hali yakunlanmagan buyurtmalar bo'lsa bloklanadi
+   * (order servisi bilan aloqa bo'lmasa ham — FAIL-CLOSED, chunki bu
+   * qaytarib bo'lmaydigan amal).
+   */
+  async deleteRestaurant(id: string): Promise<void> {
+    await this.requireRestaurant(id);
+    const activeCount = await this.orderClient.getActiveOrderCount(id);
+    if (activeCount === null) {
+      throw new ServiceUnavailableException(
+        "Buyurtmalar xizmati bilan aloqa yo'q — xavfsizlik uchun o'chirish vaqtincha bloklandi. Birozdan so'ng qayta urinib ko'ring.",
+      );
+    }
+    if (activeCount > 0) {
+      throw new ConflictException(
+        `Bu oshxonada ${activeCount} ta hali yakunlanmagan buyurtma bor — avval ularni yakunlang yoki bekor qiling.`,
+      );
+    }
+    await this.authClient.deleteKitchenCredential(id);
+    await this.repo.deleteRestaurant(id);
   }
 
   /** Oshxonani ochiq/yopiq (faol/faolsiz) qiladi — ega paneli yoki tizim. */

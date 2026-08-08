@@ -2,9 +2,10 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  deleteRestaurant,
   formatSom,
   getKitchenCredential,
   getManageRestaurants,
@@ -13,6 +14,7 @@ import {
   updateRestaurant,
 } from '@/lib/api';
 import { useToast } from '@/components/toast';
+import { useDialog } from '@/components/dialog';
 import { OwnerAssignModal } from '@/components/owner-assign-modal';
 import type { AdminRestaurant, RestaurantMenuView } from '@/lib/types';
 
@@ -82,13 +84,16 @@ function TabButton({
 export default function RestaurantDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const router = useRouter();
   const toast = useToast();
+  const dialog = useDialog();
 
   const [tab, setTab] = useState<Tab>('info');
   const [r, setR] = useState<AdminRestaurant | null>(null);
   const [menu, setMenu] = useState<RestaurantMenuView | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [ownerModalOpen, setOwnerModalOpen] = useState(false);
 
   // Edit fields
@@ -190,6 +195,29 @@ export default function RestaurantDetailPage() {
   function handleOwnerAssigned() {
     toast('Ega biriktirildi ✓', 'success');
     load();
+  }
+
+  async function remove() {
+    if (!r) return;
+    const itemCountNow = menu?.categories.reduce((s, c) => s + c.items.length, 0) ?? 0;
+    const ok = await dialog.confirm(
+      `"${r.name}" oshxonasini butunlay o'chirasizmi? Bu amalni qaytarib bo'lmaydi. ` +
+        `${itemCountNow} ta taom va barcha kategoriyalar birga o'chadi. ` +
+        `Eski buyurtmalar tarixi saqlanib qoladi, lekin ularda oshxona nomi endi ko'rsatilmaydi. ` +
+        `Hali yakunlanmagan buyurtmalar bo'lsa, o'chirish rad etiladi.`,
+      { title: "Oshxonani o'chirish", danger: true },
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await deleteRestaurant(id);
+      toast("Oshxona o'chirildi", 'success');
+      router.push('/restaurants');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (loading) {
@@ -374,6 +402,32 @@ export default function RestaurantDetailPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---- Xavfli zona ---- */}
+      {tab === 'info' && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="card-header">
+            <span className="card-title">⚠️ Xavfli zona</span>
+          </div>
+          <div className="card-body">
+            <div className="info-block red" style={{ marginBottom: 14 }}>
+              Oshxonani o&apos;chirish qaytarib bo&apos;lmaydigan amal — menyu va kategoriyalar
+              birga o&apos;chadi. Hali yakunlanmagan buyurtmalar bo&apos;lsa, tizim
+              o&apos;chirishni avtomatik rad etadi.
+            </div>
+            <button className="btn red" disabled={deleting} onClick={remove}>
+              {deleting ? (
+                <>
+                  <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+                  O&apos;chirilmoqda…
+                </>
+              ) : (
+                "🗑️ Oshxonani o'chirish"
+              )}
+            </button>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { InternalKeyGuard } from '@beshariq/nest-auth';
 import { OrdersService } from './orders.service';
 
@@ -24,6 +24,18 @@ export class InternalOrderLookupController {
     return {
       success: true,
       data: await this.orders.lookupByDriverAndPublicNo(driverUserId, no),
+    };
+  }
+
+  /**
+   * Restoran servisi oshxonani o'chirishdan oldin so'raydi — hali yakunlanmagan
+   * buyurtmalar bo'lsa, o'chirish bloklanadi.
+   */
+  @Get('restaurant/:restaurantId/active-count')
+  async activeCount(@Param('restaurantId') restaurantId: string) {
+    return {
+      success: true,
+      data: { count: await this.orders.activeOrderCountForRestaurant(restaurantId) },
     };
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../restaurant/restaurant_api.dart';
 import 'kitchen_api.dart';
 import 'kitchen_home_screen.dart';
 import 'kitchen_models.dart';
@@ -52,6 +53,11 @@ class _KitchenSettingsScreenState extends ConsumerState<KitchenSettingsScreen> {
     try {
       await ref.read(kitchenApiProvider).setOpen(widget.restaurantId, !widget.restaurant.isOpen);
       ref.invalidate(kitchenRestaurantProvider(widget.restaurantId));
+      // Ochiq/yopiq holati mijoz bosh ekranidagi oshxonalar ro'yxati va
+      // "Ovqat" lentasiga (isOpen filtri) ta'sir qiladi — shu ProviderContainer
+      // ichida darhol yangilanishi uchun invalidatsiya qilinadi.
+      ref.invalidate(restaurantsProvider);
+      ref.invalidate(dishesProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

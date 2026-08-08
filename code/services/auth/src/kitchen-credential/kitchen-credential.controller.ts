@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -8,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { IsString, MaxLength, MinLength } from 'class-validator';
-import { JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
+import { InternalKeyGuard, JwtAuthGuard, Roles, RolesGuard } from '@beshariq/nest-auth';
 import { KitchenCredentialService } from './kitchen-credential.service';
 
 class KitchenLoginDto {
@@ -75,5 +76,23 @@ export class AdminKitchenCredentialController {
   @Get(':restaurantId')
   async info(@Param('restaurantId') restaurantId: string) {
     return { success: true, data: await this.service.getInfo(restaurantId) };
+  }
+}
+
+/**
+ * Servislararo (internal): restoran servisi oshxonani o'chirganda kirish
+ * ma'lumotini ham tozalaydi. x-internal-key bilan himoyalangan — admin JWT
+ * emas, chunki chaqiruvchi boshqa backend servis.
+ */
+@Controller('internal/kitchen-credentials')
+@UseGuards(InternalKeyGuard)
+export class InternalKitchenCredentialController {
+  constructor(private readonly service: KitchenCredentialService) {}
+
+  @Delete(':restaurantId')
+  @HttpCode(200)
+  async remove(@Param('restaurantId') restaurantId: string) {
+    await this.service.deleteCredential(restaurantId);
+    return { success: true };
   }
 }

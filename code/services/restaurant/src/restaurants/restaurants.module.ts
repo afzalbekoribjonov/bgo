@@ -8,6 +8,7 @@ import { CatalogController } from './catalog.controller';
 import { ImageKitService } from './imagekit.service';
 import { InternalRestaurantsController } from './internal-restaurants.controller';
 import { ManagementController } from './management.controller';
+import { OrderClient } from '../order-client/order.client';
 import { OwnerController } from './owner.controller';
 import { PrismaRestaurantRepository } from './prisma-restaurant.repository';
 import { RestaurantOwnerGuard } from './restaurant-owner.guard';
@@ -33,6 +34,7 @@ import { UploadController } from './upload.controller';
     InternalKeyGuard,
     RestaurantOwnerGuard,
     AuthClient,
+    OrderClient,
     { provide: RestaurantRepository, useClass: PrismaRestaurantRepository },
   ],
   exports: [RestaurantsService],

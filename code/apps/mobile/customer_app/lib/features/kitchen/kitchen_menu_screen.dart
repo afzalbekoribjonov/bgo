@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
 import '../../widgets/async_error.dart';
+import '../restaurant/restaurant_api.dart';
 import 'kitchen_api.dart';
 import 'kitchen_models.dart';
 
@@ -35,6 +36,11 @@ class _KitchenMenuScreenState extends ConsumerState<KitchenMenuScreen> {
   void _reload() {
     ref.invalidate(kitchenCategoriesProvider(widget.restaurantId));
     ref.invalidate(kitchenMenuItemsProvider(widget.restaurantId));
+    // Mijoz bosh ekrani ("Ovqat" bo'limi) shu ilova ichida, bir xil
+    // ProviderContainer'da ishlaydi — yangi/o'zgargan taom darhol
+    // ko'rinishi uchun mijoz-tomon providerlar ham invalidatsiya qilinadi.
+    ref.invalidate(dishesProvider);
+    ref.invalidate(restaurantsProvider);
   }
 
   Future<void> _openCategoryForm({KitchenCategory? existing}) async {

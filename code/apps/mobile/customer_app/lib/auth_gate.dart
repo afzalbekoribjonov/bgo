@@ -49,7 +49,9 @@ class _AuthGateState extends ConsumerState<AuthGate> {
   void _handleDeepLink(RemoteMessage message) {
     final type = message.data['type'];
     final restaurantId = message.data['restaurantId'] as String?;
-    if (type == 'kitchen_order' && restaurantId != null && restaurantId.isNotEmpty) {
+    if ((type == 'kitchen_order' || type == 'kitchen_closed') &&
+        restaurantId != null &&
+        restaurantId.isNotEmpty) {
       navigatorKey.currentState?.push(
         MaterialPageRoute(builder: (_) => KitchenHomeScreen(restaurantId: restaurantId)),
       );
@@ -80,7 +82,8 @@ class _AuthGateState extends ConsumerState<AuthGate> {
         // Ilova OCHIQ paytda kelgan yangi-buyurtma push'i — bosiladigan banner
         // (fondagi/yopiq holat allaqachon _handleDeepLink orqali qamrab olingan).
         _foregroundSub ??= ref.read(pushServiceProvider).onForegroundMessage.listen((m) {
-          if (m.data['type'] != 'kitchen_order') return;
+          final type = m.data['type'];
+          if (type != 'kitchen_order' && type != 'kitchen_closed') return;
           final ctx = navigatorKey.currentContext;
           if (ctx == null) return;
           // navigatorKey.currentContext — widgetning o'z BuildContext'i emas,
@@ -88,7 +91,9 @@ class _AuthGateState extends ConsumerState<AuthGate> {
           // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(ctx).showSnackBar(
             SnackBar(
-              content: const Text('Yangi buyurtma keldi'),
+              content: Text(type == 'kitchen_closed'
+                  ? 'Oshxonangiz avtomatik yopildi'
+                  : 'Yangi buyurtma keldi'),
               action: SnackBarAction(label: "Ko'rish", onPressed: () => _handleDeepLink(m)),
               duration: const Duration(seconds: 6),
             ),

@@ -67,6 +67,9 @@ dependencies:
   # Hamkor panellari (oshxona/do'kon) — mahsulot/taom rasmi tanlash
   image_picker: ^1.1.2
 
+  # Oshxona paneli: yangi buyurtma signali (driver_app bilan bir xil)
+  audioplayers: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -91,6 +94,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/sounds/alert.wav
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -115,4 +115,25 @@ export class AuthClient {
     }
     return result;
   }
+
+  /**
+   * Oshxona o'chirilganda kirish login/parolini ham tozalaydi (orfan
+   * qolib ketmasligi uchun) — BEST-EFFORT, xato bo'lsa faqat log yoziladi,
+   * oshxonani o'chirishning o'zini bloklamaydi.
+   */
+  async deleteKitchenCredential(restaurantId: string): Promise<void> {
+    if (!this.key) return;
+    try {
+      await fetch(
+        `${this.baseUrl}/api/v1/internal/kitchen-credentials/${encodeURIComponent(restaurantId)}`,
+        {
+          method: 'DELETE',
+          headers: { 'x-internal-key': this.key },
+          signal: AbortSignal.timeout(AuthClient.FETCH_TIMEOUT_MS),
+        },
+      );
+    } catch (err) {
+      this.logger.warn(`Oshxona kirish ma'lumotini o'chirib bo'lmadi: ${(err as Error).message}`);
+    }
+  }
 }

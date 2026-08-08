@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:beshariq_core/beshariq_core.dart';
+import '../../core/alert_sound.dart';
 import '../../widgets/async_error.dart';
 import 'kitchen_api.dart';
 import 'kitchen_models.dart';
@@ -25,6 +28,7 @@ class _KitchenOrdersScreenState extends ConsumerState<KitchenOrdersScreen> {
   Object? _error;
   bool _loading = true;
   final _busyIds = <String>{};
+  Set<String> _pendingIds = {};
 
   @override
   void initState() {
@@ -36,7 +40,25 @@ class _KitchenOrdersScreenState extends ConsumerState<KitchenOrdersScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    ref.read(alertSoundProvider).stop();
     super.dispose();
+  }
+
+  /// Yangi ("pending") buyurtma paydo bo'lganda takrorlanuvchi ovoz +
+  /// vibratsiya boshlaydi; barcha yangi buyurtmalar hal qilinganda to'xtaydi.
+  void _syncAlert(List<KitchenOrder> orders) {
+    final nowPending = orders
+        .where((o) => o.status == KitchenOrderStatus.pending)
+        .map((o) => o.id)
+        .toSet();
+    final hasNew = nowPending.difference(_pendingIds).isNotEmpty;
+    _pendingIds = nowPending;
+    if (hasNew) {
+      ref.read(alertSoundProvider).start();
+      HapticFeedback.heavyImpact();
+    } else if (nowPending.isEmpty) {
+      ref.read(alertSoundProvider).stop();
+    }
   }
 
   Future<void> _load({bool silent = false}) async {
@@ -44,6 +66,7 @@ class _KitchenOrdersScreenState extends ConsumerState<KitchenOrdersScreen> {
     try {
       final orders = await ref.read(kitchenApiProvider).orders(widget.restaurantId);
       if (!mounted) return;
+      _syncAlert(orders);
       setState(() {
         _orders = orders;
         _error = null;
@@ -147,31 +170,40 @@ class _OrderCard extends StatelessWidget {
     this.onChat,
   });
 
-  (String, Color) get _statusMeta => switch (order.status) {
-        KitchenOrderStatus.pending => ('Yangi', const Color(0xFFEF6C00)),
-        KitchenOrderStatus.accepted => ('Qabul qilindi', const Color(0xFF1565C0)),
-        KitchenOrderStatus.preparing => ('Tayyorlanmoqda', const Color(0xFF6A1B9A)),
-        KitchenOrderStatus.ready => ('Tayyor — kuryer kutilmoqda', const Color(0xFF2E7D32)),
-        KitchenOrderStatus.assigned => ('Kuryer biriktirildi', const Color(0xFF00838F)),
-        KitchenOrderStatus.inProgress => ('Kuryer yo\'lda', const Color(0xFF00838F)),
-        KitchenOrderStatus.pickedUp => ('Kuryer oldi', const Color(0xFF00838F)),
-        _ => ('Faol', const Color(0xFF616161)),
-      };
+  (String, Color) get _statusMeta {
+    if (order.isAwaitingDriver) return ('Kuryer qidirilmoqda', const Color(0xFF1565C0));
+    return switch (order.status) {
+      KitchenOrderStatus.pending => ('Yangi buyurtma', const Color(0xFFEF6C00)),
+      KitchenOrderStatus.accepted => ('Qabul qilindi', const Color(0xFF1565C0)),
+      KitchenOrderStatus.preparing => ('Tayyorlanmoqda', const Color(0xFF6A1B9A)),
+      KitchenOrderStatus.ready => ('Tayyor — kuryer kutilmoqda', const Color(0xFF2E7D32)),
+      KitchenOrderStatus.assigned => ('Kuryer biriktirildi', const Color(0xFF00838F)),
+      KitchenOrderStatus.inProgress => ('Kuryer yo\'lda', const Color(0xFF00838F)),
+      KitchenOrderStatus.pickedUp => ('Kuryer oldi', const Color(0xFF00838F)),
+      KitchenOrderStatus.delivered || KitchenOrderStatus.completed => ('Yetkazildi', const Color(0xFF2E7D32)),
+      KitchenOrderStatus.cancelled || KitchenOrderStatus.failed => ('Bekor qilindi', const Color(0xFFC62828)),
+      _ => ('Faol', const Color(0xFF616161)),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final (statusLabel, statusColor) = _statusMeta;
-    final itemsText = order.items.map((i) => '${i.nameSnapshot} ×${i.qty}').join(', ');
+    final isNew = order.status == KitchenOrderStatus.pending && !order.isAwaitingDriver;
 
     return Card(
       elevation: 1.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isNew ? BorderSide(color: statusColor.withValues(alpha: 0.5), width: 1.5) : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ---- sarlavha: raqam, holat, vaqt, chat ----
             Row(
               children: [
                 Text('#${order.publicNo}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
@@ -182,19 +214,76 @@ class _OrderCard extends StatelessWidget {
                   child: Text(statusLabel, style: TextStyle(color: statusColor, fontWeight: FontWeight.w700, fontSize: 11.5)),
                 ),
                 const Spacer(),
+                Text(_timeAgo(order.createdAt), style: TextStyle(color: scheme.outline, fontSize: 11.5)),
                 if (onChat != null)
                   IconButton(
                     icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
                     onPressed: onChat,
                     tooltip: 'Kuryer bilan suhbat',
+                    visualDensity: VisualDensity.compact,
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(itemsText, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 6),
-            Text(order.addressText, style: TextStyle(color: scheme.outline, fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 10),
+            // ---- taomlar ro'yxati (har biri narxi bilan) ----
+            for (final it in order.items)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text('${it.nameSnapshot} ×${it.qty}',
+                          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    Text('${_formatSom(it.lineTotal)} so\'m', style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5)),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.place_rounded, size: 15, color: scheme.outline),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(order.addressText, style: TextStyle(color: scheme.outline, fontSize: 12.5), maxLines: 2, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+            // ---- mijoz va haydovchi aloqa ma'lumoti ----
+            if ((order.customer.name?.isNotEmpty ?? false) || (order.customer.phone?.isNotEmpty ?? false)) ...[
+              const Divider(height: 18),
+              _ContactRow(
+                icon: Icons.person_rounded,
+                fallbackLabel: 'Mijoz',
+                name: order.customer.name,
+                phone: order.customer.phone,
+              ),
+            ],
+            if (order.driver != null) ...[
+              const SizedBox(height: 6),
+              _ContactRow(
+                icon: Icons.two_wheeler_rounded,
+                fallbackLabel: 'Kuryer',
+                name: order.driver!.name,
+                phone: order.driver!.phone,
+                extra: [order.driver!.car, order.driver!.plate].where((v) => v != null && v.isNotEmpty).join(' · '),
+                rating: order.driver!.rating,
+              ),
+            ],
+            if (order.status == KitchenOrderStatus.ready) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 15, color: scheme.outline),
+                  const SizedBox(width: 6),
+                  Text('Kuryerga topshiring', style: TextStyle(color: scheme.outline, fontSize: 12, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ],
+            const Divider(height: 18),
             Row(
               children: [
                 Text('${_formatSom(order.itemsTotal)} so\'m', style: TextStyle(fontWeight: FontWeight.w800, color: scheme.primary, fontSize: 15)),
@@ -227,6 +316,85 @@ class _OrderCard extends StatelessWidget {
         return const [];
     }
   }
+}
+
+/// Mijoz/kuryer aloqa qatori — ism (+ ixtiyoriy mashina/plastinka/reyting) va
+/// bosilsa qo'ng'iroq qiladigan telefon tugmasi.
+class _ContactRow extends StatelessWidget {
+  final IconData icon;
+  final String fallbackLabel;
+  final String? name;
+  final String? phone;
+  final String? extra;
+  final double? rating;
+  const _ContactRow({
+    required this.icon,
+    required this.fallbackLabel,
+    this.name,
+    this.phone,
+    this.extra,
+    this.rating,
+  });
+
+  Future<void> _call() async {
+    final p = (phone ?? '').trim();
+    if (p.isEmpty) return;
+    try {
+      await launchUrl(Uri(scheme: 'tel', path: p));
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: scheme.outline),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      (name?.isNotEmpty ?? false) ? name! : fallbackLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (rating != null && rating! > 0) ...[
+                    const SizedBox(width: 6),
+                    Icon(Icons.star_rounded, size: 13, color: Colors.amber[700]),
+                    Text(rating!.toStringAsFixed(1), style: TextStyle(fontSize: 11.5, color: scheme.outline)),
+                  ],
+                ],
+              ),
+              if (extra != null && extra!.isNotEmpty)
+                Text(extra!, style: TextStyle(fontSize: 11.5, color: scheme.outline)),
+            ],
+          ),
+        ),
+        if (phone != null && phone!.isNotEmpty)
+          IconButton(
+            icon: Icon(Icons.call_rounded, size: 18, color: scheme.primary),
+            onPressed: _call,
+            visualDensity: VisualDensity.compact,
+            tooltip: "Qo'ng'iroq qilish",
+          ),
+      ],
+    );
+  }
+}
+
+String _timeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inMinutes < 1) return 'hozir';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} daq. oldin';
+  if (diff.inHours < 24) return '${diff.inHours} soat oldin';
+  return '${diff.inDays} kun oldin';
 }
 
 String _formatSom(int value) {

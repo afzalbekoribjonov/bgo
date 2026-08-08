@@ -148,6 +148,39 @@ KitchenOrderStatus _statusFromString(String? s) {
   }
 }
 
+/// Mijoz ismi/telefoni — oshxona egasi bog'lanishi uchun.
+class KitchenCustomerInfo {
+  final String? name;
+  final String? phone;
+  const KitchenCustomerInfo({this.name, this.phone});
+
+  factory KitchenCustomerInfo.fromJson(Map<String, dynamic>? j) => KitchenCustomerInfo(
+        name: j?['name'] as String?,
+        phone: j?['phone'] as String?,
+      );
+}
+
+/// Haydovchi ismi/telefoni/mashinasi/reytingi — kuryer biriktirilgach.
+class KitchenDriverInfo {
+  final String? name;
+  final String? phone;
+  final String? car;
+  final String? plate;
+  final double? rating;
+  const KitchenDriverInfo({this.name, this.phone, this.car, this.plate, this.rating});
+
+  factory KitchenDriverInfo.fromJson(Map<String, dynamic>? j) {
+    if (j == null) return const KitchenDriverInfo();
+    return KitchenDriverInfo(
+      name: j['name'] as String?,
+      phone: j['phone'] as String?,
+      car: j['car'] as String?,
+      plate: j['plate'] as String?,
+      rating: (j['rating'] as num?)?.toDouble(),
+    );
+  }
+}
+
 class KitchenOrder {
   final String id;
   final int publicNo;
@@ -157,8 +190,11 @@ class KitchenOrder {
   final int total;
   final KitchenOrderStatus status;
   final String? driverId;
+  final DateTime? kitchenAcceptedAt;
   final String addressText;
   final DateTime createdAt;
+  final KitchenCustomerInfo customer;
+  final KitchenDriverInfo? driver;
   const KitchenOrder({
     required this.id,
     required this.publicNo,
@@ -168,9 +204,17 @@ class KitchenOrder {
     required this.total,
     required this.status,
     this.driverId,
+    this.kitchenAcceptedAt,
     required this.addressText,
     required this.createdAt,
+    this.customer = const KitchenCustomerInfo(),
+    this.driver,
   });
+
+  /// Oshxona qabul qilgan, lekin hali kuryer topilmagan — "kuryer qidirilmoqda"
+  /// holatini "yangi buyurtma" dan ajratish uchun (restaurant_web bilan bir xil).
+  bool get isAwaitingDriver =>
+      status == KitchenOrderStatus.pending && kitchenAcceptedAt != null && driverId == null;
 
   factory KitchenOrder.fromJson(Map<String, dynamic> j) => KitchenOrder(
         id: j['id'] as String,
@@ -183,8 +227,15 @@ class KitchenOrder {
         total: (j['total'] as num?)?.toInt() ?? 0,
         status: _statusFromString(j['status'] as String?),
         driverId: j['driverId'] as String?,
+        kitchenAcceptedAt: j['kitchenAcceptedAt'] != null
+            ? DateTime.tryParse(j['kitchenAcceptedAt'] as String)
+            : null,
         addressText: (j['address'] as Map?)?['text'] as String? ?? '',
         createdAt: DateTime.tryParse(j['createdAt'] as String? ?? '') ?? DateTime.now(),
+        customer: KitchenCustomerInfo.fromJson((j['customer'] as Map?)?.cast<String, dynamic>()),
+        driver: j['driver'] != null
+            ? KitchenDriverInfo.fromJson((j['driver'] as Map).cast<String, dynamic>())
+            : null,
       );
 }
 

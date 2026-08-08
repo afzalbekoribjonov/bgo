@@ -62,6 +62,15 @@ export class KitchenCredentialService {
     };
   }
 
+  /**
+   * Oshxona o'chirilganda kirish ma'lumotini ham tozalaydi — aks holda
+   * mavjud bo'lmagan restaurantId'ga ishora qiluvchi login abadiy qolib
+   * ketardi. `deleteMany` — qator bo'lmasa ham xato bermaydi (idempotent).
+   */
+  async deleteCredential(restaurantId: string): Promise<void> {
+    await this.prisma.kitchenCredential.deleteMany({ where: { restaurantId } });
+  }
+
   /** Sayt kirishi: login/parol -> JWT (role 'restaurant', restaurantId claim). */
   async login(username: string, password: string) {
     const cred = await this.prisma.kitchenCredential.findUnique({

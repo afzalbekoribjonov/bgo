@@ -305,6 +305,21 @@ export class OrdersService implements OnModuleInit {
       "Hozircha kuryer topilmadi yoki oshxona bilan aloqa qilib bo'lmadi. Uzr!",
       { type: 'order', id, status: 'CANCELLED', reason },
     );
+    // Oshxona egasi tizim tomonidan avtomatik yopilganini bilishi kerak —
+    // aks holda panelida "ochiq" ko'rinib, yangi buyurtma qabul qilmayotganini
+    // tushunmay qoladi (kutilmagan "hozirda yopiq" xatosi).
+    this.restaurant
+      .getOwnerUserId(order.restaurantId)
+      .then((ownerUserId) => {
+        if (!ownerUserId) return;
+        return this.notifications.notify(
+          ownerUserId,
+          'Oshxona avtomatik yopildi',
+          "Buyurtma qabul qilinmadi (kuryer topilmadi/javob bo'lmadi) — oshxonangiz vaqtincha yopildi. Qayta ochish uchun Sozlamalar bo'limiga o'ting.",
+          { type: 'kitchen_closed', restaurantId: order.restaurantId },
+        );
+      })
+      .catch(() => undefined);
     return cancelled;
   }
 
@@ -433,15 +448,68 @@ export class OrdersService implements OnModuleInit {
   // ---------- Oshxona (kitchen) ----------
   // TODO(restaurant auth): restaurant roli JWT + egalik tekshiruvi.
 
-  listForRestaurant(restaurantId: string) {
-    return this.repo.findByRestaurant(restaurantId);
+  /** Faol (hali yakunlanmagan) buyurtmalar — mijoz/haydovchi ma'lumoti bilan boyitilgan. */
+  async listForRestaurant(restaurantId: string) {
+    const all = await this.repo.findByRestaurant(restaurantId);
+    const active = all.filter(
+      (o) => !['DELIVERED', 'COMPLETED', 'CANCELLED', 'FAILED'].includes(o.status),
+    );
+    return this.enrichForKitchen(active);
   }
 
   async listHistoryForRestaurant(restaurantId: string) {
     const all = await this.repo.findByRestaurant(restaurantId);
-    return all.filter((o) =>
+    const done = all.filter((o) =>
       ['DELIVERED', 'COMPLETED', 'CANCELLED', 'FAILED'].includes(o.status),
     );
+    return this.enrichForKitchen(done);
+  }
+
+  /**
+   * Oshxona paneli uchun mijoz (ism/telefon) va haydovchi (ism/telefon/mashina/
+   * reyting) ma'lumotini qo'shadi — bir nechta so'rovni (N+1) BITTA ommaviy
+   * chaqiruvga jamlab (`getUsersInfo`/`getPublicBulk`, `orders.service.ts`dagi
+   * `adminOrderDetail` bilan bir xil naqsh). Ro'yxat odatda kichik bo'lgani
+   * uchun haydovchi telefoni (ommaviy endpoint yo'q) individual so'raladi.
+   */
+  private async enrichForKitchen(orders: Order[]) {
+    const customerIds = [...new Set(orders.map((o) => o.customerId))];
+    const driverIds = [...new Set(orders.map((o) => o.driverId).filter((v): v is string => !!v))];
+    const [customers, drivers, phones] = await Promise.all([
+      this.driverInfo.getUsersInfo(customerIds),
+      this.driverInfo.getPublicBulk(driverIds),
+      Promise.all(driverIds.map(async (id) => [id, await this.driverInfo.getUserPhone(id)] as const)),
+    ]);
+    const phoneMap = new Map(phones);
+    return orders.map((o) => {
+      const customer = customers.get(o.customerId);
+      const driver = o.driverId ? drivers.get(o.driverId) : null;
+      return {
+        ...o,
+        customer: { name: customer?.fullName ?? null, phone: customer?.phone ?? null },
+        driver: o.driverId
+          ? {
+              name: driver?.fullName ?? null,
+              phone: phoneMap.get(o.driverId) ?? null,
+              car: driver?.carName ?? null,
+              plate: driver?.plateNumber ?? null,
+              rating: driver?.rating ?? null,
+            }
+          : null,
+      };
+    });
+  }
+
+  /**
+   * Hali yakunlanmagan (DELIVERED/COMPLETED/CANCELLED/FAILED emas)
+   * buyurtmalar soni — admin oshxonani o'chirishdan oldin tekshiradi
+   * (services/restaurant'ning ichki chaqiruvi).
+   */
+  async activeOrderCountForRestaurant(restaurantId: string): Promise<number> {
+    const all = await this.repo.findByRestaurant(restaurantId);
+    return all.filter(
+      (o) => !['DELIVERED', 'COMPLETED', 'CANCELLED', 'FAILED'].includes(o.status),
+    ).length;
   }
 
   async statsForRestaurant(restaurantId: string) {

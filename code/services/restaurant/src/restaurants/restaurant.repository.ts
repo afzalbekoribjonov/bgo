@@ -61,6 +61,8 @@ export abstract class RestaurantRepository {
     id: string,
     patch: UpdateRestaurantData,
   ): Promise<Restaurant>;
+  /** Butunlay o'chirish (admin) — Category/MenuItem kaskad o'chadi. */
+  abstract deleteRestaurant(id: string): Promise<void>;
 
   abstract listCategories(restaurantId: string): Promise<Category[]>;
   abstract createCategory(data: CreateCategoryData): Promise<Category>;

@@ -133,6 +133,12 @@ export class PrismaRestaurantRepository extends RestaurantRepository {
     return this.toRestaurant(r as Row);
   }
 
+  async deleteRestaurant(id: string): Promise<void> {
+    await this.assertRestaurant(id);
+    // Category/MenuItem — schema.prisma'da onDelete: Cascade, avtomatik o'chadi.
+    await this.prisma.restaurant.delete({ where: { id } });
+  }
+
   async listCategories(restaurantId: string): Promise<Category[]> {
     const rows = await this.prisma.category.findMany({
       where: { restaurantId },
