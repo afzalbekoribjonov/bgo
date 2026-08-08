@@ -1,7 +1,39 @@
-import { getToken } from './auth';
+import { getRefreshToken, getToken, setRefreshToken, setToken } from './auth';
 import type { Category, ChatMessage, ChatThread, Product, SellerProfile, SellerType } from './types';
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+
+/**
+ * Access token muddati tugaganda (30 daqiqa) qayta login so'ralmasin uchun
+ * — saqlangan refresh token bilan yangi juftlik olinadi. Bir nechta so'rov
+ * bir vaqtda 401 olsa ham refresh FAQAT bir marta chaqirilishi uchun
+ * natija promise sifatida keshlanadi.
+ */
+let refreshInFlight: Promise<string | null> | null = null;
+function refreshAccessToken(): Promise<string | null> {
+  if (refreshInFlight) return refreshInFlight;
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return Promise.resolve(null);
+  refreshInFlight = fetch(`${BASE}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((body) => {
+      const access = body?.data?.accessToken as string | undefined;
+      const refresh = body?.data?.refreshToken as string | undefined;
+      if (!access || !refresh) return null;
+      setToken(access);
+      setRefreshToken(refresh);
+      return access;
+    })
+    .catch(() => null)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
 
 async function api<T>(path: string, opts?: RequestInit): Promise<T> {
   const token = getToken();
@@ -13,6 +45,24 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
       ...(opts?.headers ?? {}),
     },
   });
+  if (res.status === 401 && token) {
+    const fresh = await refreshAccessToken();
+    if (fresh) {
+      const retryRes = await fetch(`${BASE}${path}`, {
+        cache: 'no-store',
+        ...opts,
+        headers: {
+          Authorization: `Bearer ${fresh}`,
+          ...(opts?.headers ?? {}),
+        },
+      });
+      const retryBody = await retryRes.json().catch(() => null);
+      if (!retryRes.ok) {
+        throw new Error(retryBody?.error?.message ?? retryBody?.message ?? `Xatolik (${retryRes.status})`);
+      }
+      return retryBody?.data as T;
+    }
+  }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error(body?.error?.message ?? body?.message ?? `Xatolik (${res.status})`);

@@ -319,11 +319,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _openMarket() async {
-    final token = await ref.read(tokenStorageProvider).readAccess();
+    final storage = ref.read(tokenStorageProvider);
+    final token = await storage.readAccess();
+    final refreshToken = await storage.readRefresh();
     if (!mounted) return;
     _go(AppWebViewScreen(
       baseUrl: ApiConfig.marketBaseUrl,
       token: token,
+      refreshToken: refreshToken,
       title: 'Beshariq Market',
       loadingIcon: Icons.storefront_rounded,
       loadingLabel: 'Market yuklanmoqda…',
@@ -335,12 +338,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required String title,
     required IconData icon,
   }) async {
-    final token = await ref.read(tokenStorageProvider).readAccess();
+    final storage = ref.read(tokenStorageProvider);
+    final token = await storage.readAccess();
+    final refreshToken = await storage.readRefresh();
     if (!mounted) return;
     final base = ApiConfig.shopsBaseUrl.replaceAll(RegExp(r'/+$'), '');
     _go(AppWebViewScreen(
       baseUrl: '$base$path',
       token: token,
+      refreshToken: refreshToken,
       title: title,
       loadingIcon: icon,
       loadingLabel: '$title yuklanmoqda…',
@@ -491,12 +497,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _openMarketProduct(MarketProduct product) async {
-    final token = await ref.read(tokenStorageProvider).readAccess();
+    final storage = ref.read(tokenStorageProvider);
+    final token = await storage.readAccess();
+    final refreshToken = await storage.readRefresh();
     if (!mounted) return;
     final base = ApiConfig.marketBaseUrl.replaceAll(RegExp(r'/+$'), '');
     _go(AppWebViewScreen(
       baseUrl: '$base/products/${product.id}',
       token: token,
+      refreshToken: refreshToken,
       title: 'Beshariq Market',
       loadingIcon: Icons.storefront_rounded,
       loadingLabel: 'Market yuklanmoqda…',

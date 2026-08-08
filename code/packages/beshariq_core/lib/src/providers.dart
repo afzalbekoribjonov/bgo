@@ -18,6 +18,11 @@ String localeToHeader(Locale locale) {
 final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
 
 /// Sozlangan Dio: base URL, timeout, har so'rovga token va til qo'shadi.
+/// 401 kelsa — refresh tokendan foydalanib SOKIN yangi access token oladi
+/// va so'rovni bir marta qayta uradi, foydalanuvchi hech qachon "qayta
+/// kiring" ko'rmaydi (faqat refresh token ham amal qilmasa — 30 kunlik
+/// muddat tugagan yoki chiqilgan bo'lsa — asl 401 xatosi davom etadi,
+/// shunda AuthController buni ushlab chiqishni amalga oshiradi).
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.read(tokenStorageProvider);
   final dio = Dio(
@@ -27,6 +32,33 @@ final dioProvider = Provider<Dio>((ref) {
       receiveTimeout: ApiConfig.timeout,
     ),
   );
+
+  Future<String?> refreshAccessToken() async {
+    final refresh = await storage.readRefresh();
+    if (refresh == null) return null;
+    try {
+      // Alohida, interceptorsiz Dio — asosiy `dio`ning onError zanjiriga
+      // qayta tushib qolmasligi (cheksiz tsikl xavfi) uchun.
+      final res = await Dio(
+        BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          connectTimeout: ApiConfig.timeout,
+          receiveTimeout: ApiConfig.timeout,
+        ),
+      ).post('/auth/refresh', data: {'refreshToken': refresh});
+      final data = res.data['data'] as Map<String, dynamic>?;
+      final access = data?['accessToken'] as String?;
+      final newRefresh = data?['refreshToken'] as String?;
+      if (access != null && newRefresh != null) {
+        await storage.saveTokens(access: access, refresh: newRefresh);
+        return access;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -36,6 +68,23 @@ final dioProvider = Provider<Dio>((ref) {
         }
         options.headers['Accept-Language'] = localeToHeader(ref.read(localeProvider));
         handler.next(options);
+      },
+      onError: (error, handler) async {
+        if (error.response?.statusCode == 401 &&
+            !error.requestOptions.path.contains('/auth/refresh')) {
+          final fresh = await refreshAccessToken();
+          if (fresh != null) {
+            final req = error.requestOptions;
+            req.headers['Authorization'] = 'Bearer $fresh';
+            try {
+              final retried = await dio.fetch(req);
+              return handler.resolve(retried);
+            } catch (_) {
+              // qayta urinish ham muvaffaqiyatsiz — asl xatoni davom ettiramiz
+            }
+          }
+        }
+        handler.next(error);
       },
     ),
   );

@@ -58,10 +58,16 @@ import type {
   UpdateRestaurantInput,
   UpdateRoadInput,
 } from './types';
-import { clearToken, getToken } from './auth';
+import { clearToken, getToken, refreshAccessToken } from './auth';
 
 const BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+
+function forceLogout(): never {
+  clearToken();
+  if (typeof window !== 'undefined') window.location.reload();
+  throw new Error('Avtorizatsiya talab qilinadi');
+}
 
 async function api<T>(path: string, opts?: RequestInit): Promise<T> {
   const token = getToken();
@@ -73,11 +79,32 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
       ...(opts?.headers ?? {}),
     },
   });
+  if (res.status === 401 && token) {
+    // Token muddati tugagan bo'lishi mumkin — avval sokin refresh urinamiz.
+    // 403 bu yerga kirmaydi: u yaroqli token, lekin yetarli rol yo'qligini
+    // bildiradi — refresh buni tuzatmaydi.
+    const fresh = await refreshAccessToken();
+    if (fresh) {
+      const retryRes = await fetch(`${BASE}${path}`, {
+        cache: 'no-store',
+        ...opts,
+        headers: {
+          Authorization: `Bearer ${fresh}`,
+          ...(opts?.headers ?? {}),
+        },
+      });
+      if (retryRes.status === 401 || retryRes.status === 403) forceLogout();
+      const retryBody = await retryRes.json().catch(() => null);
+      if (!retryRes.ok) {
+        throw new Error(retryBody?.error?.message ?? retryBody?.message ?? `Xatolik (${retryRes.status})`);
+      }
+      return retryBody?.data as T;
+    }
+    forceLogout();
+  }
   if (res.status === 401 || res.status === 403) {
-    // Sessiya tugagan / ruxsat yo'q — qayta login
-    clearToken();
-    if (typeof window !== 'undefined') window.location.reload();
-    throw new Error('Avtorizatsiya talab qilinadi');
+    // Token umuman yo'q, yoki refresh tokeni ham amal qilmayapti — qayta login.
+    forceLogout();
   }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
@@ -126,6 +153,9 @@ export const updateRestaurant = (id: string, body: UpdateRestaurantInput) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+/** Butunlay o'chiradi — qaytarib bo'lmaydi. Faol buyurtmalar bo'lsa server rad etadi. */
+export const deleteRestaurant = (id: string) =>
+  api<unknown>(`/restaurants/${id}`, { method: 'DELETE' });
 export const assignRestaurantOwner = (id: string, ownerUserId: string) =>
   api<AdminRestaurant>(`/restaurants/${id}/owner`, {
     method: 'PATCH',

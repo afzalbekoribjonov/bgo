@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { isAdmin, requestOtp, setToken, verifyOtp } from '@/lib/auth';
+import { isAdmin, requestOtp, setRefreshToken, setToken, verifyOtp } from '@/lib/auth';
 
 export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [phone, setPhone] = useState('+998');
@@ -37,13 +37,14 @@ export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
     setLoading(true);
     setError(null);
     try {
-      const { accessToken, user } = await verifyOtp(phone, code);
+      const { accessToken, refreshToken, user } = await verifyOtp(phone, code);
       if (!isAdmin(user)) {
         setError("Sizda admin huquqi yo'q");
         setLoading(false);
         return;
       }
       setToken(accessToken);
+      setRefreshToken(refreshToken);
       onLoggedIn();
     } catch (e) {
       setError((e as Error).message);

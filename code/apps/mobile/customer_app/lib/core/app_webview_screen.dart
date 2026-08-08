@@ -7,6 +7,10 @@ import 'package:webview_flutter/webview_flutter.dart';
 class AppWebViewScreen extends StatefulWidget {
   final String baseUrl; // masalan http://localhost:3300
   final String? token; // bo'lmasa — ko'rish rejimida ochiladi
+  // Access token muddati tugaganda sayt o'zi /auth/refresh chaqira olishi
+  // uchun — aks holda 30 daqiqadan keyin sahifa xatolar bera boshlaydi,
+  // foydalanuvchi esa ilovani qayta ochmasa buni tuzatolmaydi.
+  final String? refreshToken;
   final String title;
   final IconData loadingIcon;
   final String loadingLabel;
@@ -16,6 +20,7 @@ class AppWebViewScreen extends StatefulWidget {
     required this.baseUrl,
     required this.title,
     this.token,
+    this.refreshToken,
     this.loadingIcon = Icons.storefront_rounded,
     this.loadingLabel = 'Yuklanmoqda…',
   });
@@ -47,7 +52,12 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
     final base = widget.baseUrl.replaceAll(RegExp(r'/+$'), '');
     final token = widget.token;
     if (token == null || token.isEmpty) return Uri.parse('$base/');
-    return Uri.parse('$base/?token=${Uri.encodeComponent(token)}');
+    final refresh = widget.refreshToken;
+    final query = {
+      'token': token,
+      if (refresh != null && refresh.isNotEmpty) 'refreshToken': refresh,
+    };
+    return Uri.parse('$base/').replace(queryParameters: query);
   }
 
   @override
