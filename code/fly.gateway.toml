@@ -1,0 +1,39 @@
+app = "beshariq-gateway"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    SERVICE = "gateway"
+
+[env]
+  NODE_ENV = "production"
+  GATEWAY_PORT = "4000"
+  AUTH_SERVICE_URL = "http://beshariq-auth.flycast"
+  RESTAURANT_SERVICE_URL = "http://beshariq-restaurant.flycast"
+  ORDER_SERVICE_URL = "http://beshariq-order.flycast"
+  MARKET_SERVICE_URL = "http://beshariq-market.flycast"
+  MARKETPLACE_SERVICE_URL = "http://beshariq-marketplace.flycast"
+  SUPPORT_SERVICE_URL = "http://beshariq-support.flycast"
+  # Frontendlar deploy qilingach, aniq domenlar bilan to'ldiriladi
+  # (vergul bilan ajratilgan ro'yxat). Hozircha bo'sh — brauzer-CORS
+  # mobil ilova/xizmatlararo trafikka taalluqli emas.
+  # CORS_ORIGIN = "https://admin-web.vercel.app,https://market-web.vercel.app"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    path = "/api/v1/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

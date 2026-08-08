@@ -1,0 +1,31 @@
+app = "beshariq-market"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    SERVICE = "market"
+
+[env]
+  NODE_ENV = "production"
+  MARKET_PORT = "4005"
+  AUTH_SERVICE_URL = "http://beshariq-auth.flycast"
+  PUBLIC_API_URL = "https://beshariq-gateway.fly.dev"
+
+[http_service]
+  internal_port = 4005
+  force_https = false
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    path = "/api/v1/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

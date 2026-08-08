@@ -10,10 +10,12 @@ Bu hujjat butun tizimni (baza, marshrut serveri, 7 backend xizmat, 5 frontend) b
 |---|---|---|
 | Ma'lumotlar bazasi (6 ta) | **Neon** | Bepul, PostGIS kerak emas (tasdiqlangan), Prisma bilan mos — [`scripts/neon-setup.md`](scripts/neon-setup.md) |
 | Marshrut serveri (OSRM) | **Fly.io** | Docker image'ni to'g'ridan-to'g'ri, doimiy volume bilan ishga tushiradi — [`osrm/README.md`](osrm/README.md) |
-| Backend (gateway + 6 xizmat) | **Railway** | Dockerfile'siz avtomatik Node aniqlash (Nixpacks), bitta repo'dan ko'p xizmatni "root directory" orqali alohida deploy, xizmatlar orasidagi ichki tarmoq mavjud `*_SERVICE_URL` naqshiga to'g'ridan-to'g'ri mos keladi |
+| Backend (gateway + 6 xizmat) | **Fly.io** | Har xizmat — alohida Fly app, `Dockerfile`+`turbo prune` orqali quriladi, auto-stop/auto-start (bo'sh turganda $0 xarajat), xizmatlar orasi Flycast (xususiy tarmoq) orqali |
 | Frontend (5 ta) | **Vercel** | Standart Next.js server-mode, hech qanday kod o'zgarishisiz (dinamik `[id]` marshrutlar bor — statik eksport hozircha ko'rib chiqilmagan), bepul tarifi bu ko'lam uchun yetarli |
 
-**Muqobillar**: Backend uchun Render (bepul tarifi bor, lekin faolsizlikda "uxlaydi" — gateway+7-xizmat arxitektura uchun unchalik mos emas, sovuq boshlanish sezilarli bo'ladi). Frontend uchun Cloudflare Pages (bepul, cheksiz so'rov) — lekin bu 5 ilovaning barchasida dinamik `[id]` marshrutlar borligi sababli statik eksport (`output:'export'`) talab qiladi, bu katta va xavfli qayta qurish (alohida so'ralganda ko'rib chiqiladi).
+**Muqobillar**: Frontend uchun Cloudflare Pages (bepul, cheksiz so'rov) — lekin bu 5 ilovaning barchasida dinamik `[id]` marshrutlar borligi sababli statik eksport (`output:'export'`) talab qiladi, bu katta va xavfli qayta qurish (alohida so'ralganda ko'rib chiqiladi).
+
+**Eslatma — Fly.io xarajati**: yangi hisoblarga endi doimiy bepul tarif berilmaydi (2024-yildan buyon), faqat bir martalik ~$5 kredit. Auto-stop/auto-start yoqilgan holda (bu qo'llanmada shunday sozlangan) sinov davrida xarajat deyarli nolga yaqin — xizmatlar so'rov bo'lmasa avtomatik to'xtaydi, kelganda ~1-2s ichida uyg'onadi. Doimiy, uzluksiz ishlatilganda taxminan $25-50/oy (9 ta xizmat: 7 backend + gateway + OSRM).
 
 ---
 
@@ -25,54 +27,40 @@ To'liq qo'llanma: [`scripts/neon-setup.md`](scripts/neon-setup.md). Qisqacha: hi
 
 To'liq qo'llanma: [`osrm/README.md`](osrm/README.md#production-joylashtirish-flyio). Natijada `https://beshariq-osrm.fly.dev` kabi doimiy URL olasiz — 3-bosqichda `order` xizmatining `OSRM_URL`iga qo'yiladi.
 
-## 3-bosqich: Railway (backend — gateway + 6 xizmat)
+## 3-bosqich: Fly.io (backend — gateway + 6 xizmat)
 
-1. https://railway.app → GitHub bilan kirish → "New Project" → "Deploy from GitHub repo" → shu repo tanlanadi.
-2. Har bir backend xizmat uchun **alohida service** yaratiladi (bitta repo, 7 marta "New Service" → "GitHub Repo" → xuddi shu repo, lekin **Root Directory** har birida farq qiladi):
-   - `services/gateway`
-   - `services/auth`
-   - `services/restaurant`
-   - `services/order`
-   - `services/market`
-   - `services/marketplace`
-   - `services/support`
-3. Har bir xizmat "Settings" → "Networking":
-   - **Faqat `gateway`ga** public domain beriladi ("Generate Domain") — u yagona tashqi (brauzer/mobil ilova) chaqiradigan xizmat.
-   - Qolgan 6 xizmat FAQAT ichki (private) tarmoqda qoladi — Railway avtomatik `<service>.railway.internal` domenini beradi, bu boshqa xizmatlarning muhit o'zgaruvchilarida ishlatiladi (pastga qarang). Bu xavfsizlik uchun ham foydali — 6 xizmat internetdan to'g'ridan-to'g'ri chaqirilmaydi.
-4. Har bir xizmatga muhit o'zgaruvchilari (`.env.example`lardagi kalitlar asosida, "Variables" bo'limi):
+**Holat**: bu bosqich BAJARILGAN va jonli ishlab turibdi — quyida amalda ishlatilgan aniq oqim tasvirlangan (kelajakda qayta joylashtirish/yangi muhit uchun ma'lumotnoma sifatida).
 
-   **Barcha 7 xizmatda umumiy** (bir xil qiymat — aks holda JWT/ichki-chaqiruvlar ishlamaydi):
+Konteynerlash uchun repo ildizida bitta umumiy `Dockerfile` (`turbo prune --docker` orqali har bir xizmat uchun qayta ishlatiladi, `SERVICE` build-arg bilan farqlanadi), `.dockerignore`, `docker-entrypoint.sh` bor. Har xizmat uchun alohida `fly.<xizmat>.toml` (`fly.gateway.toml`, `fly.auth.toml`, `fly.restaurant.toml`, `fly.order.toml`, `fly.market.toml`, `fly.marketplace.toml`, `fly.support.toml`) — barchasi `auto_stop_machines="stop"`/`auto_start_machines=true`/`min_machines_running=0` bilan (bo'sh turganda $0 xarajat).
+
+1. `flyctl` o'rnatish + login: `iwr https://fly.io/install.ps1 -useb | iex` (Windows), so'ng `flyctl auth login` (brauzer orqali, o'zingiz tasdiqlaysiz).
+2. Har bir xizmat uchun Fly app yaratish: `flyctl apps create beshariq-<xizmat>` (7 marta: gateway, auth, restaurant, order, market, marketplace, support).
+3. Tarmoq — **faqat `gateway`ga** ochiq IP, qolgan 6 tasi FAQAT xususiy (Flycast):
+   ```powershell
+   flyctl ips allocate-v6 --private -a beshariq-auth
+   flyctl ips allocate-v6 --private -a beshariq-restaurant
+   flyctl ips allocate-v6 --private -a beshariq-order
+   flyctl ips allocate-v6 --private -a beshariq-market
+   flyctl ips allocate-v6 --private -a beshariq-marketplace
+   flyctl ips allocate-v6 --private -a beshariq-support
+   flyctl ips allocate-v4 --shared -a beshariq-gateway
+   flyctl ips allocate-v6 -a beshariq-gateway
    ```
-   NODE_ENV=production
-   JWT_ACCESS_SECRET=<xavfsiz tasodifiy satr — barcha xizmatlarda AYNAN bir xil>
-   INTERNAL_API_KEY=<xavfsiz tasodifiy satr — barcha xizmatlarda AYNAN bir xil>
+   **MUHIM — Flycast port gotcha**: Flycast (`<app>.flycast`) Fly Proxy orqali o'tadi (shu sababli auto-stop/start ichki chaqiruvlar uchun ham ishlaydi — oddiy `.internal` buni CHETLAB o'tadi va uxlab qolgan xizmatni uyg'otmaydi). Lekin bu degani boshqa xizmatga chaqiruv xizmatning ICHKI portiga emas (masalan `:4001`), balki **standart HTTP portiga (80, port ko'rsatilmasdan)** qilinishi kerak: `http://beshariq-auth.flycast` — TO'G'RI; `http://beshariq-auth.flycast:4001` — ADASHADI (ECONNRESET).
+4. Sirlar (`fly secrets set`) — barcha 7 xizmatga umumiy:
+   ```powershell
+   $jwt = <openssl rand -hex 32>; $key = <openssl rand -hex 32>
+   flyctl secrets set JWT_ACCESS_SECRET=$jwt INTERNAL_API_KEY=$key -a beshariq-<xizmat>
    ```
+   Har xizmatga xos: `DATABASE_URL` (Neon connection string + `&connection_limit=5&pool_timeout=20`, 6 DB'li xizmatning har biriga), `auth`ga qo'shimcha `JWT_REFRESH_SECRET`, `ADMIN_PHONES`, `FIREBASE_SERVICE_ACCOUNT_B64` (`firebase-service-account.json`ning base64'i — fayl image'ga yozilmaydi/commit qilinmaydi, konteyner ishga tushishda dekodlanadi), `support`ga `GEMINI_API_KEY`, (agar mavjud bo'lsa) `restaurant`/`market`/`marketplace`ga `IMAGEKIT_PUBLIC_KEY`/`IMAGEKIT_PRIVATE_KEY`/`IMAGEKIT_URL_ENDPOINT`.
 
-   **`gateway`**:
-   ```
-   GATEWAY_PORT=4000
-   AUTH_SERVICE_URL=http://<auth-service>.railway.internal:4001
-   RESTAURANT_SERVICE_URL=http://<restaurant-service>.railway.internal:4003
-   ORDER_SERVICE_URL=http://<order-service>.railway.internal:4004
-   MARKET_SERVICE_URL=http://<market-service>.railway.internal:4005
-   MARKETPLACE_SERVICE_URL=http://<marketplace-service>.railway.internal:4006
-   SUPPORT_SERVICE_URL=http://<support-service>.railway.internal:4007
-   CORS_ORIGIN=https://admin-web.vercel.app,https://market-web.vercel.app,https://restaurant-web.vercel.app,https://shops-web.vercel.app,https://seller-web.vercel.app
-   ```
-   (4-bosqichdan keyin, Vercel'dagi haqiqiy domenlar bilan `CORS_ORIGIN`ni yangilang.)
-
-   **`auth`**: `AUTH_PORT=4001`, `DATABASE_URL=<Neon auth_db>`, Firebase/Telegram kalitlari (mavjud `.env.example`dan).
-
-   **`restaurant`**: `RESTAURANT_PORT=4003`, `DATABASE_URL=<Neon restaurant_db>`, `AUTH_SERVICE_URL=http://<auth-service>.railway.internal:4001`, `SEED_ON_START=false`, `PUBLIC_API_URL=https://<gateway-domain>` (ImageKit sozlanmagan holatda lokal-disk rasm URL'lari shu orqali quriladi — lekin Railway'ning fayl tizimi ephemeral, shuning uchun ImageKit kalitlarini sozlash TAVSIYA ETILADI), `IMAGEKIT_PUBLIC_KEY`/`IMAGEKIT_PRIVATE_KEY`/`IMAGEKIT_URL_ENDPOINT`.
-
-   **`order`**: `ORDER_PORT=4004`, `DATABASE_URL=<Neon order_db>`, `OSRM_URL=https://beshariq-osrm.fly.dev` (2-bosqich), qolgan `*_SERVICE_URL`lar boshqa xizmatlarning `.railway.internal` manzillariga.
-
-   **`market`**/**`marketplace`**: mos `DATABASE_URL`, `PUBLIC_API_URL`, `IMAGEKIT_*` (ikkalasida allaqachon bor).
-
-   **`support`**: `DATABASE_URL=<Neon support_db>`, `GEMINI_API_KEY=<sizning kalitingiz>`.
-
-5. Har xizmat avtomatik `pnpm install` (→ yangi `postinstall: prisma generate`) va `start:prod` (→ `prisma migrate deploy && node dist/main.js`) ishga tushiradi — Railway "Root Directory"da `package.json`ni topib standart Node buyruqlarini avtomatik ishlatadi (Nixpacks), qo'shimcha sozlash shart emas.
-6. Tekshirish: `https://<gateway-domain>/api/v1/health` — 200 qaytishi kerak (barcha 6 xizmatning DB-health-check'i endi haqiqiy — birortasi noto'g'ri sozlansa, o'sha xizmatning `/health`i 503 qaytaradi, buni Railway loglarida ko'rasiz).
+   **Bilinган cheklov**: agar ImageKit sozlanmasa, bu 3 xizmat lokal diskka yozadi — Fly'ning fayl tizimi vaqtinchalik, shuning uchun yuklangan rasmlar HAR auto-stop/redeploy'da yo'qoladi. Production'da ImageKit hisob ochib kalitlarni qo'shish qat'iy tavsiya etiladi.
+5. Joylashtirish tartibi — barg-xizmatlardan boshlab (har birini `fly deploy -c fly.<xizmat>.toml --remote-only`):
+   1. **auth** (bog'liqligi yo'q)
+   2. **restaurant, market, marketplace, support** (faqat auth'ga bog'liq — istalgan tartibda)
+   3. **order** (auth+market+restaurant+OSRM'ga bog'liq — 2-bosqichdagi OSRM avval jonli bo'lishi kerak)
+   4. **gateway** (barcha 6 tasiga bog'liq — ENG OXIRIDA)
+6. Tekshirish: `curl https://beshariq-gateway.fly.dev/api/v1/health` — 200 qaytishi kerak. Ichki xizmatlarni tekshirish uchun (ochiq IP'siz) `flyctl ssh console -a beshariq-<xizmat> -C "node -e \"fetch('http://localhost:<port>/api/v1/health').then(r=>r.text()).then(console.log)\""` (slim image'da `curl` yo'q, Node'ning o'z `fetch`idan foydalaniladi).
 
 ## 4-bosqich: Vercel (5 frontend)
 
@@ -89,7 +77,7 @@ Har bir ilova uchun alohida Vercel loyihasi (bitta repo, "Root Directory" har bi
 1. https://vercel.com → GitHub bilan kirish → "Add New Project" → repo tanlanadi → "Root Directory"ni yuqoridagi jadvaldan tanlang (Vercel Next.js'ni avtomatik aniqlaydi, qo'shimcha build-sozlash shart emas).
 2. "Environment Variables"ga yuqoridagi qatorni qo'shing.
 3. Deploy tugmasi bosiladi — natijada `https://<app-nomi>.vercel.app` domeni olinadi.
-4. Barcha 5 domen aniq bo'lgach, **3-bosqichning `gateway` xizmatidagi `CORS_ORIGIN`ni shu 5 domen bilan yangilang** (Railway'da redeploy talab qiladi).
+4. Barcha 5 domen aniq bo'lgach, **3-bosqichning `gateway` xizmatidagi `CORS_ORIGIN`ni shu 5 domen bilan yangilang** (`flyctl secrets set CORS_ORIGIN="https://..." -a beshariq-gateway`, avtomatik redeploy qiladi).
 
 ### Tekshirish
 Har bir Vercel domenini brauzerda ochib, login/OTP oqimi ishlashini, va rasm yuklangan sahifalarda (masalan admin_web'ning Market bo'limi, restaurant_web'ning Menyu sahifasi) rasmlar to'g'ri ko'rinishini tasdiqlash (bu — B qismida tuzatilgan `images.remotePatterns` gapini production'da haqiqatan tekshirish imkoni).

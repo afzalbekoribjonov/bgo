@@ -3,6 +3,16 @@ packages:
   - "packages/*"
   - "apps/web/*"
 
+# pnpm 10 standart holatda bog'liqliklarning postinstall skriptlarini
+# bloklaydi — Prisma shunga tayanadi (@prisma/client, @prisma/engines,
+# prisma). Ruxsatsiz, oddiy `pnpm install` (Docker'dan tashqarida ham,
+# CI/boshqa dev mashinasida ham) Prisma binary'larini o'rnatmasligi
+# mumkin.
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "prisma"
+
 # Eslatma: apps/mobile/customer_app va apps/mobile/driver_app — Flutter (Dart)
 # ilovalari, pnpm workspace'iga kirmaydi. Ular alohida `flutter pub get` bilan
 # boshqariladi.

@@ -1,0 +1,39 @@
+app = "beshariq-auth"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    SERVICE = "auth"
+
+[env]
+  NODE_ENV = "production"
+  AUTH_PORT = "4001"
+  OTP_LENGTH = "6"
+  OTP_TTL_SECONDS = "120"
+  OTP_MAX_ATTEMPTS = "5"
+  # Hozircha haqiqiy SMS provayder ulanmagan — OTP javobda ko'rinadi
+  # (Telegram bot ham hali sozlanmagan). Real SMS/Telegram ulangach
+  # false qilinadi.
+  SMS_DEV_MODE = "true"
+  FCM_DEV_MODE = "false"
+  FCM_ENABLED = "true"
+  FCM_SERVICE_ACCOUNT = "./firebase-service-account.json"
+
+[http_service]
+  internal_port = 4001
+  force_https = false
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    path = "/api/v1/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

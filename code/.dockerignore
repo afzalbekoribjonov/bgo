@@ -1,0 +1,37 @@
+# node_modules/build artifacts — regenerated inside the image, never useful
+# in the build context.
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+
+# Prisma clients are regenerated for the target platform (Linux) at build
+# time — never ship a host-generated (Windows/macOS) client into the image.
+**/prisma/generated
+
+# Local uploads fallback (dev-only, restaurant/market/marketplace).
+services/*/uploads
+
+# Secrets / env files — must never enter a Docker build context.
+**/.env
+**/.env.local
+**/*.local
+**/firebase-service-account.json
+
+# git metadata.
+.git
+
+# OSRM routing dataset — several GB, irrelevant to every backend-service
+# image; OSRM is its own separate Fly app/image (infra/osrm/README.md).
+infra/osrm/data
+
+# Flutter/Dart apps — not part of the pnpm workspace at all
+# (pnpm-workspace.yaml explicitly excludes apps/mobile/*).
+apps/mobile
+
+# Misc dev artifacts.
+**/*.log
+services/*/out.log
+services/*/err.log
+services/*/_*.log

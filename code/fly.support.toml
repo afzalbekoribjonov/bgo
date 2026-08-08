@@ -1,0 +1,32 @@
+app = "beshariq-support"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    SERVICE = "support"
+
+[env]
+  NODE_ENV = "production"
+  SUPPORT_PORT = "4007"
+  AUTH_SERVICE_URL = "http://beshariq-auth.flycast"
+  ORDER_SERVICE_URL = "http://beshariq-order.flycast"
+  GEMINI_MODEL = "gemini-2.5-flash"
+
+[http_service]
+  internal_port = 4007
+  force_https = false
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    path = "/api/v1/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
