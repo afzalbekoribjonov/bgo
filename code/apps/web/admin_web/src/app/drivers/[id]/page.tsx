@@ -42,6 +42,9 @@ function isBlockedNow(d: Pick<AdminDriver, 'blockedUntil'> | null): boolean {
 
 type Tab = 'info' | 'orders' | 'stats' | 'control';
 
+/** Haydovchi tarixi bir so'rovda nechta qator yuklaydi (server chegarasi — 50). */
+const HISTORY_PAGE_SIZE = 25;
+
 const ACTOR_LABEL: Record<string, string> = {
   customer: 'Mijoz bekor qildi',
   kitchen: 'Oshxona rad etdi',
@@ -76,6 +79,9 @@ export default function DriverDetailPage() {
   // History tab
   const [history, setHistory] = useState<DriverOrderHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyMore, setHistoryMore] = useState(false);
 
   // Stats tab
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'all'>('today');
@@ -129,8 +135,12 @@ export default function DriverDetailPage() {
   useEffect(() => {
     if (tab === 'orders' && driverUserId && history.length === 0) {
       setHistoryLoading(true);
-      getDriverHistory(driverUserId)
-        .then(setHistory)
+      getDriverHistory(driverUserId, 1, HISTORY_PAGE_SIZE)
+        .then((res) => {
+          setHistory(res.items);
+          setHistoryTotal(res.total);
+          setHistoryPage(res.page);
+        })
         .catch((e) => toast((e as Error).message, 'error'))
         .finally(() => setHistoryLoading(false));
     }
@@ -150,7 +160,7 @@ export default function DriverDetailPage() {
     if (tab === 'control' && driverUserId) {
       setActiveLoading(true);
       getOrders({ driverId: driverUserId, status: 'ACCEPTED,PENDING,PREPARING,PICKED_UP,IN_PROGRESS,EN_ROUTE' })
-        .then(setActiveOrders)
+        .then((res) => setActiveOrders(res.items))
         .catch((e) => toast((e as Error).message, 'error'))
         .finally(() => setActiveLoading(false));
     }
@@ -632,6 +642,45 @@ export default function DriverDetailPage() {
               </table>
             </div>
           )}
+
+          {/* Sahifalash — tarix hech qachon bittada to'liq yuklanmaydi */}
+          {!historyLoading && historyTotal > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                marginTop: 14,
+                flexWrap: 'wrap',
+              }}
+            >
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {history.length} / <b style={{ color: 'var(--text)' }}>{historyTotal}</b> ta yozuv
+              </span>
+              {history.length < historyTotal && driverUserId && (
+                <button
+                  className="btn ghost"
+                  disabled={historyMore}
+                  onClick={() => {
+                    setHistoryMore(true);
+                    getDriverHistory(driverUserId, historyPage + 1, HISTORY_PAGE_SIZE)
+                      .then((res) => {
+                        setHistory((prev) => [...prev, ...res.items]);
+                        setHistoryTotal(res.total);
+                        setHistoryPage(res.page);
+                      })
+                      .catch((e) => toast((e as Error).message, 'error'))
+                      .finally(() => setHistoryMore(false));
+                  }}
+                >
+                  {historyMore
+                    ? 'Yuklanmoqda…'
+                    : `Yana ko'rsatish (${historyTotal - history.length} ta qoldi)`}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -821,8 +870,14 @@ export default function DriverDetailPage() {
               <button className="btn ghost btn-sm" disabled={!driverUserId} onClick={() => {
                 if (!driverUserId) return;
                 setActiveLoading(true);
-                getOrders({ driverId: driverUserId })
-                  .then((res) => setActiveOrders(res.filter((o) => !['DELIVERED', 'CANCELLED', 'FAILED', 'COMPLETED'].includes(o.status))))
+                getOrders({ driverId: driverUserId, pageSize: 50 })
+                  .then((res) =>
+                    setActiveOrders(
+                      res.items.filter(
+                        (o) => !['DELIVERED', 'CANCELLED', 'FAILED', 'COMPLETED'].includes(o.status),
+                      ),
+                    ),
+                  )
                   .catch((e) => toast((e as Error).message, 'error'))
                   .finally(() => setActiveLoading(false));
               }}>

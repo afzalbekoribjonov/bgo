@@ -432,6 +432,34 @@ export interface OrderDetail {
   note?: string | null;
 }
 
+/** Yillik hisobotdagi bitta oy (1..12). */
+export interface MonthlyRow {
+  month: number;
+  orders: number;
+  delivered: number;
+  cancelled: number;
+  revenue: number;
+  profit: number;
+}
+
+/** Yillik hisobot: 12 oy + vertikal bo'yicha taqsimot. */
+export interface YearReport {
+  year: number;
+  months: MonthlyRow[];
+  byVertical: {
+    food: MonthlyRow[];
+    taxi: MonthlyRow[];
+    parcel: MonthlyRow[];
+  };
+  summary: {
+    totalOrders: number;
+    delivered: number;
+    cancelled: number;
+    revenue: number;
+    profit: number;
+  };
+}
+
 export interface OrdersQuery {
   status?: string;
   type?: string;
@@ -440,6 +468,9 @@ export interface OrdersQuery {
   q?: string;
   sort?: 'createdAt' | 'total';
   order?: 'asc' | 'desc';
+  /** Sahifa raqami (1'dan). Serverda pageSize 50 bilan cheklangan. */
+  page?: number;
+  pageSize?: number;
 }
 
 /** Jonli xaritadagi bitta haydovchi (admin). */

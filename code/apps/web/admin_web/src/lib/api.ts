@@ -57,6 +57,7 @@ import type {
   UpdateDriverInput,
   UpdateRestaurantInput,
   UpdateRoadInput,
+  YearReport,
 } from './types';
 import { clearToken, getToken, refreshAccessToken } from './auth';
 
@@ -119,16 +120,31 @@ export const getReport = (period: ReportPeriod) =>
 /** Ixtiyoriy sana oralig'i (istalgan kun/oy) — YYYY-MM-DD. */
 export const getReportRange = (from: string, to: string) =>
   api<ReportRange>(`/admin/reports/range?from=${from}&to=${to}`);
+/** Yillik hisobot — 12 oy bo'yicha jamlanma. */
+export const getYearReport = (year: number) =>
+  api<YearReport>(`/admin/reports/monthly?year=${year}`);
+/**
+ * Buyurtmalar ro'yxati — DOIM sahifalangan. Server bir so'rovda eng ko'pi
+ * bilan 50 qator qaytaradi, shuning uchun "hamma" filtri ham butun jadvalni
+ * tortmaydi.
+ */
 export const getOrders = (query: OrdersQuery & { driverId?: string } = {}) => {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value) params.set(key, String(value));
   }
   const qs = params.toString();
-  return api<AdminOrder[]>(`/admin/orders${qs ? `?${qs}` : ''}`);
+  return api<PagedResult<AdminOrder>>(`/admin/orders${qs ? `?${qs}` : ''}`);
 };
 export const cancelOrder = (id: string) =>
   api<unknown>(`/admin/orders/${id}/cancel`, { method: 'POST' });
+/**
+ * Buyurtmani ro'yxatdan o'chirish — YASHIRIN o'chirish. Yozuv bazada
+ * qoladi, shuning uchun kunlik/oylik hisobot raqamlari o'zgarmaydi.
+ * Faqat yakunlangan yoki bekor qilingan buyurtmani o'chirish mumkin.
+ */
+export const deleteOrder = (id: string) =>
+  api<{ hidden: boolean; type: string }>(`/admin/orders/${id}`, { method: 'DELETE' });
 /** Bitta buyurtmaning to'liq holati (alohida sahifa). */
 export const getOrderDetail = (id: string, type: 'FOOD' | 'TAXI' | 'PARCEL') =>
   api<OrderDetail>(`/admin/orders/${id}/detail?type=${type}`);
@@ -226,8 +242,11 @@ export const blockDriver = (id: string, reason: string, minutes: number) =>
 /** Darhol blokdan chiqarish (masalan ofisda jarima to'langach). */
 export const unblockDriver = (id: string) =>
   api<AdminDriver>(`/auth/admin/drivers/${id}/unblock`, { method: 'POST' });
-export const getDriverHistory = (id: string) =>
-  api<DriverOrderHistoryItem[]>(`/admin/drivers/${id}/history`);
+/** Haydovchi tarixi — sahifalangan (server bir so'rovda 50 tagacha qaytaradi). */
+export const getDriverHistory = (id: string, page = 1, pageSize = 20) =>
+  api<PagedResult<DriverOrderHistoryItem>>(
+    `/admin/drivers/${id}/history?page=${page}&pageSize=${pageSize}`,
+  );
 export const getDriverStats = (id: string, period: 'today' | 'week' | 'month' | 'all') =>
   api<DriverStats>(`/admin/drivers/${id}/stats?period=${period}`);
 export const getPromos = () => api<PromoCode[]>('/admin/promos');
@@ -526,6 +545,9 @@ export const sendSupportAdminReply = (id: string, text: string) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
   });
+/** Suhbatni butunlay o'chirish — xabarlari bilan birga, qaytarib bo'lmaydi. */
+export const deleteSupportConversation = (id: string) =>
+  api<{ deleted: boolean }>(`/support/admin/conversations/${id}`, { method: 'DELETE' });
 export const getSupportFaqItems = () =>
   api<SupportFaqItem[]>('/support/admin/faq');
 export const createSupportFaqItem = (dto: {

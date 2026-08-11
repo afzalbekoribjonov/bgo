@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { cancelOrder, formatDate, formatSom, getOrders, getReportRange } from '@/lib/api';
+import { cancelOrder, deleteOrder, formatDate, formatSom, getOrders, getReportRange } from '@/lib/api';
 import { ORDER_STATUSES, statusColor, statusLabel } from '@/lib/status';
 import { useToast } from '@/components/toast';
 import type { AdminOrder, OrdersQuery, ReportRange } from '@/lib/types';
@@ -22,6 +22,9 @@ const VERTICAL_CHIP: Record<string, string> = {
 };
 
 type Preset = 'day' | 'week' | 'month' | 'custom';
+
+/** Bir so'rovda nechta buyurtma yuklanadi (server chegarasi — 50). */
+const ORDERS_PAGE_SIZE = 25;
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -105,6 +108,9 @@ export default function OrdersPage() {
   const [reportLoading, setReportLoading] = useState(true);
 
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [type, setType] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [q, setQ] = useState('');
@@ -112,6 +118,7 @@ export default function OrdersPage() {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   function applyPreset(p: 'day' | 'week' | 'month') {
     setPreset(p);
@@ -163,28 +170,44 @@ export default function OrdersPage() {
     }
   }, [from, to, toast]);
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const query: OrdersQuery = {
-        type: type || undefined,
-        status: status || undefined,
-        from,
-        to,
-        q: q.trim() || undefined,
-        sort,
-        order,
-      };
-      setOrders(await getOrders(query));
-    } catch (e) {
-      toast((e as Error).message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [type, status, from, to, q, sort, order, toast]);
+  /**
+   * Buyurtmalarni sahifalab yuklaydi. `append=false` — filtr o'zgardi,
+   * ro'yxat boshidan; `append=true` — "Yana ko'rsatish". Hech qachon butun
+   * jadval tortilmaydi: bir so'rovda faqat ORDERS_PAGE_SIZE ta qator.
+   */
+  const loadOrders = useCallback(
+    async (targetPage = 1, append = false) => {
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      try {
+        const query: OrdersQuery = {
+          type: type || undefined,
+          status: status || undefined,
+          from,
+          to,
+          q: q.trim() || undefined,
+          sort,
+          order,
+          page: targetPage,
+          pageSize: ORDERS_PAGE_SIZE,
+        };
+        const res = await getOrders(query);
+        setOrders((prev) => (append ? [...prev, ...res.items] : res.items));
+        setTotal(res.total);
+        setPage(res.page);
+      } catch (e) {
+        toast((e as Error).message, 'error');
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [type, status, from, to, q, sort, order, toast],
+  );
 
   useEffect(() => { loadReport(); }, [loadReport]);
-  useEffect(() => { loadOrders(); }, [loadOrders]);
+  // Filtr/saralash o'zgarsa — doim 1-sahifadan boshlanadi.
+  useEffect(() => { loadOrders(1, false); }, [loadOrders]);
 
   async function handleCancel(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -199,6 +222,35 @@ export default function OrdersPage() {
       toast((e as Error).message, 'error');
     } finally {
       setCancelling(null);
+    }
+  }
+
+  /**
+   * Ro'yxatdan o'chirish — yashirin o'chirish (yozuv bazada qoladi).
+   * Hisobotlar o'zgarmasligi ataylab: o'tmishdagi tushum/foyda raqamlari
+   * keyinchalik "kamayib qolmasligi" kerak.
+   */
+  async function handleDelete(id: string, publicNo: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (
+      !confirm(
+        `#${publicNo} buyurtmani ro'yxatdan o'chirasizmi?\n\n` +
+          "Yozuv bazada saqlanib qoladi — hisobot raqamlari o'zgarmaydi, " +
+          "faqat ro'yxatda ko'rinmay qoladi.",
+      )
+    ) {
+      return;
+    }
+    setDeleting(id);
+    try {
+      await deleteOrder(id);
+      toast("Buyurtma ro'yxatdan o'chirildi", 'success');
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+      setTotal((t) => Math.max(0, t - 1));
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -423,22 +475,60 @@ export default function OrdersPage() {
                       <span style={{ color: 'var(--text-muted)', fontSize: 12.5 }}>{formatDate(o.createdAt)}</span>
                     </td>
                     <td>
-                      {active && (
-                        <button
-                          className="btn ghost btn-sm"
-                          disabled={cancelling === o.id}
-                          onClick={(e) => handleCancel(o.id, e)}
-                          style={{ color: 'var(--red)', borderColor: 'var(--red)', opacity: cancelling === o.id ? 0.5 : 1 }}
-                        >
-                          Bekor
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        {active ? (
+                          <button
+                            className="btn ghost btn-sm"
+                            disabled={cancelling === o.id}
+                            onClick={(e) => handleCancel(o.id, e)}
+                            style={{ color: 'var(--red)', borderColor: 'var(--red)', opacity: cancelling === o.id ? 0.5 : 1 }}
+                          >
+                            Bekor
+                          </button>
+                        ) : (
+                          // Faqat yakunlangan/bekor qilingan buyurtmani ro'yxatdan
+                          // olib tashlash mumkin (yashirin o'chirish).
+                          <button
+                            className="btn ghost btn-sm"
+                            title="Ro'yxatdan o'chirish (hisobotga ta'sir qilmaydi)"
+                            aria-label="Buyurtmani ro'yxatdan o'chirish"
+                            disabled={deleting === o.id}
+                            onClick={(e) => handleDelete(o.id, o.publicNo, e)}
+                            style={{ color: 'var(--text-muted)', opacity: deleting === o.id ? 0.5 : 1 }}
+                          >
+                            {deleting === o.id ? '…' : '🗑'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Sahifalash — ro'yxat hech qachon bittada to'liq yuklanmaydi */}
+      {!loading && total > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            marginTop: 14,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            {orders.length} / <b style={{ color: 'var(--text)' }}>{total}</b> ta buyurtma
+          </span>
+          {orders.length < total && (
+            <button className="btn ghost" disabled={loadingMore} onClick={() => loadOrders(page + 1, true)}>
+              {loadingMore ? 'Yuklanmoqda…' : `Yana ko'rsatish (${total - orders.length} ta qoldi)`}
+            </button>
+          )}
         </div>
       )}
     </div>

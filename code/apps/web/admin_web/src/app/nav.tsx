@@ -160,11 +160,22 @@ function IcLogOut({ className }: { className?: string }) {
   );
 }
 
+function IcChart({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+  );
+}
+
 /* ---- Nav config ---- */
 const MAIN_LINKS = [
   { href: '/', label: 'Dashboard', Icon: IcGrid },
   { href: '/live', label: 'Jonli xarita', Icon: IcNavCar },
   { href: '/orders', label: 'Buyurtmalar', Icon: IcBag },
+  { href: '/reports', label: 'Oylik hisobot', Icon: IcChart },
   { href: '/restaurants', label: 'Oshxonalar', Icon: IcStore },
   { href: '/market', label: 'Market', Icon: IcCart },
   { href: '/sellers', label: 'Sotuvchilar', Icon: IcStorefront },

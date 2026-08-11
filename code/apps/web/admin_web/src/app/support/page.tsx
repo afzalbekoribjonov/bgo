@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   createSupportFaqItem,
+  deleteSupportConversation,
   deleteSupportFaqItem,
   getSupportConversationMessages,
   getSupportConversations,
@@ -107,6 +108,7 @@ function ConversationsTab() {
   const [messages, setMessages] = useState<SupportChatMessage[]>([]);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<string | null>(null);
   selectedRef.current = selected;
@@ -161,6 +163,33 @@ function ConversationsTab() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
+
+  /** Suhbatni butunlay o'chirish — xabarlari bilan, qaytarib bo'lmaydi. */
+  async function removeConversation() {
+    if (!selected || !selectedConv) return;
+    const who = selectedConv.userInfo?.fullName || 'Foydalanuvchi';
+    if (
+      !confirm(
+        `${who} bilan bo'lgan suhbatni butunlay o'chirasizmi?\n\n` +
+          "Barcha xabarlar ham o'chadi. Bu amalni qaytarib bo'lmaydi.",
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteSupportConversation(selected);
+      toast("Suhbat o'chirildi", 'success');
+      setSelected(null);
+      setSelectedConv(null);
+      setMessages([]);
+      await loadList(true);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function send() {
     if (!selected || !reply.trim()) return;
@@ -299,6 +328,16 @@ function ConversationsTab() {
                       📞
                     </a>
                   )}
+                  <button
+                    className="btn ghost btn-sm"
+                    title="Suhbatni butunlay o'chirish"
+                    aria-label="Suhbatni butunlay o'chirish"
+                    disabled={deleting}
+                    onClick={removeConversation}
+                    style={{ color: 'var(--red)', borderColor: 'var(--red)', opacity: deleting ? 0.5 : 1 }}
+                  >
+                    {deleting ? '…' : '🗑'}
+                  </button>
                 </div>
               </div>
               <div
